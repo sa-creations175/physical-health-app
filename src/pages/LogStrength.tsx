@@ -23,15 +23,26 @@ export default function LogStrength() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
+    // Cancellation guard: under StrictMode the effect fires twice and an
+    // in-flight resolution from the first mount could land after the user
+    // has already tapped a different type, silently overwriting their pick.
+    // The functional setSelected((cur) => cur ?? s) is belt-and-suspenders —
+    // suggestion only seeds when nothing is selected yet.
+    let cancelled = false;
     suggestNextLiftingType()
       .then((s) => {
+        if (cancelled) return;
         setSuggested(s);
-        setSelected(s);
+        setSelected((cur) => cur ?? s);
       })
       .catch((err) => {
+        if (cancelled) return;
         console.error('Failed to suggest type:', err);
-        setSelected('upper');
+        setSelected((cur) => cur ?? 'upper');
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleStart() {
