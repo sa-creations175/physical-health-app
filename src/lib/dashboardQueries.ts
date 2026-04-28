@@ -2,7 +2,7 @@ import { db } from '../db/database';
 import {
   todayISODate,
   startOfWeekISODate,
-  last7DaysISODates,
+  currentWeekISODates,
   shortDayLabel,
   addDaysISO,
 } from './dateHelpers';
@@ -34,7 +34,7 @@ export interface CardioWeekSummary {
 
 export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeSummary> {
   const weekStart = startOfWeekISODate();
-  const dates7 = last7DaysISODates();
+  const dates7 = currentWeekISODates();
 
   const weekSessions = await db.sessions
     .where('type').equals(type)
@@ -70,7 +70,7 @@ export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeS
 
 export async function getCardioSummary(): Promise<CardioWeekSummary> {
   const weekStart = startOfWeekISODate();
-  const dates7 = last7DaysISODates();
+  const dates7 = currentWeekISODates();
 
   const weekSessions = await db.sessions
     .where('type').equals('cardio')

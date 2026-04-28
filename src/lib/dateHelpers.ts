@@ -1,5 +1,7 @@
 // All dates handled as ISO strings (YYYY-MM-DD, local time) or full ISO datetimes.
-// Week starts Monday — matches the ISO week number shown in the dashboard subline.
+// Week starts Sunday — matches the user's training-week convention. The week
+// number shown in the dashboard subline is therefore US-style (week 1 contains
+// Jan 1; weeks run Sun → Sat) rather than ISO 8601.
 
 function toISODateLocal(d: Date): string {
   return d.toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
@@ -10,24 +12,22 @@ export function todayISODate(): string {
 }
 
 export function startOfWeekISODate(d: Date = new Date()): string {
-  const day = d.getDay(); // 0 = Sun
-  const diff = day === 0 ? -6 : 1 - day; // shift to Monday
-  const monday = new Date(d);
-  monday.setDate(d.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return toISODateLocal(monday);
+  const day = d.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() - day);
+  sunday.setHours(0, 0, 0, 0);
+  return toISODateLocal(sunday);
 }
 
-export function isoWeekNumber(d: Date = new Date()): number {
-  const target = new Date(d.valueOf());
-  const dayNum = (d.getDay() + 6) % 7;
-  target.setDate(target.getDate() - dayNum + 3);
-  const firstThursdayMs = target.valueOf();
-  target.setMonth(0, 1);
-  if (target.getDay() !== 4) {
-    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
-  }
-  return 1 + Math.ceil((firstThursdayMs - target.valueOf()) / 604800000);
+export function weekNumber(d: Date = new Date()): number {
+  // US-style: week 1 contains Jan 1; weeks start Sunday.
+  // Use UTC date math to stay DST-safe (both anchors at UTC midnight).
+  const year = d.getFullYear();
+  const jan1 = new Date(year, 0, 1);
+  const days = Math.round(
+    (Date.UTC(year, d.getMonth(), d.getDate()) - Date.UTC(year, 0, 1)) / 86400000,
+  );
+  return Math.ceil((days + jan1.getDay() + 1) / 7);
 }
 
 export function dayName(d: Date = new Date()): string {
@@ -48,18 +48,18 @@ export function narrowDayLabel(isoDate: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'narrow' });
 }
 
-export function last7DaysISODates(today: Date = new Date()): string[] {
-  const dates: string[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    dates.push(toISODateLocal(d));
-  }
-  return dates;
-}
-
 export function addDaysISO(iso: string, n: number): string {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + n);
   return toISODateLocal(d);
+}
+
+export function currentWeekISODates(today: Date = new Date()): string[] {
+  // Returns 7 dates Sun → Sat of the week containing `today`.
+  const startISO = startOfWeekISODate(today);
+  const dates: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    dates.push(addDaysISO(startISO, i));
+  }
+  return dates;
 }

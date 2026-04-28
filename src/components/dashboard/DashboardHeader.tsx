@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { computeStreak } from '../../lib/dashboardQueries';
-import { dayName, dateLabel, isoWeekNumber } from '../../lib/dateHelpers';
+import { dayName, dateLabel, weekNumber } from '../../lib/dateHelpers';
 
 export default function DashboardHeader() {
   const streak = useLiveQuery(() => computeStreak(), [], 0) ?? 0;
@@ -13,7 +13,7 @@ export default function DashboardHeader() {
           {dayName(now)}
         </h1>
         <p className="text-[12px] text-ink-hint mt-1">
-          {dateLabel(now)} · Week {isoWeekNumber(now)}
+          {dateLabel(now)} · Week {weekNumber(now)}
         </p>
       </div>
       <div

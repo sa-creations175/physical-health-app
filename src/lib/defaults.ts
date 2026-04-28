@@ -1,9 +1,9 @@
 // Hardcoded defaults for Phase 1. Replaced by user_preferences table + Settings UI in step 7.
 
 export const DEFAULT_WEEKLY_LIFTING_TARGETS = {
-  lower: 1,      // LEGS
+  lower: 2,      // LEGS
   upper: 2,      // UPPER
-  full_body: 1,  // FULL BODY (optional per goals)
+  full_body: 0,  // FULL BODY (optional — target 0 by default)
 } as const;
 
 export const DEFAULT_CARDIO_WEEKLY_TARGET = 5; // mid of the 4–6 range from seeded goals
