@@ -79,7 +79,7 @@ export function SevenDayDotRow({
               background: d.hadSession ? activeColor : '#1a2e22',
             }}
           />
-          <span className="text-[9px] text-ink-hint uppercase tracking-micro">
+          <span className="text-[9px] text-card-mute uppercase tracking-micro">
             {narrowDayLabel(d.date)}
           </span>
         </div>

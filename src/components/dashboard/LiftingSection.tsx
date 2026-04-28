@@ -75,10 +75,10 @@ function LiftingCard({
       </p>
       <p className="mt-1.5 leading-none">
         <span className="text-[19px] font-medium text-ink">{count}</span>
-        <span className="text-[12px] text-ink-mute"> / {target}</span>
+        <span className="text-[12px] text-card-mute"> / {target}</span>
       </p>
       {optional && (
-        <p className="text-[9px] text-ink-hint mt-1.5 lowercase">optional</p>
+        <p className="text-[9px] text-card-mute mt-1.5 lowercase">optional</p>
       )}
     </button>
   );
@@ -93,11 +93,11 @@ function ExpandedDetail({ type }: { type: LiftingType }) {
       <SevenDayDotRow dots={summary.weekDots} />
       <div className="mt-3 pt-3 border-t border-divider">
         {summary.lastSession ? (
-          <p className="text-[12px] text-ink-mute">
-            <span className="text-ink-hint">Last:</span> {summary.lastSession.summary}
+          <p className="text-[12px] text-card-mute">
+            <span className="text-card-mute">Last:</span> {summary.lastSession.summary}
           </p>
         ) : (
-          <p className="text-[12px] text-ink-mute">no data yet</p>
+          <p className="text-[12px] text-card-mute">no data yet</p>
         )}
       </div>
     </div>

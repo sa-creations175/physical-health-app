@@ -32,9 +32,9 @@ export default function CardioSection() {
           <div className="flex-1 min-w-0">
             <p className="leading-none">
               <span className="text-[19px] font-medium text-ink">{count}</span>
-              <span className="text-[12px] text-ink-mute"> of {target} target</span>
+              <span className="text-[12px] text-card-mute"> of {target} target</span>
             </p>
-            <p className="text-[11px] text-ink-mute mt-1">
+            <p className="text-[11px] text-card-mute mt-1">
               {count === 0
                 ? 'no data yet'
                 : remaining > 0
@@ -59,12 +59,12 @@ export default function CardioSection() {
           {summary && <SevenDayDotRow dots={summary.weekDots} />}
           <div className="mt-3 pt-3 border-t border-divider">
             {summary?.lastSession ? (
-              <p className="text-[12px] text-ink-mute capitalize">
-                <span className="text-ink-hint normal-case">Last:</span>{' '}
+              <p className="text-[12px] text-card-mute capitalize">
+                <span className="text-card-mute normal-case">Last:</span>{' '}
                 {summary.lastSession.summary}
               </p>
             ) : (
-              <p className="text-[12px] text-ink-mute">no data yet</p>
+              <p className="text-[12px] text-card-mute">no data yet</p>
             )}
           </div>
         </div>

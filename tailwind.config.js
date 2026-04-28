@@ -14,7 +14,8 @@ export default {
         'ink-body': '#e0e0e0',       // body labels inside cards
         'ink-mute': '#aaaaaa',       // denominators, "sessions", "no data yet"
         'ink-soft': '#999999',       // header date + week number
-        'ink-hint': '#888888',       // hints, narrow day labels
+        'ink-hint': '#888888',       // hints on charcoal background only
+        'card-mute': '#bbbbbb',      // floor for any small hint/secondary text on card surfaces
         // Greens — single accent family
         'green-deep': '#0F6E56',
         'green-mint': '#5DCAA5',

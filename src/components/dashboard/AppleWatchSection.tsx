@@ -19,7 +19,7 @@ export default function AppleWatchSection() {
             <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
               {label}
             </p>
-            <p className="mt-1.5 text-[12px] text-ink-mute">no data yet</p>
+            <p className="mt-1.5 text-[12px] text-card-mute">no data yet</p>
           </div>
         ))}
       </div>
