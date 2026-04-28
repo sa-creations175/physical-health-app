@@ -36,9 +36,10 @@ export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeS
   const weekStart = startOfWeekISODate();
   const dates7 = currentWeekISODates();
 
+  // Only completed sessions count toward weekly progress (feel_rating set on save).
   const weekSessions = await db.sessions
     .where('type').equals(type)
-    .filter((s) => s.date >= weekStart)
+    .filter((s) => s.date >= weekStart && s.feel_rating !== null)
     .toArray();
 
   const dayHasSession = new Set(weekSessions.map((s) => s.date));
@@ -47,7 +48,10 @@ export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeS
     hadSession: dayHasSession.has(date),
   }));
 
-  const allOfType = await db.sessions.where('type').equals(type).sortBy('date');
+  const allOfType = await db.sessions
+    .where('type').equals(type)
+    .filter((s) => s.feel_rating !== null)
+    .sortBy('date');
   const lastRaw = allOfType.length > 0 ? allOfType[allOfType.length - 1] : null;
 
   let lastSession: LastSession | null = null;
@@ -74,7 +78,7 @@ export async function getCardioSummary(): Promise<CardioWeekSummary> {
 
   const weekSessions = await db.sessions
     .where('type').equals('cardio')
-    .filter((s) => s.date >= weekStart)
+    .filter((s) => s.date >= weekStart && s.feel_rating !== null)
     .toArray();
 
   const dayHasSession = new Set(weekSessions.map((s) => s.date));
@@ -83,7 +87,10 @@ export async function getCardioSummary(): Promise<CardioWeekSummary> {
     hadSession: dayHasSession.has(date),
   }));
 
-  const allCardio = await db.sessions.where('type').equals('cardio').sortBy('date');
+  const allCardio = await db.sessions
+    .where('type').equals('cardio')
+    .filter((s) => s.feel_rating !== null)
+    .sortBy('date');
   const lastRaw = allCardio.length > 0 ? allCardio[allCardio.length - 1] : null;
 
   let lastSession: LastSession | null = null;
@@ -109,6 +116,7 @@ export async function computeStreak(): Promise<number> {
   // collapse mid-day before the user has logged.
   const sessions = await db.sessions
     .where('type').anyOf('upper', 'lower', 'full_body', 'cardio')
+    .filter((s) => s.feel_rating !== null)
     .toArray();
 
   if (sessions.length === 0) return 0;
