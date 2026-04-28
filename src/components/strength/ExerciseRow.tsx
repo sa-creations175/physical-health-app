@@ -1,7 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import type { SessionExercise } from '../../db/types';
-import { addSet } from '../../lib/strengthHelpers';
+import {
+  addSet,
+  getPreviousSessionForExercise,
+} from '../../lib/strengthHelpers';
+import { relativeDateLabel } from '../../lib/dateHelpers';
 import SetRow from './SetRow';
 
 export default function ExerciseRow({ link }: { link: SessionExercise }) {
@@ -14,10 +18,23 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
     [link.id],
     [],
   );
+  const previous = useLiveQuery(
+    () => getPreviousSessionForExercise(link.exercise_id, link.session_id),
+    [link.exercise_id, link.session_id],
+    null,
+  );
 
   async function handleAddSet() {
+    // Copies the most recent set in the current exercise; if none, falls back
+    // to last-session's top set so a brand-new exercise still pre-fills with
+    // the user's prior weight/reps as a starting point.
     const last = sets[sets.length - 1];
-    await addSet(link.id, last?.weight ?? 0, last?.reps ?? 0);
+    if (last) {
+      await addSet(link.id, last.weight, last.reps);
+      return;
+    }
+    const prevTop = previous?.sets[previous.sets.length - 1];
+    await addSet(link.id, prevTop?.weight ?? 0, prevTop?.reps ?? 0);
   }
 
   if (!exercise) return null;
@@ -33,6 +50,24 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
           {exercise.muscle_group.replace('_', ' ')}
         </span>
       </div>
+
+      {previous && previous.sets.length > 0 && (
+        <div className="mt-2 px-3 py-2 bg-charcoal rounded-lg">
+          <p className="text-[10px] tracking-micro uppercase text-card-mute font-semibold">
+            Last · {relativeDateLabel(previous.date)} · {previous.sets.length} set
+            {previous.sets.length === 1 ? '' : 's'}
+          </p>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+            {previous.sets.map((s) => (
+              <span key={s.id} className="text-[12px]">
+                <span className="text-ink-body font-medium">{s.weight}</span>
+                <span className="text-card-mute">×{s.reps}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mt-1 divide-y divide-divider">
         {sets.map((s, i) => (
           <SetRow key={s.id} set={s} setNumber={i + 1} />

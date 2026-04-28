@@ -116,6 +116,43 @@ export async function createNewExercise(
   return exercise.id;
 }
 
+// Most-recent completed session that included this exercise, with its sets.
+// Used in the active logger as a progressive-overload reference. Excludes
+// the current session so the user sees history, not their in-progress work.
+export interface PreviousSessionForExercise {
+  date: string;
+  sets: SetEntry[];
+}
+
+export async function getPreviousSessionForExercise(
+  exerciseId: string,
+  excludeSessionId: string,
+): Promise<PreviousSessionForExercise | null> {
+  const links = await db.session_exercises
+    .where('exercise_id').equals(exerciseId)
+    .toArray();
+  if (links.length === 0) return null;
+
+  const sessionIds = [...new Set(links.map((l) => l.session_id))];
+  const candidates = await db.sessions
+    .where('id').anyOf(sessionIds)
+    .filter((s) => s.feel_rating !== null && s.id !== excludeSessionId)
+    .toArray();
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => b.date.localeCompare(a.date));
+  const last = candidates[0];
+
+  const linkForLast = links.find((l) => l.session_id === last.id);
+  if (!linkForLast) return null;
+
+  const sets = await db.sets
+    .where('session_exercise_id').equals(linkForLast.id)
+    .sortBy('created_at');
+
+  return { date: last.date, sets };
+}
+
 // Pick the lifting type with the largest unmet target this week.
 // Used to pre-select the type-selector. Only counts completed sessions.
 export async function suggestNextLiftingType(): Promise<'upper' | 'lower' | 'full_body'> {

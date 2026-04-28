@@ -54,6 +54,17 @@ export function addDaysISO(iso: string, n: number): string {
   return toISODateLocal(d);
 }
 
+export function relativeDateLabel(isoDate: string, ref: Date = new Date()): string {
+  const then = new Date(isoDate + 'T00:00:00');
+  const refMid = new Date(ref);
+  refMid.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((refMid.getTime() - then.getTime()) / 86400000);
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays > 1 && diffDays < 7) return `${diffDays}d ago`;
+  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export function currentWeekISODates(today: Date = new Date()): string[] {
   // Returns 7 dates Sun → Sat of the week containing `today`.
   const startISO = startOfWeekISODate(today);
