@@ -4,6 +4,11 @@ import { SectionLabel, ProgressBar, SevenDayDotRow } from '../ui/primitives';
 import { getCardioSummary } from '../../lib/dashboardQueries';
 import { DEFAULT_CARDIO_WEEKLY_TARGET } from '../../lib/defaults';
 
+const GREEN_STRIPE = {
+  borderLeftWidth: '2px',
+  borderLeftColor: '#0F6E56',
+} as const;
+
 export default function CardioSection() {
   const [expanded, setExpanded] = useState(false);
   const summary = useLiveQuery(() => getCardioSummary(), []);
@@ -18,6 +23,7 @@ export default function CardioSection() {
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
+        style={GREEN_STRIPE}
         className={`mt-2 w-full bg-card border rounded-xl p-4 text-left transition-colors ${
           expanded ? 'border-green-mint' : 'border-card-edge'
         }`}
@@ -26,7 +32,7 @@ export default function CardioSection() {
           <div className="flex-1 min-w-0">
             <p className="leading-none">
               <span className="text-[19px] font-medium text-ink">{count}</span>
-              <span className="text-[12px] text-ink-hint"> of {target} target</span>
+              <span className="text-[12px] text-ink-mute"> of {target} target</span>
             </p>
             <p className="text-[11px] text-ink-mute mt-1">
               {count === 0
@@ -39,21 +45,26 @@ export default function CardioSection() {
           <SessionPills done={count} total={target} />
         </div>
         <div className="mt-3">
-          <ProgressBar value={count} max={target} color="green-leaf" />
+          <ProgressBar
+            value={count}
+            max={target}
+            color="green-leaf"
+            trackColor="#0a2a1e"
+          />
         </div>
       </button>
 
       {expanded && (
         <div className="bg-card border border-card-edge rounded-xl p-4 mt-2">
           {summary && <SevenDayDotRow dots={summary.weekDots} />}
-          <div className="mt-3 pt-3 border-t border-card-edge">
+          <div className="mt-3 pt-3 border-t border-divider">
             {summary?.lastSession ? (
               <p className="text-[12px] text-ink-mute capitalize">
                 <span className="text-ink-hint normal-case">Last:</span>{' '}
                 {summary.lastSession.summary}
               </p>
             ) : (
-              <p className="text-[12px] text-ink-hint">no data yet</p>
+              <p className="text-[12px] text-ink-mute">no data yet</p>
             )}
           </div>
         </div>

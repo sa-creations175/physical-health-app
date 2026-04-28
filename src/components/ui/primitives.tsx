@@ -15,19 +15,10 @@ export function Card({
   );
 }
 
-export function SectionLabel({
-  children,
-  onCard = false,
-}: {
-  children: ReactNode;
-  onCard?: boolean;
-}) {
+export function SectionLabel({ children }: { children: ReactNode }) {
+  // All section micro-labels: mint #5DCAA5, 9px, weight 600, tracked.
   return (
-    <p
-      className={`text-[9px] tracking-micro uppercase font-medium ${
-        onCard ? 'text-green-mint' : 'text-ink-hint'
-      }`}
-    >
+    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
       {children}
     </p>
   );
@@ -85,7 +76,7 @@ export function SevenDayDotRow({
             style={{
               width: size,
               height: size,
-              background: d.hadSession ? activeColor : '#444',
+              background: d.hadSession ? activeColor : '#1a2e22',
             }}
           />
           <span className="text-[9px] text-ink-hint uppercase tracking-micro">

@@ -16,10 +16,10 @@ export default function AppleWatchSection() {
             key={key}
             className="bg-card border border-card-edge rounded-xl p-3 min-h-[80px] flex flex-col"
           >
-            <p className="text-[9px] tracking-micro uppercase text-green-mint font-medium">
+            <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
               {label}
             </p>
-            <p className="mt-1.5 text-[12px] text-ink-hint">no data yet</p>
+            <p className="mt-1.5 text-[12px] text-ink-mute">no data yet</p>
           </div>
         ))}
       </div>

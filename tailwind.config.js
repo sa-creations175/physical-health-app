@@ -4,15 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Surfaces
+        // Surfaces — unchanged per April 27 spec
         charcoal: '#2a2a2a',
         card: '#686868',
         'card-edge': '#555555',
-        divider: '#3a3a3a',
-        // Text
-        ink: '#f0f0f0',
-        'ink-mute': '#aaaaaa',
-        'ink-hint': '#777777',
+        divider: '#1a2e22',          // green-tinted dark, replaces #3a3a3a
+        // Text — bumped brightness across the board
+        ink: '#ffffff',              // pure white (primary stat numbers + day name)
+        'ink-body': '#e0e0e0',       // body labels inside cards
+        'ink-mute': '#aaaaaa',       // denominators, "sessions", "no data yet"
+        'ink-soft': '#999999',       // header date + week number
+        'ink-hint': '#888888',       // hints, narrow day labels
         // Greens — single accent family
         'green-deep': '#0F6E56',
         'green-mint': '#5DCAA5',

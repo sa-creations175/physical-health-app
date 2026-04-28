@@ -13,6 +13,11 @@ const LIFTING_CARDS: { type: LiftingType; label: string; optional?: boolean }[] 
   { type: 'full_body', label: 'Full Body', optional: true },
 ];
 
+const GREEN_STRIPE = {
+  borderLeftWidth: '2px',
+  borderLeftColor: '#0F6E56',
+} as const;
+
 export default function LiftingSection() {
   const [expanded, setExpanded] = useState<LiftingType | null>(null);
 
@@ -60,16 +65,17 @@ function LiftingCard({
       type="button"
       onClick={onToggle}
       aria-expanded={isExpanded}
+      style={GREEN_STRIPE}
       className={`bg-card border rounded-xl p-3 text-left min-h-[80px] transition-colors ${
         isExpanded ? 'border-green-mint' : 'border-card-edge'
       }`}
     >
-      <p className="text-[9px] tracking-micro uppercase text-green-mint font-medium">
+      <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
         {label.toUpperCase()}
       </p>
       <p className="mt-1.5 leading-none">
         <span className="text-[19px] font-medium text-ink">{count}</span>
-        <span className="text-[12px] text-ink-hint"> / {target}</span>
+        <span className="text-[12px] text-ink-mute"> / {target}</span>
       </p>
       {optional && (
         <p className="text-[9px] text-ink-hint mt-1.5 lowercase">optional</p>
@@ -85,13 +91,13 @@ function ExpandedDetail({ type }: { type: LiftingType }) {
   return (
     <div className="bg-card border border-card-edge rounded-xl p-4 mt-2">
       <SevenDayDotRow dots={summary.weekDots} />
-      <div className="mt-3 pt-3 border-t border-card-edge">
+      <div className="mt-3 pt-3 border-t border-divider">
         {summary.lastSession ? (
           <p className="text-[12px] text-ink-mute">
             <span className="text-ink-hint">Last:</span> {summary.lastSession.summary}
           </p>
         ) : (
-          <p className="text-[12px] text-ink-hint">no data yet</p>
+          <p className="text-[12px] text-ink-mute">no data yet</p>
         )}
       </div>
     </div>
