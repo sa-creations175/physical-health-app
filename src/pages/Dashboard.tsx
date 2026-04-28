@@ -1,16 +1,19 @@
+import DashboardHeader from '../components/dashboard/DashboardHeader';
+import LiftingSection from '../components/dashboard/LiftingSection';
+import CardioSection from '../components/dashboard/CardioSection';
+import NutritionSection from '../components/dashboard/NutritionSection';
+import AppleWatchSection from '../components/dashboard/AppleWatchSection';
+import DashboardCTAs from '../components/dashboard/DashboardCTAs';
+
 export default function Dashboard() {
   return (
-    <div className="px-5 pt-8">
-      <p className="text-[9px] tracking-micro uppercase text-ink-hint font-medium">
-        Dashboard
-      </p>
-      <h1 className="text-[22px] font-medium text-ink mt-1">
-        Phase 1 placeholder
-      </h1>
-      <p className="text-[13px] text-ink-mute mt-4 leading-relaxed">
-        The five sections render here in step 4: this week — lifting, this week — cardio,
-        today — nutrition, today — Apple Watch, and the pillar balance row.
-      </p>
-    </div>
+    <>
+      <DashboardHeader />
+      <LiftingSection />
+      <CardioSection />
+      <NutritionSection />
+      <AppleWatchSection />
+      <DashboardCTAs />
+    </>
   );
 }
