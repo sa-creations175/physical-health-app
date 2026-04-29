@@ -8,8 +8,8 @@ import {
 import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
 
 const LIFTING_CARDS: { type: LiftingType; label: string; optional?: boolean }[] = [
-  { type: 'lower', label: 'Lower' },
-  { type: 'upper', label: 'Upper' },
+  { type: 'lower', label: 'Lower Body' },
+  { type: 'upper', label: 'Upper Body' },
   { type: 'full_body', label: 'Full Body', optional: true },
 ];
 

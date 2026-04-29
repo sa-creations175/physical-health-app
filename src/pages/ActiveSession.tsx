@@ -9,7 +9,7 @@ import { dateLabel } from '../lib/dateHelpers';
 
 const TYPE_LABEL: Record<string, string> = {
   upper: 'Upper Body',
-  lower: 'Lower',
+  lower: 'Lower Body',
   full_body: 'Full Body',
 };
 

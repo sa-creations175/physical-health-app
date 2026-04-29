@@ -16,6 +16,12 @@ const FEEL_OPTIONS: {
   { value: 'crawling', label: 'Crawling', description: 'Heavy legs, slow, off' },
 ];
 
+const TYPE_LABEL: Record<string, string> = {
+  upper: 'Upper Body',
+  lower: 'Lower Body',
+  full_body: 'Full Body',
+};
+
 export default function SessionComplete() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
@@ -75,6 +81,9 @@ export default function SessionComplete() {
     <div className="px-5 pt-8 pb-8">
       <SectionLabel>Session Summary</SectionLabel>
       <h1 className="text-[22px] font-medium text-ink mt-1">How'd it go?</h1>
+      <p className="text-[12px] text-ink-soft mt-1">
+        {TYPE_LABEL[session.type] ?? session.type}
+      </p>
 
       <div
         className="bg-card border border-card-edge rounded-xl p-4 mt-4"

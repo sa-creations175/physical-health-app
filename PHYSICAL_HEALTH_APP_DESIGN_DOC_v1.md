@@ -2,13 +2,15 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: April 28, 2026 (v1.2)
+Last updated: April 28, 2026 (v1.3)
 
-**What changed in v1.2 (April 28, 2026):** Dashboard lifting card display label changed from `LEGS` to `LOWER` to match the `UPPER` and `FULL BODY` naming pattern. Data layer enum stays `lower`. Updated §Dashboard design and the v1.1 changelog reference below to reflect the new label.
+**What changed in v1.3 (April 28, 2026):** Lifting type display labels unified to the `Body`-suffixed pattern across all surfaces — `UPPER BODY`, `LOWER BODY`, `FULL BODY`. v1.2 had landed `LOWER` (matching `UPPER` and `FULL BODY`); v1.3 promotes both `UPPER` and `LOWER` to the longer form so the three labels read as a consistent set. Data layer enums stay `upper / lower / full_body`. Updated §Dashboard design accordingly.
+
+**What changed in v1.2 (April 28, 2026):** Dashboard lifting card display label changed from `LEGS` to `LOWER` (later promoted to `LOWER BODY` in v1.3). Data layer enum stays `lower`.
 
 **What changed in v1.1 (April 27, 2026):** Phase 1 scope locked after design review. Resolutions baked into the doc:
 - Repo: `git init` + scaffold now, first commit before any feature code; no GitHub remote until Phase 6.
-- Display label `LOWER` maps to schema enum `lower`. UI uses display labels, data layer always uses the enum. (Was `LEGS` in v1.1; renamed in v1.2.)
+- Display label `LOWER BODY` maps to schema enum `lower`. UI uses display labels, data layer always uses the enum. (Was `LEGS` in v1.1; renamed to `LOWER` in v1.2; promoted to `LOWER BODY` in v1.3.)
 - `LOCAL_USER_ID = 'local-user-001'` constant carried in every row from Phase 1, so Phase 6 Supabase migration is purely additive.
 - `prompts` table + thin orchestrator module ship in Phase 1 with zero registered triggers. Phases 4/5 plug in.
 - PR auto-detection logic is in Phase 1, surfaced as a quiet inline indicator on the exercise history view.
@@ -101,11 +103,11 @@ The dashboard is the philosophical center. Opens the app. Answers: "How am I doi
 
 ### Section: This week — lifting
 Three tappable stat cards side by side:
-- LOWER — `x / target` sessions
-- UPPER — `x / target` sessions
+- LOWER BODY — `x / target` sessions
+- UPPER BODY — `x / target` sessions
 - FULL BODY — `x / target` (labeled "optional")
 
-The display label `LOWER` maps to the schema enum value `lower`. UI surfaces always render display labels; the data layer always uses the enum (`upper | lower | full_body | cardio | mobility`).
+Display labels (`LOWER BODY`, `UPPER BODY`, `FULL BODY`) map to schema enum values (`lower`, `upper`, `full_body`). UI surfaces always render display labels; the data layer always uses the enum (`upper | lower | full_body | cardio | mobility`).
 
 Tap any card → expands below with:
 - 7-day dot row (green dot = session logged, grey = rest day)
