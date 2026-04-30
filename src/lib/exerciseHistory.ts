@@ -118,8 +118,15 @@ export function composeExerciseHistory(
     }
   }
 
-  // Walk oldest → newest so the running max can flag PRs.
-  const ordered = completed.slice().sort((a, b) => a.date.localeCompare(b.date));
+  // Walk oldest → newest so the running max can flag PRs. Sort by
+  // created_at (full ISO datetime) rather than date (YYYY-MM-DD) so that
+  // two sessions logged on the same day still resolve in the right order
+  // — otherwise the same-day tiebreak falls back to Dexie's primary-key
+  // order (effectively random for UUIDs) and history[0] can end up on
+  // the older same-day session instead of the most recent.
+  const ordered = completed
+    .slice()
+    .sort((a, b) => a.created_at.localeCompare(b.created_at));
   const entries: ExerciseHistoryEntry[] = [];
   let maxRepMetric = 0;
   let maxDurationSecs = 0;
