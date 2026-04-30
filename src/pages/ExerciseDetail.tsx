@@ -123,8 +123,8 @@ export default function ExerciseDetail() {
         {last ? (
           <>
             <p className="text-[14px] text-ink mt-1">
-              <span className="font-medium">{last.topSet.weight}</span>
-              <span className="text-card-mute"> × {formatSetMagnitude(last.topSet)}</span>
+              <span className="font-medium">{last.lastSet.weight}</span>
+              <span className="text-card-mute"> × {formatSetMagnitude(last.lastSet)}</span>
               <span className="text-card-mute">
                 {' · '}
                 {last.totalSets} set{last.totalSets === 1 ? '' : 's'}

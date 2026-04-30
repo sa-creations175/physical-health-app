@@ -15,7 +15,13 @@ export interface ExerciseHistoryEntry {
   date: string; // YYYY-MM-DD
   totalSets: number;
   totalVolume: number; // lb·reps for rep-mode sets only
+  // Heaviest set in the session (rep-mode by est-1RM, duration-mode by
+  // seconds). Drives PR detection, sparkline, and per-row history display.
   topSet: TopSet;
+  // Literal last set the user logged in the session, by max set_number.
+  // For the "Last session" card — answers "where did I finish last time?"
+  // honestly, even when the user pyramided down or did a back-off set.
+  lastSet: TopSet;
   // Single comparable number per session: est1RM for rep-mode top set,
   // duration_seconds for duration-mode. Drives the sparkline y-axis and PR detection.
   metric: number;
@@ -140,6 +146,21 @@ export function composeExerciseHistory(
     const top = topSetForSession(sessionSets);
     if (!top) continue;
 
+    // Literal last logged set — highest set_number wins, with created_at as
+    // a tiebreak for the rare case where a deletion + re-add can produce a
+    // duplicate set_number (addSet uses count+1, which is brittle on delete).
+    const lastSetEntry = sessionSets.reduce((best, s) => {
+      if (s.set_number > best.set_number) return s;
+      if (s.set_number === best.set_number && s.created_at > best.created_at) return s;
+      return best;
+    }, sessionSets[0]);
+    const lastSet: TopSet = {
+      weight: lastSetEntry.weight,
+      reps: lastSetEntry.set_type === 'reps' ? lastSetEntry.reps : 0,
+      duration_seconds: lastSetEntry.duration_seconds,
+      set_type: lastSetEntry.set_type,
+    };
+
     const totalVolume = sessionSets.reduce(
       (sum, s) => (s.set_type === 'duration' ? sum : sum + s.weight * s.reps),
       0,
@@ -171,6 +192,7 @@ export function composeExerciseHistory(
       totalSets: sessionSets.length,
       totalVolume,
       topSet: top,
+      lastSet,
       metric,
       metricKind: top.set_type,
       isPR,
