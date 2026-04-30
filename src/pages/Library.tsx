@@ -66,7 +66,7 @@ function ExerciseListItem({
       type="button"
       onClick={onTap}
       style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-      className="w-full bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center justify-between text-left gap-3"
+      className="w-full bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center justify-between text-left gap-3 min-h-[48px]"
     >
       <div className="min-w-0">
         <p className="text-[14px] text-ink truncate">{exercise.name}</p>

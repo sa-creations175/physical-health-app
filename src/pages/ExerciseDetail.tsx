@@ -91,7 +91,7 @@ export default function ExerciseDetail() {
       <button
         type="button"
         onClick={() => navigate('/library')}
-        className="text-[11px] tracking-micro uppercase text-card-mute font-semibold"
+        className="text-[11px] tracking-micro uppercase text-card-mute font-semibold py-2 -ml-2 px-2 min-h-[44px] flex items-center"
       >
         ← Library
       </button>
@@ -110,7 +110,7 @@ export default function ExerciseDetail() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="text-[11px] tracking-micro uppercase font-semibold text-green-mint border border-card-edge bg-card rounded-lg px-3 h-9 whitespace-nowrap"
+          className="text-[11px] tracking-micro uppercase font-semibold text-green-mint border border-card-edge bg-card rounded-lg px-4 h-11 min-w-[64px] whitespace-nowrap"
         >
           Edit
         </button>

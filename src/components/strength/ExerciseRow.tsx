@@ -85,7 +85,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       <button
         type="button"
         onClick={handleAddSet}
-        className="mt-2 w-full bg-charcoal text-card-mute rounded-lg py-2.5 text-[11px] font-semibold uppercase tracking-micro border border-card-edge"
+        className="mt-2 w-full bg-charcoal text-card-mute rounded-lg py-2.5 text-[11px] font-semibold uppercase tracking-micro border border-card-edge min-h-[44px]"
       >
         + Add Set
       </button>

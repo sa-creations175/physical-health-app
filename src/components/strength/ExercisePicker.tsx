@@ -107,7 +107,7 @@ export default function ExercisePicker({
                 onClick={() => handlePick(e.id)}
                 disabled={busy}
                 style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-                className="w-full bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center justify-between text-left disabled:opacity-50"
+                className="w-full bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center justify-between text-left disabled:opacity-50 min-h-[48px]"
               >
                 <span className="text-[14px] text-ink">{e.name}</span>
                 <span className="text-[10px] tracking-micro uppercase text-card-mute whitespace-nowrap">
