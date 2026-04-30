@@ -9,11 +9,11 @@ export default function Dashboard() {
   return (
     <>
       <DashboardHeader />
+      <DashboardCTAs />
       <LiftingSection />
       <CardioSection />
       <NutritionSection />
       <AppleWatchSection />
-      <DashboardCTAs />
     </>
   );
 }
