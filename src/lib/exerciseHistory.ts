@@ -10,6 +10,24 @@ export interface TopSet {
   set_type: SetType;
 }
 
+export interface PersonalRecord {
+  weight: number;
+  reps: number;
+  duration_seconds: number | null;
+  set_type: SetType;
+  date: string; // YYYY-MM-DD when the PR was set
+  metric: number; // est-1RM for rep-mode, duration_seconds for duration-mode
+}
+
+export interface ExerciseHistory {
+  // Most recent N completed sessions (most-recent first), bounded by limit.
+  entries: ExerciseHistoryEntry[];
+  // All-time best by the dominant mode for this exercise. Computed across
+  // all completed history, not just the returned window — an old PR older
+  // than `limit` sessions still surfaces here.
+  personalRecord: PersonalRecord | null;
+}
+
 export interface ExerciseHistoryEntry {
   sessionId: string;
   date: string; // YYYY-MM-DD
@@ -102,11 +120,11 @@ export function composeExerciseHistory(
   sessions: Session[],
   sets: SetEntry[],
   limit = 8,
-): ExerciseHistoryEntry[] {
-  if (links.length === 0) return [];
+): ExerciseHistory {
+  if (links.length === 0) return { entries: [], personalRecord: null };
 
   const completed = sessions.filter((s) => s.feel_rating !== null);
-  if (completed.length === 0) return [];
+  if (completed.length === 0) return { entries: [], personalRecord: null };
 
   const setsByLink = new Map<string, SetEntry[]>();
   for (const s of sets) {
@@ -136,6 +154,13 @@ export function composeExerciseHistory(
   const entries: ExerciseHistoryEntry[] = [];
   let maxRepMetric = 0;
   let maxDurationSecs = 0;
+  // Track the all-time best per mode while we walk. By the end, each ref
+  // points at the session that set the highest mark for its mode — ready
+  // to surface as the personal record without a second pass.
+  let bestRep: { topSet: TopSet; date: string; metric: number } | null = null;
+  let bestDuration: { topSet: TopSet; date: string; metric: number } | null = null;
+  let repCount = 0;
+  let durationCount = 0;
 
   for (const session of ordered) {
     const linkId = linkBySession.get(session.id);
@@ -171,18 +196,22 @@ export function composeExerciseHistory(
     let prKind: PRKind = null;
 
     if (top.set_type === 'reps') {
+      repCount++;
       metric = estimated1RM(top.weight, top.reps);
       if (metric > 0 && metric > maxRepMetric) {
         isPR = true;
         prKind = 'weight';
         maxRepMetric = metric;
+        bestRep = { topSet: top, date: session.date, metric };
       }
     } else {
+      durationCount++;
       metric = top.duration_seconds ?? 0;
       if (metric > 0 && metric > maxDurationSecs) {
         isPR = true;
         prKind = 'duration';
         maxDurationSecs = metric;
+        bestDuration = { topSet: top, date: session.date, metric };
       }
     }
 
@@ -200,8 +229,27 @@ export function composeExerciseHistory(
     });
   }
 
+  // Surface the PR for whichever mode dominates this exercise's history.
+  // Duration-only exercises (kettlebell swings, planks) get a duration PR;
+  // rep-dominant exercises get the rep est-1RM PR. Ties go to rep-mode.
+  const dominantBest =
+    durationCount > repCount ? bestDuration : bestRep ?? bestDuration;
+  const personalRecord: PersonalRecord | null = dominantBest
+    ? {
+        weight: dominantBest.topSet.weight,
+        reps: dominantBest.topSet.reps,
+        duration_seconds: dominantBest.topSet.duration_seconds,
+        set_type: dominantBest.topSet.set_type,
+        date: dominantBest.date,
+        metric: dominantBest.metric,
+      }
+    : null;
+
   // Most recent first, bounded.
-  return entries.slice(-limit).reverse();
+  return {
+    entries: entries.slice(-limit).reverse(),
+    personalRecord,
+  };
 }
 
 // One-shot async wrapper kept for non-React callers (tests, future
@@ -210,12 +258,12 @@ export function composeExerciseHistory(
 export async function getExerciseHistory(
   exerciseId: string,
   limit = 8,
-): Promise<ExerciseHistoryEntry[]> {
+): Promise<ExerciseHistory> {
   const links = await db.session_exercises
     .where('exercise_id')
     .equals(exerciseId)
     .toArray();
-  if (links.length === 0) return [];
+  if (links.length === 0) return { entries: [], personalRecord: null };
 
   const sessionIds = [...new Set(links.map((l) => l.session_id))];
   const sessions = await db.sessions.where('id').anyOf(sessionIds).toArray();

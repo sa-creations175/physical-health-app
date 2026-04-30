@@ -83,7 +83,8 @@ export default function ExerciseDetail() {
     );
   }
 
-  const last = history[0] ?? null;
+  const last = history.entries[0] ?? null;
+  const pr = history.personalRecord;
 
   return (
     <div className="px-5 pt-8 pb-8">
@@ -119,44 +120,66 @@ export default function ExerciseDetail() {
         className="bg-card border border-card-edge rounded-xl p-4 mt-5"
         style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
       >
-        <SectionLabel>Last session</SectionLabel>
-        {last ? (
-          <>
-            <p className="text-[14px] text-ink mt-1">
-              <span className="font-medium">{last.lastSet.weight}</span>
-              <span className="text-card-mute"> × {formatSetMagnitude(last.lastSet)}</span>
-              <span className="text-card-mute">
-                {' · '}
-                {last.totalSets} set{last.totalSets === 1 ? '' : 's'}
-              </span>
-            </p>
-            <p className="text-[11px] text-card-mute mt-1">
-              {relativeDateLabel(last.date)}
-            </p>
-          </>
-        ) : (
-          <p className="text-[12px] text-card-mute mt-1">
+        {!last && !pr ? (
+          <p className="text-[12px] text-card-mute">
             No sessions yet — log this exercise to start a history.
           </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <SectionLabel>Last set</SectionLabel>
+              {last ? (
+                <>
+                  <p className="text-[14px] text-ink mt-1">
+                    <span className="font-medium">{last.lastSet.weight}</span>
+                    <span className="text-card-mute"> × {formatSetMagnitude(last.lastSet)}</span>
+                  </p>
+                  <p className="text-[11px] text-card-mute mt-1">
+                    {relativeDateLabel(last.date)}
+                    {' · '}
+                    {last.totalSets} set{last.totalSets === 1 ? '' : 's'}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[12px] text-card-mute mt-1">—</p>
+              )}
+            </div>
+            <div>
+              <SectionLabel>Personal best</SectionLabel>
+              {pr ? (
+                <>
+                  <p className="text-[14px] text-ink mt-1">
+                    <span className="font-medium">{pr.weight}</span>
+                    <span className="text-card-mute"> × {formatSetMagnitude(pr)}</span>
+                  </p>
+                  <p className="text-[11px] text-card-mute mt-1">
+                    {relativeDateLabel(pr.date)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[12px] text-card-mute mt-1">—</p>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
       <div className="mt-5">
         <SectionLabel>Last 8 sessions</SectionLabel>
         <div className="bg-card border border-card-edge rounded-xl p-4 mt-2">
-          <Sparkline entries={history} />
+          <Sparkline entries={history.entries} />
         </div>
       </div>
 
       <div className="mt-5">
         <SectionLabel>History</SectionLabel>
-        {history.length === 0 ? (
+        {history.entries.length === 0 ? (
           <p className="text-[12px] text-card-mute mt-2">
             No completed sessions yet.
           </p>
         ) : (
           <div className="mt-2">
-            {history.map((entry) => {
+            {history.entries.map((entry) => {
               const accent = entry.isPR ? '#5DCAA5' : '#0F6E56';
               return (
                 <div
