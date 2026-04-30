@@ -1,6 +1,7 @@
 import { db } from './database';
 import { syncedBulkPut, syncedBulkDelete } from './syncedWrite';
 import { LOCAL_USER_ID } from '../lib/constants';
+import { getUserPreferences } from '../lib/userPreferences';
 import { STARTER_EXERCISES } from './starterExercises';
 import type { Exercise } from './types';
 
@@ -17,6 +18,10 @@ export async function runSeedersIfNeeded(): Promise<void> {
     await db.open();
     await dedupeExercisesByName();
     await seedStarterExercisesIfEmpty();
+    // Forces lazy-create of the user_preferences row on first launch so
+    // dashboard live queries don't have to render a defaults-fallback frame
+    // before the row exists.
+    await getUserPreferences();
   })();
   return inflight;
 }

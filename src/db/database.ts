@@ -10,6 +10,7 @@ import type {
   HealthCheckin,
   Goal,
   PromptRecord,
+  UserPreferences,
 } from './types';
 
 export class PhysicalHealthDB extends Dexie {
@@ -23,6 +24,7 @@ export class PhysicalHealthDB extends Dexie {
   health_checkins!: Table<HealthCheckin, string>;
   goals!: Table<Goal, string>;
   prompts!: Table<PromptRecord, string>;
+  user_preferences!: Table<UserPreferences, string>;
 
   constructor() {
     super('physical_health_db');
@@ -65,6 +67,24 @@ export class PhysicalHealthDB extends Dexie {
             if (row.duration_seconds === undefined) row.duration_seconds = null;
           });
       });
+
+    // v3: add user_preferences. The single row per user is lazy-created on
+    // first read by getUserPreferences(); no upgrade hook needed — fresh
+    // installs and v2-→-v3 upgrades both rely on the same lazy-create path
+    // so there's a single source of seeding logic.
+    this.version(3).stores({
+      sessions: 'id, user_id, type, date, created_at',
+      exercises: 'id, user_id, name, muscle_group, last_used_at',
+      session_exercises: 'id, session_id, exercise_id, order_index',
+      sets: 'id, session_exercise_id, set_number, created_at',
+      cardio_logs: 'id, user_id, session_id, created_at',
+      nutrition_logs: 'id, user_id, date',
+      supplements: 'id, user_id, active',
+      health_checkins: 'id, user_id, type',
+      goals: 'id, user_id, pillar, parent_goal_id',
+      prompts: 'id, user_id, type, fired_at, dismissed_at',
+      user_preferences: 'id, user_id',
+    });
   }
 }
 

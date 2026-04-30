@@ -1,0 +1,65 @@
+import { db } from '../db/database';
+import { syncedPut, syncedUpdate } from '../db/syncedWrite';
+import { LOCAL_USER_ID } from './constants';
+import {
+  DEFAULT_WEEKLY_LIFTING_TARGETS,
+  DEFAULT_CARDIO_WEEKLY_TARGET,
+  DEFAULT_DAILY_NUTRITION_TARGETS,
+} from './defaults';
+import type { UserPreferences } from '../db/types';
+
+// Sane upper bounds for the Settings UI input clamps. Lower bound is 0
+// across the board (a target of 0 means "not tracking that metric").
+export const TARGET_RANGES = {
+  lifting: { min: 0, max: 7 }, // sessions per week
+  cardio: { min: 0, max: 14 },
+  protein_grams: { min: 0, max: 400 },
+  water_glasses: { min: 0, max: 20 },
+  veg_servings: { min: 0, max: 12 },
+} as const;
+
+function buildDefaultPreferences(): UserPreferences {
+  const now = new Date().toISOString();
+  return {
+    id: LOCAL_USER_ID,
+    user_id: LOCAL_USER_ID,
+    lifting_target_lower: DEFAULT_WEEKLY_LIFTING_TARGETS.lower,
+    lifting_target_upper: DEFAULT_WEEKLY_LIFTING_TARGETS.upper,
+    lifting_target_full_body: DEFAULT_WEEKLY_LIFTING_TARGETS.full_body,
+    cardio_target_weekly: DEFAULT_CARDIO_WEEKLY_TARGET,
+    protein_grams_daily: DEFAULT_DAILY_NUTRITION_TARGETS.protein_grams,
+    water_glasses_daily: DEFAULT_DAILY_NUTRITION_TARGETS.water_glasses,
+    veg_servings_daily: DEFAULT_DAILY_NUTRITION_TARGETS.veg_servings,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+// Lazy-create on first read so dashboard live queries always resolve to a
+// row, even on a fresh install or on first launch after the v3 upgrade.
+// syncedPut (upsert) is race-safe — concurrent first-readers all write the
+// same defaults, so the second writer overwriting the first is a no-op.
+export async function getUserPreferences(): Promise<UserPreferences> {
+  const existing = await db.user_preferences.get(LOCAL_USER_ID);
+  if (existing) return existing;
+  const row = buildDefaultPreferences();
+  await syncedPut(db.user_preferences, row);
+  return row;
+}
+
+type EditablePreferenceFields = Omit<
+  UserPreferences,
+  'id' | 'user_id' | 'created_at' | 'updated_at'
+>;
+
+export async function updateUserPreferences(
+  changes: Partial<EditablePreferenceFields>,
+): Promise<void> {
+  // Make sure the row exists before updating — otherwise update() is a no-op
+  // on a missing key and the user's edit silently disappears.
+  await getUserPreferences();
+  await syncedUpdate(db.user_preferences, LOCAL_USER_ID, {
+    ...changes,
+    updated_at: new Date().toISOString(),
+  });
+}

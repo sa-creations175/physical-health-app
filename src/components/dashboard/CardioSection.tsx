@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { SectionLabel, ProgressBar, SevenDayDotRow } from '../ui/primitives';
 import { getCardioSummary } from '../../lib/dashboardQueries';
 import { DEFAULT_CARDIO_WEEKLY_TARGET } from '../../lib/defaults';
+import { getUserPreferences } from '../../lib/userPreferences';
 
 // Two stripe colors signal pillar progress at a glance: deep green is the
 // default accent, mint marks "weekly target hit" — same green family, just
@@ -13,8 +14,9 @@ const STRIPE_COMPLETE = '#5DCAA5';
 export default function CardioSection() {
   const [expanded, setExpanded] = useState(false);
   const summary = useLiveQuery(() => getCardioSummary(), []);
+  const prefs = useLiveQuery(() => getUserPreferences(), []);
   const count = summary?.thisWeekCount ?? 0;
-  const target = DEFAULT_CARDIO_WEEKLY_TARGET;
+  const target = prefs?.cardio_target_weekly ?? DEFAULT_CARDIO_WEEKLY_TARGET;
   const remaining = Math.max(0, target - count);
   const complete = target > 0 && count >= target;
 

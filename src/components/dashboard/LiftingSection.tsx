@@ -6,6 +6,7 @@ import {
   type LiftingType,
 } from '../../lib/dashboardQueries';
 import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
+import { getUserPreferences } from '../../lib/userPreferences';
 
 const LIFTING_CARDS: { type: LiftingType; label: string; optional?: boolean }[] = [
   { type: 'lower', label: 'Lower Body' },
@@ -21,6 +22,17 @@ const STRIPE_COMPLETE = '#5DCAA5';
 
 export default function LiftingSection() {
   const [expanded, setExpanded] = useState<LiftingType | null>(null);
+  const prefs = useLiveQuery(() => getUserPreferences(), []);
+
+  // Targets fall back to module defaults during the brief first-render window
+  // before the live query resolves. After that, the live query drives the
+  // numbers and the cards re-render whenever Settings edits land.
+  const targets = {
+    lower: prefs?.lifting_target_lower ?? DEFAULT_WEEKLY_LIFTING_TARGETS.lower,
+    upper: prefs?.lifting_target_upper ?? DEFAULT_WEEKLY_LIFTING_TARGETS.upper,
+    full_body:
+      prefs?.lifting_target_full_body ?? DEFAULT_WEEKLY_LIFTING_TARGETS.full_body,
+  };
 
   return (
     <section className="px-5 mt-2">
@@ -32,6 +44,7 @@ export default function LiftingSection() {
             type={type}
             label={label}
             optional={optional}
+            target={targets[type]}
             isExpanded={expanded === type}
             onToggle={() =>
               setExpanded((cur) => (cur === type ? null : type))
@@ -48,17 +61,18 @@ function LiftingCard({
   type,
   label,
   optional,
+  target,
   isExpanded,
   onToggle,
 }: {
   type: LiftingType;
   label: string;
   optional?: boolean;
+  target: number;
   isExpanded: boolean;
   onToggle: () => void;
 }) {
   const summary = useLiveQuery(() => getLiftingSummary(type), [type]);
-  const target = DEFAULT_WEEKLY_LIFTING_TARGETS[type];
   const count = summary?.thisWeekCount ?? 0;
   // Optional cards have target 0 — guard so we don't celebrate a goal that
   // wasn't set. Full Body never celebrates unless the user raises its target.

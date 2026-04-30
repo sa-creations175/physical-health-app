@@ -117,6 +117,23 @@ export interface Goal {
   created_at: string;
 }
 
+// One row per user (id === user_id in Phase 1; multi-user comes in Phase 6).
+// Lazy-created on first read with values seeded from src/lib/defaults.ts so
+// the dashboard always has live targets to render.
+export interface UserPreferences {
+  id: string;
+  user_id: string;
+  lifting_target_lower: number;
+  lifting_target_upper: number;
+  lifting_target_full_body: number;
+  cardio_target_weekly: number;
+  protein_grams_daily: number;
+  water_glasses_daily: number;
+  veg_servings_daily: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PromptRecord {
   id: string;
   user_id: string;

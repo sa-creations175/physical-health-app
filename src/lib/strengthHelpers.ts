@@ -16,7 +16,7 @@ import type {
   MuscleGroup,
 } from '../db/types';
 import { todayISODate, startOfWeekISODate } from './dateHelpers';
-import { DEFAULT_WEEKLY_LIFTING_TARGETS } from './defaults';
+import { getUserPreferences } from './userPreferences';
 
 export async function createSession(type: SessionType): Promise<string> {
   const now = new Date().toISOString();
@@ -165,22 +165,33 @@ export async function getPreviousSessionForExercise(
 
 // Pick the lifting type with the largest unmet target this week.
 // Used to pre-select the type-selector. Only counts completed sessions.
+// Targets come from user_preferences so a user who's edited their weekly
+// goals in Settings gets a suggestion that respects them.
 export async function suggestNextLiftingType(): Promise<'upper' | 'lower' | 'full_body'> {
   const types: ('upper' | 'lower' | 'full_body')[] = ['upper', 'lower', 'full_body'];
   const weekStart = startOfWeekISODate();
 
-  const sessions = await db.sessions
-    .where('type').anyOf(types)
-    .filter((s) => s.date >= weekStart && s.feel_rating !== null)
-    .toArray();
+  const [sessions, prefs] = await Promise.all([
+    db.sessions
+      .where('type').anyOf(types)
+      .filter((s) => s.date >= weekStart && s.feel_rating !== null)
+      .toArray(),
+    getUserPreferences(),
+  ]);
 
   const counts: Record<string, number> = { upper: 0, lower: 0, full_body: 0 };
   for (const s of sessions) {
     counts[s.type] = (counts[s.type] ?? 0) + 1;
   }
 
+  const targetByType: Record<'upper' | 'lower' | 'full_body', number> = {
+    upper: prefs.lifting_target_upper,
+    lower: prefs.lifting_target_lower,
+    full_body: prefs.lifting_target_full_body,
+  };
+
   const ranked = types
-    .map((t) => ({ type: t, gap: DEFAULT_WEEKLY_LIFTING_TARGETS[t] - counts[t] }))
+    .map((t) => ({ type: t, gap: targetByType[t] - counts[t] }))
     .sort((a, b) => b.gap - a.gap);
 
   return ranked[0].type;

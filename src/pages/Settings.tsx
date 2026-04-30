@@ -1,15 +1,170 @@
+import { useEffect, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { SectionLabel } from '../components/ui/primitives';
+import {
+  getUserPreferences,
+  updateUserPreferences,
+  TARGET_RANGES,
+} from '../lib/userPreferences';
+
 export default function Settings() {
+  const prefs = useLiveQuery(() => getUserPreferences(), []);
+
+  if (!prefs) {
+    return (
+      <div className="px-5 pt-8 text-card-mute text-[12px]">Loading…</div>
+    );
+  }
+
   return (
-    <div className="px-5 pt-8">
-      <p className="text-[9px] tracking-micro uppercase text-ink-hint font-medium">
-        Settings
+    <div className="px-5 pt-8 pb-8">
+      <SectionLabel>Settings</SectionLabel>
+      <h1 className="text-[22px] font-medium text-ink mt-1">Settings</h1>
+      <p className="text-[12px] text-ink-soft mt-1">
+        Targets save automatically when you tap away from the field.
       </p>
-      <h1 className="text-[22px] font-medium text-ink mt-1">
-        Settings placeholder
-      </h1>
-      <p className="text-[13px] text-ink-mute mt-4 leading-relaxed">
-        Editable weekly + daily targets land in step 7.
-      </p>
+
+      <section className="mt-6">
+        <SectionLabel>Weekly targets</SectionLabel>
+        <p className="text-[11px] text-ink-soft mt-1">Sessions per week</p>
+
+        <NumberRow
+          label="Lower Body"
+          value={prefs.lifting_target_lower}
+          min={TARGET_RANGES.lifting.min}
+          max={TARGET_RANGES.lifting.max}
+          onCommit={(v) =>
+            updateUserPreferences({ lifting_target_lower: v })
+          }
+        />
+        <NumberRow
+          label="Upper Body"
+          value={prefs.lifting_target_upper}
+          min={TARGET_RANGES.lifting.min}
+          max={TARGET_RANGES.lifting.max}
+          onCommit={(v) =>
+            updateUserPreferences({ lifting_target_upper: v })
+          }
+        />
+        <NumberRow
+          label="Full Body"
+          hint="Optional — set 0 to hide from progress tracking."
+          value={prefs.lifting_target_full_body}
+          min={TARGET_RANGES.lifting.min}
+          max={TARGET_RANGES.lifting.max}
+          onCommit={(v) =>
+            updateUserPreferences({ lifting_target_full_body: v })
+          }
+        />
+        <NumberRow
+          label="Cardio"
+          value={prefs.cardio_target_weekly}
+          min={TARGET_RANGES.cardio.min}
+          max={TARGET_RANGES.cardio.max}
+          onCommit={(v) =>
+            updateUserPreferences({ cardio_target_weekly: v })
+          }
+        />
+      </section>
+
+      <section className="mt-7">
+        <SectionLabel>Daily nutrition</SectionLabel>
+        <p className="text-[11px] text-ink-soft mt-1">
+          Saved now — Phase 3 lights up dashboard tracking.
+        </p>
+
+        <NumberRow
+          label="Protein"
+          hint="grams per day"
+          value={prefs.protein_grams_daily}
+          min={TARGET_RANGES.protein_grams.min}
+          max={TARGET_RANGES.protein_grams.max}
+          onCommit={(v) =>
+            updateUserPreferences({ protein_grams_daily: v })
+          }
+        />
+        <NumberRow
+          label="Water"
+          hint="glasses per day"
+          value={prefs.water_glasses_daily}
+          min={TARGET_RANGES.water_glasses.min}
+          max={TARGET_RANGES.water_glasses.max}
+          onCommit={(v) =>
+            updateUserPreferences({ water_glasses_daily: v })
+          }
+        />
+        <NumberRow
+          label="Vegetables"
+          hint="servings per day"
+          value={prefs.veg_servings_daily}
+          min={TARGET_RANGES.veg_servings.min}
+          max={TARGET_RANGES.veg_servings.max}
+          onCommit={(v) =>
+            updateUserPreferences({ veg_servings_daily: v })
+          }
+        />
+      </section>
+    </div>
+  );
+}
+
+function NumberRow({
+  label,
+  hint,
+  value,
+  min,
+  max,
+  onCommit,
+}: {
+  label: string;
+  hint?: string;
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (next: number) => Promise<void> | void;
+}) {
+  const [text, setText] = useState(String(value));
+
+  // Mirror the underlying value back into the local input when it changes
+  // (e.g., another tab saved, or the value was clamped on the previous commit).
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  async function commit() {
+    const trimmed = text.trim();
+    const parsed = trimmed === '' ? 0 : parseInt(trimmed, 10);
+    if (Number.isNaN(parsed)) {
+      setText(String(value));
+      return;
+    }
+    const clamped = Math.max(min, Math.min(max, parsed));
+    if (clamped !== value) {
+      await onCommit(clamped);
+    }
+    setText(String(clamped));
+  }
+
+  return (
+    <div
+      className="bg-card border border-card-edge rounded-xl px-4 py-3 mt-2 flex items-center justify-between gap-3"
+      style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+    >
+      <div className="min-w-0">
+        <p className="text-[14px] text-ink">{label}</p>
+        {hint && (
+          <p className="text-[11px] text-card-mute mt-0.5">{hint}</p>
+        )}
+      </div>
+      <input
+        type="number"
+        inputMode="numeric"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        aria-label={label}
+        className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[72px] h-11 text-[16px] text-center"
+      />
     </div>
   );
 }
