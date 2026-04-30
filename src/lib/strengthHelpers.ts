@@ -11,6 +11,7 @@ import type {
   Exercise,
   SessionExercise,
   SetEntry,
+  SetType,
   FeelRating,
   MuscleGroup,
 } from '../db/types';
@@ -58,6 +59,7 @@ export async function addSet(
   sessionExerciseId: string,
   weight: number,
   reps: number,
+  options: { set_type?: SetType; duration_seconds?: number | null } = {},
 ): Promise<string> {
   const existing = await db.sets
     .where('session_exercise_id').equals(sessionExerciseId)
@@ -68,6 +70,8 @@ export async function addSet(
     set_number: existing + 1,
     weight,
     reps,
+    duration_seconds: options.duration_seconds ?? null,
+    set_type: options.set_type ?? 'reps',
     completed: true,
     created_at: new Date().toISOString(),
   };
@@ -77,7 +81,13 @@ export async function addSet(
 
 export async function updateSet(
   setId: string,
-  changes: { weight?: number; reps?: number; completed?: boolean },
+  changes: {
+    weight?: number;
+    reps?: number;
+    duration_seconds?: number | null;
+    set_type?: SetType;
+    completed?: boolean;
+  },
 ): Promise<void> {
   await syncedUpdate(db.sets, setId, changes);
 }

@@ -1,6 +1,7 @@
 export type SessionType = 'upper' | 'lower' | 'full_body' | 'cardio' | 'mobility';
 export type FeelRating = 'flying' | 'cruising' | 'crawling';
 export type Intensity = 'low' | 'moderate' | 'high';
+export type SetType = 'reps' | 'duration';
 export type Pillar = 'strength' | 'cardio' | 'mobility' | 'nutrition' | 'health';
 export type PromptPriority = 'high' | 'medium' | 'low';
 export type CheckinType = 'doctor' | 'dental' | 'derm' | 'custom';
@@ -52,7 +53,11 @@ export interface SetEntry {
   session_exercise_id: string;
   set_number: number;
   weight: number;
+  // For set_type='reps' — counts reps; ignored when set_type='duration'.
   reps: number;
+  // For set_type='duration' — seconds elapsed; null when set_type='reps'.
+  duration_seconds: number | null;
+  set_type: SetType;
   completed: boolean;
   created_at: string;
 }

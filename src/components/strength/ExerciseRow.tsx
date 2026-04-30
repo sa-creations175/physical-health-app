@@ -6,6 +6,7 @@ import {
   getPreviousSessionForExercise,
 } from '../../lib/strengthHelpers';
 import { relativeDateLabel } from '../../lib/dateHelpers';
+import { formatSetMagnitude } from '../../lib/setFormat';
 import SetRow from './SetRow';
 
 export default function ExerciseRow({ link }: { link: SessionExercise }) {
@@ -27,14 +28,22 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
   async function handleAddSet() {
     // Copies the most recent set in the current exercise; if none, falls back
     // to last-session's top set so a brand-new exercise still pre-fills with
-    // the user's prior weight/reps as a starting point.
+    // the user's prior weight/reps as a starting point. set_type and the
+    // matching magnitude (reps or duration_seconds) carry over so a
+    // timed-effort exercise keeps logging in the same mode.
     const last = sets[sets.length - 1];
     if (last) {
-      await addSet(link.id, last.weight, last.reps);
+      await addSet(link.id, last.weight, last.reps, {
+        set_type: last.set_type,
+        duration_seconds: last.duration_seconds,
+      });
       return;
     }
     const prevTop = previous?.sets[previous.sets.length - 1];
-    await addSet(link.id, prevTop?.weight ?? 0, prevTop?.reps ?? 0);
+    await addSet(link.id, prevTop?.weight ?? 0, prevTop?.reps ?? 0, {
+      set_type: prevTop?.set_type ?? 'reps',
+      duration_seconds: prevTop?.duration_seconds ?? null,
+    });
   }
 
   if (!exercise) return null;
@@ -61,7 +70,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
             {previous.sets.map((s) => (
               <span key={s.id} className="text-[12px]">
                 <span className="text-ink-body font-medium">{s.weight}</span>
-                <span className="text-card-mute">×{s.reps}</span>
+                <span className="text-card-mute">×{formatSetMagnitude(s)}</span>
               </span>
             ))}
           </div>

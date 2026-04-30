@@ -57,7 +57,13 @@ export default function SessionComplete() {
   );
 
   const totalSets = allSets.length;
-  const totalVolume = allSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+  // Volume is lb·reps — only rep-mode sets contribute. Duration sets are
+  // counted in totalSets but excluded here; weight × seconds isn't a
+  // meaningful comparable magnitude.
+  const totalVolume = allSets.reduce(
+    (sum, s) => (s.set_type === 'duration' ? sum : sum + s.weight * s.reps),
+    0,
+  );
 
   if (!session) {
     return (

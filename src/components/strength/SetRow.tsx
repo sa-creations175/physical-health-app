@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { SetEntry } from '../../db/types';
 import { updateSet, deleteSet } from '../../lib/strengthHelpers';
 
@@ -11,6 +11,18 @@ export default function SetRow({
 }) {
   const [weight, setWeight] = useState(set.weight === 0 ? '' : String(set.weight));
   const [reps, setReps] = useState(set.reps === 0 ? '' : String(set.reps));
+  const [duration, setDuration] = useState(
+    set.duration_seconds && set.duration_seconds > 0 ? String(set.duration_seconds) : '',
+  );
+
+  // Keep local inputs in sync when the underlying row changes type — e.g. the
+  // user toggles reps↔duration and the other field's stored value updates.
+  useEffect(() => {
+    setReps(set.reps === 0 ? '' : String(set.reps));
+    setDuration(
+      set.duration_seconds && set.duration_seconds > 0 ? String(set.duration_seconds) : '',
+    );
+  }, [set.set_type, set.reps, set.duration_seconds]);
 
   async function commitWeight() {
     const w = weight.trim() === '' ? 0 : parseFloat(weight);
@@ -25,6 +37,20 @@ export default function SetRow({
       await updateSet(set.id, { reps: r });
     }
   }
+
+  async function commitDuration() {
+    const d = duration.trim() === '' ? 0 : parseInt(duration, 10);
+    if (!isNaN(d) && d !== (set.duration_seconds ?? 0)) {
+      await updateSet(set.id, { duration_seconds: d });
+    }
+  }
+
+  async function toggleType() {
+    const next = set.set_type === 'reps' ? 'duration' : 'reps';
+    await updateSet(set.id, { set_type: next });
+  }
+
+  const isDuration = set.set_type === 'duration';
 
   return (
     <div className="flex items-center gap-2 py-2">
@@ -42,16 +68,37 @@ export default function SetRow({
         className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[68px] h-11 text-[16px] text-center"
       />
       <span className="text-[12px] text-card-mute">×</span>
-      <input
-        type="number"
-        inputMode="numeric"
-        value={reps}
-        onChange={(e) => setReps(e.target.value)}
-        onBlur={commitReps}
-        placeholder="reps"
-        aria-label="Reps"
-        className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[60px] h-11 text-[16px] text-center"
-      />
+      {isDuration ? (
+        <input
+          type="number"
+          inputMode="numeric"
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
+          onBlur={commitDuration}
+          placeholder="sec"
+          aria-label="Duration in seconds"
+          className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[60px] h-11 text-[16px] text-center"
+        />
+      ) : (
+        <input
+          type="number"
+          inputMode="numeric"
+          value={reps}
+          onChange={(e) => setReps(e.target.value)}
+          onBlur={commitReps}
+          placeholder="reps"
+          aria-label="Reps"
+          className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[60px] h-11 text-[16px] text-center"
+        />
+      )}
+      <button
+        type="button"
+        onClick={toggleType}
+        aria-label={isDuration ? 'Switch to reps' : 'Switch to duration'}
+        className="text-[9px] tracking-micro uppercase text-card-mute font-semibold w-9 h-11 flex items-center justify-center"
+      >
+        {isDuration ? 'sec' : 'reps'}
+      </button>
       <button
         type="button"
         onClick={() => updateSet(set.id, { completed: !set.completed })}
