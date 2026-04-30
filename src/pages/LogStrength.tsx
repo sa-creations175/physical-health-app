@@ -11,8 +11,8 @@ const TYPE_OPTIONS: {
   value: 'upper' | 'lower' | 'full_body';
   label: string;
 }[] = [
-  { value: 'upper', label: 'Upper Body' },
   { value: 'lower', label: 'Lower Body' },
+  { value: 'upper', label: 'Upper Body' },
   { value: 'full_body', label: 'Full Body' },
 ];
 
