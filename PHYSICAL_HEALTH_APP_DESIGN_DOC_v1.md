@@ -582,6 +582,7 @@ Numbered steps used during build (matches commit-message labels):
 ### Known issues / follow-ups for next session
 
 - **Resume in-progress sessions.** Today, navigating away from `/log/strength/active/:id` and re-tapping "Log session" creates a new session row instead of resuming the open one. The data is there (orphan-tolerant on purpose) — needs a tiny "you have a session in progress, resume?" check on the type-select screen.
+- **Repeat last session (Phase 2).** From the session type select screen, offer a "Repeat last [Lower Body / Upper Body / Full Body] session" option that pre-loads all exercises and sets from the most recent session of that type, with weights and reps editable before saving. Saves significant logging time for users who run similar sessions week to week.
 - **Swipe-to-delete on sets.** Deferred during step 5; the inline `×` button is fine for now. Revisit during step 10 polish if it actually feels missing in real use.
 - **Visual tweaks still open:**
   - The reps/duration toggle pill on `SetRow` is text-only ("reps" / "sec") — fine functionally, but may want a clearer affordance once it's been used in a real workout. Watch for misses in the gym.
