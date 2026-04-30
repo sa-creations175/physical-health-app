@@ -75,14 +75,6 @@ export default function ExerciseDetail() {
     );
   }
 
-  if (exercise === null) {
-    return (
-      <div className="px-5 pt-8 text-card-mute text-[12px]">
-        Exercise not found.
-      </div>
-    );
-  }
-
   const last = history.entries[0] ?? null;
   const pr = history.personalRecord;
 
