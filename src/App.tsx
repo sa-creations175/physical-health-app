@@ -7,6 +7,7 @@ import LogStrength from './pages/LogStrength';
 import ActiveSession from './pages/ActiveSession';
 import SessionComplete from './pages/SessionComplete';
 import Library from './pages/Library';
+import ExerciseDetail from './pages/ExerciseDetail';
 import Settings from './pages/Settings';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/log/strength/active/:sessionId" element={<ActiveSession />} />
         <Route path="/log/strength/complete/:sessionId" element={<SessionComplete />} />
         <Route path="/library" element={<Library />} />
+        <Route path="/library/:exerciseId" element={<ExerciseDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
     </Routes>

@@ -1,13 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import { SectionLabel } from '../components/ui/primitives';
-import ExerciseEditor from '../components/library/ExerciseEditor';
 import type { Exercise } from '../db/types';
 
 export default function Library() {
   const [search, setSearch] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const exercises = useLiveQuery(
     () => db.exercises.orderBy('name').toArray(),
@@ -25,7 +25,7 @@ export default function Library() {
       <SectionLabel>Exercise Library</SectionLabel>
       <h1 className="text-[22px] font-medium text-ink mt-1">Library</h1>
       <p className="text-[12px] text-ink-soft mt-1">
-        {exercises.length} exercise{exercises.length === 1 ? '' : 's'} · tap to edit
+        {exercises.length} exercise{exercises.length === 1 ? '' : 's'} · tap for history
       </p>
 
       <input
@@ -46,17 +46,10 @@ export default function Library() {
           <ExerciseListItem
             key={e.id}
             exercise={e}
-            onTap={() => setEditingId(e.id)}
+            onTap={() => navigate(`/library/${e.id}`)}
           />
         ))}
       </div>
-
-      {editingId && (
-        <ExerciseEditor
-          exerciseId={editingId}
-          onClose={() => setEditingId(null)}
-        />
-      )}
     </div>
   );
 }
