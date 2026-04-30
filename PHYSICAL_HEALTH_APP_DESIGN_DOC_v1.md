@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: April 28, 2026 (v1.4)
+Last updated: April 30, 2026 (v1.5)
+
+**What changed in v1.5 (April 30, 2026):** Phase 1 complete. Adds §Phase 1 complete — checkpoint with the full 31-commit trail (scaffold → close), grouped done-vs-deferred summary, the small follow-ups carried into Phase 2, and current build state. Schema bumped to v3 with the new `user_preferences` table; the design-philosophy body is unchanged. Phase 1 ships an installable, offline-capable PWA at 382 KB JS / 117 KB gzipped.
 
 **What changed in v1.4 (April 28, 2026):** End-of-session checkpoint covering build days 1–2. Adds §Build session log — days 1–2 with the full commit trail, decisions log, and current Phase 1 status. Schema gains two columns on `sets` (`set_type`, `duration_seconds`) so timed efforts log natively alongside reps. No design-philosophy changes — this version primarily catches the doc up to what's already built.
 
@@ -590,3 +592,134 @@ Numbered steps used during build (matches commit-message labels):
   - Completion screen volume tile shows `lb·reps` as a tiny subscript; if a session is mostly duration sets the number will read low. Decide later whether to add a separate "time under tension" tile or leave volume as the rep-only metric.
 - **PR auto-detection** logic isn't wired yet — exercises don't surface PR badges in the Library or active session. Step 8.
 - **Settings page is a placeholder.** Hardcoded defaults are baked into `src/lib/defaults.ts` and will move into a `user_preferences` table edited via the Settings UI in step 7.
+
+---
+
+## Phase 1 complete — checkpoint (April 30, 2026)
+
+End-of-Phase-1 closure. Strength logging end-to-end, dashboard, exercise library + history + PR detection, settings, prompt orchestration scaffold, and PWA installability are all shipped. The app is usable in a real gym today; Phase 2 (Cardio + HealthKit) is the next build session.
+
+### Phase 1 commit trail (31 commits, scaffold → close)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `b28c86e` | scaffold: vite + react + ts + tailwind + dexie |
+| 2 | `beed715` | step 2: dexie schema + lifecycle-aware seeder |
+| 3 | `da6c092` | step 3: routing + bottom nav + base color tokens |
+| 4 | `e30ab4a` | step 4: dashboard shell with live strength + streak |
+| 5 | `c0e9515` | fix: flip week start to Sunday + update lifting defaults |
+| 6 | `0408134` | polish: text brightness pass + more green throughout dashboard |
+| 7 | `bc017bb` | polish: brightness floor #bbb for small text on grey card surfaces |
+| 8 | `a585e6d` | fix: lifting card display label LEGS → LOWER |
+| 9 | `20092ba` | step 5: strength logger end-to-end |
+| 10 | `cdc34fe` | fix(seeder): in-flight promise guard + heal duplicates |
+| 11 | `c85ef3b` | fix(log-strength): protect user's type pick from stale async resolution |
+| 12 | `bf2a926` | feat(library): tap-to-edit exercises |
+| 13 | `2e0ff73` | feat(active-session): show last session's sets per exercise |
+| 14 | `7210327` | docs: sync design doc to LOWER display label (v1.2) |
+| 15 | `a13669b` | fix: unify lifting type labels to UPPER/LOWER/FULL BODY (v1.3) |
+| 16 | `f4582d8` | chore(defaults): refresh stale LEGS/UPPER comments |
+| 17 | `1ab93f0` | feat(sets): reps/duration toggle |
+| 18 | `07ca151` | docs: v1.4 end-of-session checkpoint |
+| 19 | `627015c` | feat(dashboard): move CTA row directly under header |
+| 20 | `a28e211` | docs: capture "repeat last session" as Phase 2 follow-up |
+| 21 | `414b7f2` | feat(library): exercise detail page + history sparkline + PR detection (step 6) |
+| 22 | `cbc2d5a` | fix(library): sort exercise history by created_at, not date |
+| 23 | `41f5eaf` | fix(library): "Last session" card shows literal last set, not top set |
+| 24 | `dc1913e` | feat(library): show Last set + Personal best side-by-side on detail card |
+| 25 | `325549f` | fix(log): order session types lower → upper → full body |
+| 26 | `4c40f8d` | feat(dashboard): celebrate weekly target on pillar cards |
+| 27 | `32b090f` | step 7: Settings page + user_preferences live targets |
+| 28 | `e7520cf` | step 8: prompt orchestration module (zero registered triggers) |
+| 29 | `49b3c2b` | step 10a: PWA manifest + service worker + green app icon |
+| 30 | `59ac030` | step 10b: touch target audit — bring all tap targets to ≥44px |
+| 31 | `7e13e70` | step 10c: drop unreachable exercise === null branch |
+
+### What's shipped
+
+**Infrastructure**
+- Vite + React 19 + TypeScript + Tailwind + Dexie scaffold.
+- Dexie schema at v3: `sessions`, `exercises`, `session_exercises`, `sets`, `cardio_logs`, `nutrition_logs`, `supplements`, `health_checkins`, `goals`, `prompts`, `user_preferences`. All rows carry `user_id = LOCAL_USER_ID` so the Phase 6 Supabase migration is purely additive.
+- Synced-write wrappers (`syncedAdd` / `syncedUpdate` / `syncedDelete` / etc.) on every write so Phase 6 sync hooks plug in cleanly without touching call sites.
+- Lifecycle-aware seeder with in-flight promise guard, dedupe-on-launch, and lazy-create of the `user_preferences` row.
+- PWA: `manifest.webmanifest`, hand-rolled service worker (network-first for navigation requests, cache-first for hashed assets), green app icon, full apple-mobile meta tags. Registered production-only.
+
+**Dashboard**
+- Header with day / date / week / streak (consecutive days with strength OR cardio).
+- CTA row directly under the header — primary action in the thumb zone on open.
+- Lifting cards: live counts, weekly targets sourced from `user_preferences`, mint-stripe + ✓ celebration when target met. Full-Body card guarded so target-0 never celebrates.
+- Cardio card: count, progress bar, session pills, "caught up" copy, mint-stripe + ✓ + mint pills on celebration.
+- Nutrition card: visual shell with target text live-bound to `user_preferences` (data binding lands in Phase 3).
+- Apple Watch card: visual shell (HealthKit lands in Phase 2).
+
+**Strength logger end-to-end**
+- Type-select screen with "Due next" suggestion (respects `user_preferences` targets).
+- Active session: exercise picker with add-new flow, per-exercise "Last · {date} · N sets" history strip, set rows with reps↔duration toggle, inline × delete.
+- Completion screen: exercises / sets / volume (lb·reps) summary, Flying / Cruising / Crawling feel rating, optional notes.
+
+**Exercise library**
+- Searchable list seeded with starter exercises on first launch.
+- Detail page (`/library/:exerciseId`): two-column "Last set" + "Personal best" card, inline-SVG sparkline of last 8 sessions' top set, history list with quiet PR pills.
+- Multi-hook live-query composition (one `useLiveQuery` per Dexie table) so observation across `session_exercises` / `sessions` / `sets` is unambiguous regardless of early-return paths.
+- PR detection: pure helper, per-mode (rep-mode est-1RM via Epley, duration-mode by seconds). Surfaces immediately on save via the live query — no explicit save-time hook needed in Phase 1.
+- Edit accessible from the detail header.
+
+**Settings**
+- Editable weekly targets (lower / upper / full body / cardio sessions per week) and daily nutrition targets (protein g / water glasses / veg servings).
+- Save-on-blur, min/max clamped per field. No save button.
+- All consumers (`LiftingSection`, `CardioSection`, `NutritionSection`, `suggestNextLiftingType`) read live preferences via `useLiveQuery` so dashboard re-renders the moment a target is edited.
+
+**Prompt orchestration scaffold**
+- `src/lib/promptOrchestration.ts` with `canFirePrompt` / `firePrompt` / `dismissPrompt` / `getActivePrompts`.
+- Three suppression rules enforced: daily soft cap (≤2/day), active-session suppression (`feel_rating === null` on any session is the signal), per-type re-prompt cooldown.
+- Six prompt types pre-registered (mobility_stale, progressive_overload_ready, weekly_cardio_on_track, supplement_missed, health_checkin_overdue, week_review) with default priority + cooldown.
+- Zero registered triggers in Phase 1 — Phase 4/5 wires them. Tree-shaken from the Phase 1 bundle.
+
+**Polish**
+- All tap targets ≥44px (iOS HIG), 48px on list rows, 64px on bottom nav.
+- 16px input text everywhere to dodge iOS Safari auto-zoom on focus.
+- Charcoal + green-deep + green-mint palette consistent across every surface.
+- Real `<title>`, theme color, apple-mobile-web-app meta tags.
+
+### What's deferred to Phase 2+
+
+**Phase 2 — Cardio + HealthKit**
+- Cardio logger (table + dashboard card exist; logging UI not yet built).
+- HealthKit bridge (PWA via WebView vs Capacitor — decision deferred to build time).
+- Apple Watch dashboard card binds to live HK data (steps, active cal, resting HR, workout import).
+- **Repeat last session** — pre-load most-recent session of the chosen type with editable sets (Phase 2 follow-up).
+- **Resume in-progress strength sessions** — orphan-tolerant data model is in place; the "you have a session in progress, resume?" UX prompt isn't.
+
+**Phase 3 — Nutrition**
+- Daily check-in UI (protein / water / veg / supplements).
+- AI macro estimator.
+- Supplement configuration in Settings.
+
+**Phase 4 — Mobility**
+- Mobility logger.
+- Freshness tracking system (0–3 fresh / 4–10 amber / 11–20 orange / 21+ red).
+- Dashboard mobility staleness alerts.
+
+**Phase 5 — Health check-ins + Goals + Prompts**
+- Health check-in tracker.
+- Goals layer per pillar.
+- Register prompt triggers (mobility stale, progressive overload, supplement missed, weekly cardio, health overdue, week review) into the orchestrator built in step 8.
+- PR-on-save trigger as the orchestrator's first consumer (visual PR surface already ships via live query; the explicit save-time hook is deferred since there's no consumer in Phase 1).
+
+**Phase 6+** — Supabase backend, cross-device sync, Personal OS meta-dashboard integration, detraining detection after gaps.
+
+### Known follow-ups carried into Phase 2
+
+- **Swipe-to-delete on sets.** Deferred during step 5; the inline `×` button is fine in practice. Revisit if it actually feels missing in real gym use.
+- **Reps/duration toggle pill on `SetRow`.** Text-only ("reps" / "sec") — functional but may want a clearer affordance after real workouts. Watch for misses.
+- **"Last · {date} · N sets" history strip contrast.** `bg-charcoal` inside `bg-card` row — readable but tight. Consider a subtle inset border if it feels muddy.
+- **Completion screen volume tile.** Shows `lb·reps`; if a session is mostly duration sets the number reads low. Decide later whether to add a separate "time under tension" tile or leave volume as the rep-only metric.
+- **ExerciseDetail "Loading…" vs "Exercise not found" ambiguity.** `db.exercises.get()` returns `undefined` for both pending live-query and missing rows. Edge case — would need a sentinel default to distinguish.
+
+### Current state
+
+- **Installable PWA** — manifest, service worker (network-first nav, cache-first assets), apple-touch-icon, theme color all wired. Add to Home Screen on iOS / install prompt on desktop.
+- **Offline-capable** — app shell + assets cached after first visit. All data is local in IndexedDB; nothing depends on a network round-trip yet.
+- **Bundle**: 382 KB JS (117 KB gzipped), 9.8 KB CSS (3.0 KB gzipped). No PWA tooling dep; service worker is hand-rolled.
+- **Schema**: Dexie v3. Eleven tables, all `user_id`-keyed.
+- **Tree clean**, all 31 commits descriptive, Vercel-safe author email throughout. Ready to deploy whenever the user is.
