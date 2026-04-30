@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: April 28, 2026 (v1.3)
+Last updated: April 28, 2026 (v1.4)
+
+**What changed in v1.4 (April 28, 2026):** End-of-session checkpoint covering build days 1–2. Adds §Build session log — days 1–2 with the full commit trail, decisions log, and current Phase 1 status. Schema gains two columns on `sets` (`set_type`, `duration_seconds`) so timed efforts log natively alongside reps. No design-philosophy changes — this version primarily catches the doc up to what's already built.
 
 **What changed in v1.3 (April 28, 2026):** Lifting type display labels unified to the `Body`-suffixed pattern across all surfaces — `UPPER BODY`, `LOWER BODY`, `FULL BODY`. v1.2 had landed `LOWER` (matching `UPPER` and `FULL BODY`); v1.3 promotes both `UPPER` and `LOWER` to the longer form so the three labels read as a consistent set. Data layer enums stay `upper / lower / full_body`. Updated §Dashboard design accordingly.
 
@@ -442,6 +444,8 @@ session_exercises
 sets
   id, session_exercise_id, set_number
   weight, reps, completed, created_at
+  set_type: 'reps' | 'duration'           -- added v1.4 (Dexie v2)
+  duration_seconds: number | null         -- added v1.4 (Dexie v2)
 
 cardio_logs
   id, user_id, session_id, type, duration_minutes
@@ -502,3 +506,86 @@ prompts
 Paste at the start of every build session alongside the Personal OS Design Principles doc. This document is the source of truth for all design decisions. Update it before starting a new build, not after.
 
 Order: complete design conversations → update this doc → write build prompt referencing this doc → kick off build.
+
+---
+
+## Build session log — days 1–2 (April 27–28, 2026)
+
+End-of-day-2 checkpoint. Covers everything built and decided since the repo was initialized on April 27. Paste this section back at the start of the next session for full context.
+
+### Commits (chronological)
+
+| Hash | Step / kind | What it did |
+|---|---|---|
+| `b28c86e` | scaffold | Vite + React + TS + Tailwind + Dexie scaffold; first commit before any feature code (per Phase 1 plan, no GitHub remote). |
+| `beed715` | step 2 | Dexie schema for the full Phase 1 table set; lifecycle-aware seeder for starter exercises. |
+| `da6c092` | step 3 | Routing (`/`, `/log/strength`, `/library`, `/settings`) + bottom nav + base color tokens in Tailwind config. |
+| `e30ab4a` | step 4 | Dashboard shell — all five sections rendered; strength section + streak pill wired to live Dexie data, others render as visual shells. |
+| `c0e9515` | fix | Week start flipped to Sunday; lifting weekly defaults updated to 2 lower / 2 upper / 0 full body. |
+| `0408134` | polish | Text brightness pass — more green throughout dashboard, micro-labels readable on grey cards. |
+| `bc017bb` | polish | Brightness floor `#bbb` for small text on grey card surfaces (legibility audit fix). |
+| `a585e6d` | fix | Lifting card display label `LEGS` → `LOWER` (intermediate step before v1.3 promotion to `LOWER BODY`). |
+| `20092ba` | step 5 | Strength logger end-to-end — type-select → active session → exercise picker → set rows → completion screen with feel rating + notes. |
+| `cdc34fe` | fix(seeder) | In-flight promise guard + heal-duplicates pass so StrictMode double-mount can't seed twice. |
+| `c85ef3b` | fix(log-strength) | Cancellation guard on `suggestNextLiftingType` so a stale async resolution can't overwrite the user's tapped pick. |
+| `bf2a926` | feat(library) | Tap-to-edit existing exercises in the Library (rename, reassign muscle group, toggle compound). |
+| `2e0ff73` | feat(active-session) | Per-exercise "Last · {date} · N sets" history line above the live set rows in the active session. |
+| `7210327` | docs (v1.2) | Synced design doc to `LOWER` display label. |
+| `a13669b` | fix (v1.3) | Unified lifting type labels to `UPPER BODY` / `LOWER BODY` / `FULL BODY` across dashboard, log-strength type selector, active session header, and completion screen. Doc bumped to v1.3. |
+| `f4582d8` | chore (v1.3) | Refreshed stale `// LEGS` / `// UPPER` code comments in `defaults.ts` to match the v1.3 display convention. |
+| `1ab93f0` | feat(sets) | `reps` ↔ `duration` toggle on each set. Schema migrated to Dexie v2 with backfill. UI: per-row pill toggles mode, set-magnitude input swaps reps↔seconds, last-session history renders both, lb·reps total volume excludes duration sets. |
+
+### Decisions made (and the reasoning behind each)
+
+- **Sunday week start.** All weekly windows (`startOfWeekISODate`, dashboard 7-day dot row, this-week session counts) treat Sunday as day zero. Picked over Monday so the dashboard's "this week" matches the user's mental model of a fresh slate on Sunday morning.
+- **Weekly lifting defaults: 2 lower / 2 upper / 0 full body.** Full body card stays on the dashboard but is labeled "optional" with target 0 — surfaces the option without nagging when not in use. Editable in Settings (step 7).
+- **Display labels: `LOWER BODY` / `UPPER BODY` / `FULL BODY`.** Three rounds: first `LEGS` → then `LOWER` (matching `UPPER`) → finally promoted to the `Body`-suffixed pattern in v1.3 so all three read as a consistent set. Data-layer enum stays `upper | lower | full_body | cardio | mobility`.
+- **Streak definition: consecutive days with at least one strength OR cardio session.** Mobility / nutrition / supplements alone don't keep the streak alive. Today doesn't break the streak before the user has logged — if today has no qualifying session, the count starts from yesterday.
+- **Bottom nav routes (4 tabs): Dashboard, Log, Library, Settings.** Locked early for Phase 1; cardio / mobility / nutrition loggers will be reachable from inside their dashboard sections rather than as top-level tabs to keep the nav from sprawling.
+- **Swipe-to-delete on sets: deferred.** Each `SetRow` ships an inline `×` button instead. Phone gym usability is fine without the gesture, and the gesture costs more than its value at this stage. Will revisit in polish phase.
+- **Orphaned session rows are acceptable.** A session created but never finished (no `feel_rating`) stays in the table — every dashboard query filters on `feel_rating !== null`, so unfinished sessions are invisible to summaries / streaks / history. No active cleanup on app open. Trade-off accepted: cleaner code today, a future "resume in-progress session" feature gets the dangling rows for free.
+- **Inputs use 16px text size** (`text-[16px]` Tailwind class on weight / reps / duration / search inputs) so iOS Safari doesn't auto-zoom the page when an input gains focus. This is why those inputs read larger than other body copy.
+- **Volume metric: lb·reps.** Sum of `weight × reps` across all rep-mode sets in a session — surfaced on the completion screen with the `lb·reps` unit hint. Duration sets are excluded from this total (`weight × seconds` isn't comparable). Total set count still includes duration sets.
+
+### Schema additions in this session
+
+`sets` table gained two columns via Dexie version 2 (additive migration with upgrade hook):
+
+| Column | Type | Default for backfill | Purpose |
+|---|---|---|---|
+| `set_type` | `'reps' \| 'duration'` | `'reps'` | Discriminates rep-mode from timed-effort sets. |
+| `duration_seconds` | `number \| null` | `null` | Seconds elapsed for `set_type='duration'`; ignored when `set_type='reps'`. |
+
+Indexes unchanged (both fields are non-indexed columns). Existing rows backfill in the upgrade hook so consumer code can treat both fields as present.
+
+`src/lib/setFormat.ts` introduced as the single source of truth for the right-hand-side magnitude string (`"5"` for reps, `"45s"` / `"1:30"` for durations). Used in the active session's "Last" history line; will be the rendering point for PR detection and the future per-exercise history sparkline.
+
+### Phase 1 completion status
+
+Numbered steps used during build (matches commit-message labels):
+
+| Step | Deliverable | Status |
+|---|---|---|
+| 1 | Repo + scaffold (`b28c86e`) | ✅ done |
+| 2 | Dexie schema + seeder (`beed715`) | ✅ done — schema bumped to v2 in `1ab93f0` |
+| 3 | Routing + bottom nav + tokens (`da6c092`) | ✅ done |
+| 4 | Dashboard shell + live strength + streak (`e30ab4a` + polish) | ✅ done |
+| 5 | Strength logger end-to-end (`20092ba` + follow-ups) | ✅ done |
+| 6 | Exercise library detail — per-exercise history view, last-8-sessions sparkline, PR badges | ⏳ remaining |
+| 7 | Settings — editable weekly lifting + cardio targets, daily nutrition targets | ⏳ remaining (page is a placeholder today) |
+| 8 | PR auto-detection — runs on session save, surfaces as quiet inline indicator on history view | ⏳ remaining |
+| 9 | Prompt orchestration scaffold — `prompts` table + thin orchestrator module with daily soft cap, zero registered triggers | ⏳ remaining |
+| 10 | PWA manifest + service worker + Phase 1 polish pass | ⏳ remaining |
+
+**Unblocked and ready to start next session: step 6 or step 7.**
+
+### Known issues / follow-ups for next session
+
+- **Resume in-progress sessions.** Today, navigating away from `/log/strength/active/:id` and re-tapping "Log session" creates a new session row instead of resuming the open one. The data is there (orphan-tolerant on purpose) — needs a tiny "you have a session in progress, resume?" check on the type-select screen.
+- **Swipe-to-delete on sets.** Deferred during step 5; the inline `×` button is fine for now. Revisit during step 10 polish if it actually feels missing in real use.
+- **Visual tweaks still open:**
+  - The reps/duration toggle pill on `SetRow` is text-only ("reps" / "sec") — fine functionally, but may want a clearer affordance once it's been used in a real workout. Watch for misses in the gym.
+  - The "Last · {date} · N sets" history strip uses `bg-charcoal` inside a `bg-card` row — readable but tight. Consider a subtle inset border if the contrast feels muddy.
+  - Completion screen volume tile shows `lb·reps` as a tiny subscript; if a session is mostly duration sets the number will read low. Decide later whether to add a separate "time under tension" tile or leave volume as the rep-only metric.
+- **PR auto-detection** logic isn't wired yet — exercises don't surface PR badges in the Library or active session. Step 8.
+- **Settings page is a placeholder.** Hardcoded defaults are baked into `src/lib/defaults.ts` and will move into a `user_preferences` table edited via the Settings UI in step 7.
