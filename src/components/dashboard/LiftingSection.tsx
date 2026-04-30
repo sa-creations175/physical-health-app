@@ -13,10 +13,11 @@ const LIFTING_CARDS: { type: LiftingType; label: string; optional?: boolean }[] 
   { type: 'full_body', label: 'Full Body', optional: true },
 ];
 
-const GREEN_STRIPE = {
-  borderLeftWidth: '2px',
-  borderLeftColor: '#0F6E56',
-} as const;
+// Two stripe colors signal pillar progress at a glance: deep green is the
+// default accent, mint marks "weekly target hit" — same green family, just
+// brighter, like a coach's nod for good work.
+const STRIPE_DEFAULT = '#0F6E56';
+const STRIPE_COMPLETE = '#5DCAA5';
 
 export default function LiftingSection() {
   const [expanded, setExpanded] = useState<LiftingType | null>(null);
@@ -59,20 +60,36 @@ function LiftingCard({
   const summary = useLiveQuery(() => getLiftingSummary(type), [type]);
   const target = DEFAULT_WEEKLY_LIFTING_TARGETS[type];
   const count = summary?.thisWeekCount ?? 0;
+  // Optional cards have target 0 — guard so we don't celebrate a goal that
+  // wasn't set. Full Body never celebrates unless the user raises its target.
+  const complete = target > 0 && count >= target;
 
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-expanded={isExpanded}
-      style={GREEN_STRIPE}
+      style={{
+        borderLeftWidth: '2px',
+        borderLeftColor: complete ? STRIPE_COMPLETE : STRIPE_DEFAULT,
+      }}
       className={`bg-card border rounded-xl p-3 text-left min-h-[80px] transition-colors ${
         isExpanded ? 'border-green-mint' : 'border-card-edge'
       }`}
     >
-      <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
-        {label.toUpperCase()}
-      </p>
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+          {label.toUpperCase()}
+        </p>
+        {complete && (
+          <span
+            aria-label="weekly target met"
+            className="text-[12px] text-green-mint leading-none"
+          >
+            ✓
+          </span>
+        )}
+      </div>
       <p className="mt-1.5 leading-none">
         <span className="text-[19px] font-medium text-ink">{count}</span>
         <span className="text-[12px] text-card-mute"> / {target}</span>
