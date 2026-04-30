@@ -1,8 +1,8 @@
 // Hardcoded defaults for Phase 1. Replaced by user_preferences table + Settings UI in step 7.
 
 export const DEFAULT_WEEKLY_LIFTING_TARGETS = {
-  lower: 2,      // LEGS
-  upper: 2,      // UPPER
+  lower: 2,      // LOWER BODY
+  upper: 2,      // UPPER BODY
   full_body: 0,  // FULL BODY (optional — target 0 by default)
 } as const;
 
