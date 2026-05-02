@@ -13,7 +13,6 @@ import {
 } from '../lib/cardioHelpers';
 import {
   cardioDateLabel,
-  clockLabel,
   timeBucketLabel,
 } from '../lib/timeBucket';
 import {
@@ -234,7 +233,9 @@ export default function LogCardio() {
   );
   const bucket = timeBucketLabel(startedAtRendered);
   const dateText = cardioDateLabel(dateISO);
-  const timeText = clockLabel(startedAtRendered);
+  // timeText is no longer rendered — the native <input type="time">
+  // displays the value itself now. Bucket label still drives off the
+  // composed datetime via timeBucketLabel above.
 
   const canSave = Boolean(cardioTypeId) && duration >= 1;
 
@@ -301,38 +302,48 @@ export default function LogCardio() {
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
+          {/* Time field uses a real visible <input> styled to match the
+              block, NOT the invisible-overlay pattern that date uses.
+              Reason: showPicker() on type="time" silently no-ops when
+              the input is opacity:0 in some browsers (Safari especially
+              — date is more lenient about visibility, time is not).
+              With the input visible, native click → focus → picker
+              flow does its own thing reliably across browsers: Chrome
+              gets the small popup, iOS Safari gets the wheel sheet,
+              macOS Safari gets inline hour / minute spinners. Native
+              UI affordances (browser-rendered arrows / spinners)
+              replace our chevron — letting the browser draw its own
+              interactivity hint is the price of cross-browser
+              reliability. The console.log stays in for now;
+              strip after verifying the fix in real use. */}
           <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
-            className="relative bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
+            className="bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
               Time · {bucket}
             </p>
-            <span className="mt-1 flex items-center justify-between gap-2">
-              <span className="text-[15px] text-[#f0f0f0] font-medium">{timeText}</span>
-              <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
-            </span>
             <input
               ref={timeInputRef}
               type="time"
               value={timeHHMM}
               onChange={(e) => setTimeHHMM(e.target.value)}
-              onFocus={() => setOpenNativePicker('time')}
-              onBlur={() => setOpenNativePicker(null)}
-              onClick={() => {
-                const el = timeInputRef.current;
-                console.log('[LogCardio] time input click', {
-                  hasShowPicker: !!el && typeof el.showPicker === 'function',
-                  active: document.activeElement === el,
+              onFocus={() => {
+                setOpenNativePicker('time');
+                console.log('[LogCardio] time input focus', {
+                  hasShowPicker:
+                    !!timeInputRef.current &&
+                    typeof timeInputRef.current.showPicker === 'function',
                 });
-                if (el && typeof el.showPicker === 'function') {
-                  try { el.showPicker(); } catch (err) {
-                    console.warn('[LogCardio] showPicker(time) threw', err);
-                  }
-                }
               }}
+              onBlur={() => setOpenNativePicker(null)}
               aria-label="Time"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              // colorScheme:dark nudges browsers that respect it to
+              // render the native picker UI in dark mode so the popup
+              // doesn't flash white. font-size 16px dodges iOS Safari's
+              // auto-zoom-on-focus behavior, same as our other inputs.
+              style={{ colorScheme: 'dark' }}
+              className="mt-1 bg-transparent text-[#f0f0f0] text-[16px] font-medium border-0 outline-none p-0 w-full"
             />
           </div>
         </div>
