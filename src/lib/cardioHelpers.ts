@@ -53,21 +53,37 @@ export async function createCardioType(name: string): Promise<string> {
   return row.id;
 }
 
-// Most-used = most-recently-used, deduped, capped. Falls back to first
-// `limit` alphabetical seeded types when no history exists yet (so the
-// chip row doesn't render empty on a fresh install).
+// Curated fallback for the chip row when the user has no logging history
+// (or fewer than `limit` distinct types used). Order is deliberate —
+// these five are the activities the user is most likely to reach for in
+// the early days, so they land in the chip row immediately instead of an
+// alphabetical list ("Bike, Dance, Elliptical, …") that would push Run
+// off the front. Used types always take priority; the fallback only fills
+// remaining slots and skips any name already present in the used list.
+const CHIP_FALLBACK_ORDER = ['Stairmaster', 'Run', 'Bike', 'Walk', 'Row'] as const;
+
 export async function getMostUsedCardioTypes(limit = 5): Promise<CardioType[]> {
   const all = await db.cardio_types.toArray();
   if (all.length === 0) return [];
 
   const used = all.filter((t) => t.last_used_at !== null);
-  if (used.length > 0) {
-    used.sort((a, b) => (b.last_used_at ?? '').localeCompare(a.last_used_at ?? ''));
-    return used.slice(0, limit);
+  used.sort((a, b) => (b.last_used_at ?? '').localeCompare(a.last_used_at ?? ''));
+  const result: CardioType[] = used.slice(0, limit);
+
+  if (result.length < limit) {
+    const seenIds = new Set(result.map((t) => t.id));
+    const byName = new Map(all.map((t) => [t.name, t]));
+    for (const name of CHIP_FALLBACK_ORDER) {
+      if (result.length >= limit) break;
+      const t = byName.get(name);
+      if (t && !seenIds.has(t.id)) {
+        result.push(t);
+        seenIds.add(t.id);
+      }
+    }
   }
 
-  const sorted = [...all].sort((a, b) => a.name.localeCompare(b.name));
-  return sorted.slice(0, limit);
+  return result;
 }
 
 export interface LastLogContext {

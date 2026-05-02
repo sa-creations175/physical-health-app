@@ -22,11 +22,47 @@ import {
 import { getUserPreferences } from '../lib/userPreferences';
 import type { Intensity } from '../db/types';
 
+// Semantic colors when active. Low = slate-blue (calm, Zone 2),
+// Moderate = deep green (the app's primary accent), High = amber
+// (exertion). Inactive pills stay grey on card. The mint border stripe
+// on each active pill keeps them visually adjacent to the rest of the
+// app's accent family despite the wider color split.
+interface IntensityVisual {
+  bg: string;
+  border: string;
+}
+const INTENSITY_VISUAL: Record<Intensity, IntensityVisual> = {
+  low: { bg: '#3F6378', border: '#7B9CAE' },
+  moderate: { bg: '#0F6E56', border: '#5DCAA5' },
+  high: { bg: '#BA7517', border: '#E0A552' },
+};
 const INTENSITY_OPTIONS: { value: Intensity; label: string }[] = [
   { value: 'low', label: 'Low' },
   { value: 'moderate', label: 'Moderate' },
   { value: 'high', label: 'High' },
 ];
+
+// Inline lucide-style "Activity" path — heart-pulse line. Mint to match
+// the SectionLabel family. Pure SVG (no icon-lib dep) so it tree-shakes
+// cleanly and stays predictable across themes.
+function CardioGlyph() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#5DCAA5"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
 
 // Compose user-picked date (YYYY-MM-DD local) + time (HH:MM local) into
 // an ISO datetime that represents the intended local moment.
@@ -62,6 +98,31 @@ export default function LogCardio() {
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
+  const dateButtonRef = useRef<HTMLButtonElement>(null);
+  const timeButtonRef = useRef<HTMLButtonElement>(null);
+  // Tracks which native picker the user just opened. The native date /
+  // time pickers don't always dismiss on outside-click in every browser
+  // (Chrome desktop in particular), so we listen for a mousedown outside
+  // the trigger and call blur() on the input to force-close. The state
+  // also lets us auto-clear the listener as soon as a value is picked.
+  const [openNativePicker, setOpenNativePicker] = useState<
+    'date' | 'time' | null
+  >(null);
+
+  useEffect(() => {
+    if (!openNativePicker) return;
+    function handler(e: MouseEvent) {
+      const buttonRef =
+        openNativePicker === 'date' ? dateButtonRef : timeButtonRef;
+      const inputRef =
+        openNativePicker === 'date' ? dateInputRef : timeInputRef;
+      if (buttonRef.current?.contains(e.target as Node)) return;
+      inputRef.current?.blur();
+      setOpenNativePicker(null);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openNativePicker]);
 
   // Pull threshold from prefs so the duration default matches what the
   // dashboard uses to decide qualifying vs short. Falls back to the
@@ -149,6 +210,7 @@ export default function LogCardio() {
   function openDatePicker() {
     const el = dateInputRef.current;
     if (!el) return;
+    setOpenNativePicker('date');
     if (typeof el.showPicker === 'function') {
       try {
         el.showPicker();
@@ -163,6 +225,7 @@ export default function LogCardio() {
   function openTimePicker() {
     const el = timeInputRef.current;
     if (!el) return;
+    setOpenNativePicker('time');
     if (typeof el.showPicker === 'function') {
       try {
         el.showPicker();
@@ -219,7 +282,10 @@ export default function LogCardio() {
   return (
     <div className="px-5 pt-8 pb-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-[22px] font-medium text-ink">Log cardio</h1>
+        <div className="flex items-center gap-2">
+          <CardioGlyph />
+          <h1 className="text-[22px] font-medium text-ink">Log cardio</h1>
+        </div>
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -234,39 +300,53 @@ export default function LogCardio() {
         <SectionLabel>When</SectionLabel>
         <div className="grid grid-cols-2 gap-2 mt-2">
           <button
+            ref={dateButtonRef}
             type="button"
             onClick={openDatePicker}
             style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[64px]"
+            className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-card-mute">Date</p>
-            <p className="mt-1 text-[15px] text-ink font-medium">{dateText}</p>
+            <span className="mt-1 flex items-center justify-between gap-2">
+              <span className="text-[15px] text-ink font-medium">{dateText}</span>
+              <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
+            </span>
             {/* Hidden native input — the styled button drives it. */}
             <input
               ref={dateInputRef}
               type="date"
               value={dateISO}
-              onChange={(e) => setDateISO(e.target.value)}
+              onChange={(e) => {
+                setDateISO(e.target.value);
+                setOpenNativePicker(null);
+              }}
               className="absolute opacity-0 w-0 h-0 pointer-events-none"
               tabIndex={-1}
               aria-hidden="true"
             />
           </button>
           <button
+            ref={timeButtonRef}
             type="button"
             onClick={openTimePicker}
             style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[64px]"
+            className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-card-mute">
               Time · {bucket}
             </p>
-            <p className="mt-1 text-[15px] text-ink font-medium">{timeText}</p>
+            <span className="mt-1 flex items-center justify-between gap-2">
+              <span className="text-[15px] text-ink font-medium">{timeText}</span>
+              <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
+            </span>
             <input
               ref={timeInputRef}
               type="time"
               value={timeHHMM}
-              onChange={(e) => setTimeHHMM(e.target.value)}
+              onChange={(e) => {
+                setTimeHHMM(e.target.value);
+                setOpenNativePicker(null);
+              }}
               className="absolute opacity-0 w-0 h-0 pointer-events-none"
               tabIndex={-1}
               aria-hidden="true"
@@ -308,7 +388,7 @@ export default function LogCardio() {
           }`}
         >
           <span className="text-[15px] text-ink">
-            {selectedType ? selectedType.name : 'Pick activity'}
+            {selectedType ? selectedType.name : 'Search or pick another'}
           </span>
           <span aria-hidden className="text-card-mute text-[16px]">⌄</span>
         </button>
@@ -330,14 +410,14 @@ export default function LogCardio() {
       <section className="mt-6">
         <SectionLabel>Duration</SectionLabel>
         <div
-          className="bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center gap-3"
+          className="bg-card border border-card-edge rounded-xl py-1.5 px-2 mt-2 flex items-center gap-2"
           style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
         >
           <button
             type="button"
             onClick={() => bumpDuration(-5)}
             aria-label="decrease duration by 5 minutes"
-            className="bg-charcoal text-ink rounded-lg w-11 h-11 text-[18px] font-medium border border-card-edge"
+            className="bg-charcoal text-ink rounded-lg w-11 h-11 text-[15px] font-medium border border-card-edge"
           >
             −5
           </button>
@@ -348,41 +428,57 @@ export default function LogCardio() {
             onChange={(e) => setDurationText(e.target.value)}
             onBlur={commitDuration}
             aria-label="duration in minutes"
-            className="flex-1 bg-charcoal border border-card-edge text-ink rounded-lg px-2 h-11 text-[16px] text-center"
+            // appearance overrides strip the native up/down spinner —
+            // the −5/+5 buttons own that interaction so the spinner is
+            // visual clutter that throws off the row's balance.
+            className="flex-1 min-w-0 bg-charcoal border border-card-edge text-ink rounded-lg px-2 h-11 text-[16px] text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <button
             type="button"
             onClick={() => bumpDuration(5)}
             aria-label="increase duration by 5 minutes"
-            className="bg-charcoal text-ink rounded-lg w-11 h-11 text-[18px] font-medium border border-card-edge"
+            className="bg-charcoal text-ink rounded-lg w-11 h-11 text-[15px] font-medium border border-card-edge"
           >
             +5
           </button>
-          <span className="text-[12px] text-card-mute">min</span>
+          <span className="text-[12px] text-card-mute pr-1">min</span>
         </div>
       </section>
 
       {/* Intensity */}
       <section className="mt-6">
         <SectionLabel>Intensity</SectionLabel>
-        <div className="grid grid-cols-3 gap-2 mt-2">
-          {INTENSITY_OPTIONS.map((opt) => {
-            const active = opt.value === intensity;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setIntensity(opt.value)}
-                className={`min-h-[48px] rounded-xl text-[14px] font-medium border transition-colors ${
-                  active
-                    ? 'bg-green-deep text-ink border-green-mint'
-                    : 'bg-card text-ink-body border-card-edge'
-                }`}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
+        <div
+          className="bg-card border border-card-edge rounded-xl p-2 mt-2"
+          style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+        >
+          <div className="grid grid-cols-3 gap-2">
+            {INTENSITY_OPTIONS.map((opt) => {
+              const active = opt.value === intensity;
+              const visual = INTENSITY_VISUAL[opt.value];
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setIntensity(opt.value)}
+                  style={
+                    active
+                      ? {
+                          background: visual.bg,
+                          borderColor: visual.border,
+                          color: '#ffffff',
+                        }
+                      : undefined
+                  }
+                  className={`min-h-[44px] rounded-lg text-[14px] font-medium border transition-colors ${
+                    active ? '' : 'bg-charcoal text-ink-body border-card-edge'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -394,6 +490,7 @@ export default function LogCardio() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Optional"
           rows={2}
+          style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
           className="mt-2 w-full bg-card border border-card-edge text-ink rounded-xl p-3 text-[16px] placeholder:text-card-mute resize-none"
         />
       </section>
