@@ -2,8 +2,10 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { runSeedersIfNeeded } from './db';
 import AppLayout from './components/AppLayout';
+import { ToastProvider } from './components/ui/Toast';
 import Dashboard from './pages/Dashboard';
 import LogStrength from './pages/LogStrength';
+import LogCardio from './pages/LogCardio';
 import ActiveSession from './pages/ActiveSession';
 import SessionComplete from './pages/SessionComplete';
 import Library from './pages/Library';
@@ -18,17 +20,20 @@ function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route element={<AppLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/log/strength" element={<LogStrength />} />
-        <Route path="/log/strength/active/:sessionId" element={<ActiveSession />} />
-        <Route path="/log/strength/complete/:sessionId" element={<SessionComplete />} />
-        <Route path="/library" element={<Library />} />
-        <Route path="/library/:exerciseId" element={<ExerciseDetail />} />
-        <Route path="/settings" element={<Settings />} />
-      </Route>
-    </Routes>
+    <ToastProvider>
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/log/strength" element={<LogStrength />} />
+          <Route path="/log/strength/active/:sessionId" element={<ActiveSession />} />
+          <Route path="/log/strength/complete/:sessionId" element={<SessionComplete />} />
+          <Route path="/log/cardio" element={<LogCardio />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/library/:exerciseId" element={<ExerciseDetail />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Routes>
+    </ToastProvider>
   );
 }
 

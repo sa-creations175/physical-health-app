@@ -7,27 +7,30 @@ import {
 } from '../lib/strengthHelpers';
 import type { SessionType } from '../db/types';
 
-const TYPE_OPTIONS: {
-  value: 'upper' | 'lower' | 'full_body';
-  label: string;
-}[] = [
+// Cardio is a peer option here so the four logging entry points sit at the
+// same level — but it bypasses the strength session model entirely. Tapping
+// Cardio routes straight to /log/cardio (no parent session row created);
+// strength tiles still pass through the "select then Start" affordance so
+// the user can change their mind before a session is opened.
+type StrengthValue = 'upper' | 'lower' | 'full_body';
+type TypeValue = StrengthValue | 'cardio';
+
+const TYPE_OPTIONS: { value: TypeValue; label: string }[] = [
   { value: 'lower', label: 'Lower Body' },
   { value: 'upper', label: 'Upper Body' },
   { value: 'full_body', label: 'Full Body' },
+  { value: 'cardio', label: 'Cardio' },
 ];
 
 export default function LogStrength() {
   const navigate = useNavigate();
+  // Suggestion math is strength-only (cross-pillar logic deferred). Cardio
+  // never receives a "Due next" badge.
   const [suggested, setSuggested] = useState<SessionType | null>(null);
-  const [selected, setSelected] = useState<SessionType | null>(null);
+  const [selected, setSelected] = useState<StrengthValue | null>(null);
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    // Cancellation guard: under StrictMode the effect fires twice and an
-    // in-flight resolution from the first mount could land after the user
-    // has already tapped a different type, silently overwriting their pick.
-    // The functional setSelected((cur) => cur ?? s) is belt-and-suspenders —
-    // suggestion only seeds when nothing is selected yet.
     let cancelled = false;
     suggestNextLiftingType()
       .then((s) => {
@@ -44,6 +47,14 @@ export default function LogStrength() {
       cancelled = true;
     };
   }, []);
+
+  function handleTap(value: TypeValue) {
+    if (value === 'cardio') {
+      navigate('/log/cardio');
+      return;
+    }
+    setSelected(value);
+  }
 
   async function handleStart() {
     if (!selected || starting) return;
@@ -64,7 +75,7 @@ export default function LogStrength() {
         What kind of session?
       </h1>
       <p className="text-[12px] text-ink-soft mt-1">
-        Pre-selected based on what's due this week.
+        Strength is pre-selected based on what's due this week.
       </p>
 
       <div className="grid grid-cols-1 gap-2 mt-6">
@@ -72,14 +83,14 @@ export default function LogStrength() {
           <button
             key={opt.value}
             type="button"
-            onClick={() => setSelected(opt.value)}
+            onClick={() => handleTap(opt.value)}
             style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
             className={`bg-card border rounded-xl p-4 text-left min-h-[64px] transition-colors flex items-center justify-between ${
               selected === opt.value ? 'border-green-mint' : 'border-card-edge'
             }`}
           >
             <span className="text-[15px] font-medium text-ink">{opt.label}</span>
-            {suggested === opt.value && (
+            {opt.value !== 'cardio' && suggested === opt.value && (
               <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint">
                 Due next
               </span>
