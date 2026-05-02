@@ -1,9 +1,11 @@
 import Dexie, { type Table } from 'dexie';
+import { DEFAULT_CARDIO_THRESHOLD_MINUTES } from '../lib/defaults';
 import type {
   Session,
   Exercise,
   SessionExercise,
   SetEntry,
+  CardioType,
   CardioLog,
   NutritionLog,
   Supplement,
@@ -18,6 +20,7 @@ export class PhysicalHealthDB extends Dexie {
   exercises!: Table<Exercise, string>;
   session_exercises!: Table<SessionExercise, string>;
   sets!: Table<SetEntry, string>;
+  cardio_types!: Table<CardioType, string>;
   cardio_logs!: Table<CardioLog, string>;
   nutrition_logs!: Table<NutritionLog, string>;
   supplements!: Table<Supplement, string>;
@@ -85,6 +88,70 @@ export class PhysicalHealthDB extends Dexie {
       prompts: 'id, user_id, type, fired_at, dismissed_at',
       user_preferences: 'id, user_id',
     });
+
+    // v4 (Build 2.1): cardio becomes first-class.
+    // - cardio_types: new store, seeded with starter activities.
+    // - cardio_logs: indexed on started_at (week queries) instead of
+    //   session_id, since cardio doesn't always have a parent session.
+    //   New columns (cardio_type_id, started_at, updated_at) are non-indexed
+    //   for the most part; backfill below ensures consumer code can treat
+    //   them as required even on rows that predate the migration.
+    // - user_preferences: cardio_threshold_minutes backfilled on the
+    //   existing single row.
+    this.version(4)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify((row: { cardio_threshold_minutes?: number }) => {
+            if (row.cardio_threshold_minutes === undefined) {
+              row.cardio_threshold_minutes = DEFAULT_CARDIO_THRESHOLD_MINUTES;
+            }
+          });
+
+        // Defensive: no cardio_logs are written in Phase 1 (no logger UI),
+        // so this loop is essentially a no-op. Kept as a safety net for
+        // any rows injected during dev / testing — they'll get sane
+        // timestamps and a placeholder cardio_type_id that the dashboard
+        // filters out rather than rendering as a broken row.
+        await tx
+          .table('cardio_logs')
+          .toCollection()
+          .modify(
+            (row: {
+              cardio_type_id?: string;
+              started_at?: string;
+              updated_at?: string;
+              notes?: string | null;
+              session_id?: string | null;
+              created_at?: string;
+            }) => {
+              if (row.cardio_type_id === undefined) row.cardio_type_id = '';
+              if (row.started_at === undefined) {
+                row.started_at = row.created_at ?? new Date().toISOString();
+              }
+              if (row.updated_at === undefined) {
+                row.updated_at = row.created_at ?? new Date().toISOString();
+              }
+              if (row.notes === undefined) row.notes = null;
+              if (row.session_id === undefined) row.session_id = null;
+            },
+          );
+      });
   }
 }
 

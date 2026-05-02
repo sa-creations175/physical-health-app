@@ -4,15 +4,19 @@ import { LOCAL_USER_ID } from './constants';
 import {
   DEFAULT_WEEKLY_LIFTING_TARGETS,
   DEFAULT_CARDIO_WEEKLY_TARGET,
+  DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_DAILY_NUTRITION_TARGETS,
 } from './defaults';
 import type { UserPreferences } from '../db/types';
 
 // Sane upper bounds for the Settings UI input clamps. Lower bound is 0
 // across the board (a target of 0 means "not tracking that metric").
+// cardio_threshold floors at 1 — a 0-minute "qualifying" session would
+// blur the meaning of the metric.
 export const TARGET_RANGES = {
   lifting: { min: 0, max: 7 }, // sessions per week
   cardio: { min: 0, max: 14 },
+  cardio_threshold: { min: 1, max: 180 }, // minutes
   protein_grams: { min: 0, max: 400 },
   water_glasses: { min: 0, max: 20 },
   veg_servings: { min: 0, max: 12 },
@@ -27,6 +31,7 @@ function buildDefaultPreferences(): UserPreferences {
     lifting_target_upper: DEFAULT_WEEKLY_LIFTING_TARGETS.upper,
     lifting_target_full_body: DEFAULT_WEEKLY_LIFTING_TARGETS.full_body,
     cardio_target_weekly: DEFAULT_CARDIO_WEEKLY_TARGET,
+    cardio_threshold_minutes: DEFAULT_CARDIO_THRESHOLD_MINUTES,
     protein_grams_daily: DEFAULT_DAILY_NUTRITION_TARGETS.protein_grams,
     water_glasses_daily: DEFAULT_DAILY_NUTRITION_TARGETS.water_glasses,
     veg_servings_daily: DEFAULT_DAILY_NUTRITION_TARGETS.veg_servings,

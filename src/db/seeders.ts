@@ -3,7 +3,8 @@ import { syncedBulkPut, syncedBulkDelete } from './syncedWrite';
 import { LOCAL_USER_ID } from '../lib/constants';
 import { getUserPreferences } from '../lib/userPreferences';
 import { STARTER_EXERCISES } from './starterExercises';
-import type { Exercise } from './types';
+import { STARTER_CARDIO_TYPES } from '../lib/defaults';
+import type { Exercise, CardioType } from './types';
 
 // Single in-flight promise so concurrent callers (StrictMode dev double-mount,
 // multiple tabs, any other re-entry) await the same execution rather than
@@ -18,6 +19,8 @@ export async function runSeedersIfNeeded(): Promise<void> {
     await db.open();
     await dedupeExercisesByName();
     await seedStarterExercisesIfEmpty();
+    await dedupeCardioTypesByName();
+    await seedStarterCardioTypesIfEmpty();
     // Forces lazy-create of the user_preferences row on first launch so
     // dashboard live queries don't have to render a defaults-fallback frame
     // before the row exists.
@@ -79,4 +82,61 @@ async function seedStarterExercisesIfEmpty(): Promise<void> {
   }));
 
   await syncedBulkPut(db.exercises, rows);
+}
+
+// Mirror of dedupeExercisesByName for cardio_types. Cardio types aren't
+// referenced by a links table — they're foreign-keyed directly from
+// cardio_logs — so the "keep the row that's referenced by a logged child"
+// preference reduces to: keep whichever id has cardio_logs against it,
+// otherwise keep the oldest. Names are compared case-insensitively because
+// "Run" and "run" via the picker would otherwise stay distinct.
+async function dedupeCardioTypesByName(): Promise<void> {
+  const [all, logs] = await Promise.all([
+    db.cardio_types.toArray(),
+    db.cardio_logs.toArray(),
+  ]);
+  const referencedIds = new Set(logs.map((l) => l.cardio_type_id));
+
+  const byName = new Map<string, CardioType[]>();
+  for (const t of all) {
+    const key = t.name.trim().toLowerCase();
+    let group = byName.get(key);
+    if (!group) {
+      group = [];
+      byName.set(key, group);
+    }
+    group.push(t);
+  }
+
+  const toDelete: string[] = [];
+  for (const group of byName.values()) {
+    if (group.length === 1) continue;
+    const referenced = group.filter((t) => referencedIds.has(t.id));
+    const candidates = referenced.length > 0 ? referenced : group.slice();
+    candidates.sort((a, b) => a.created_at.localeCompare(b.created_at));
+    const keep = candidates[0];
+    for (const t of group) {
+      if (t.id !== keep.id) toDelete.push(t.id);
+    }
+  }
+
+  if (toDelete.length > 0) {
+    await syncedBulkDelete(db.cardio_types, toDelete);
+  }
+}
+
+async function seedStarterCardioTypesIfEmpty(): Promise<void> {
+  const count = await db.cardio_types.count();
+  if (count > 0) return;
+
+  const now = new Date().toISOString();
+  const rows: CardioType[] = STARTER_CARDIO_TYPES.map((name) => ({
+    id: crypto.randomUUID(),
+    user_id: LOCAL_USER_ID,
+    name,
+    created_at: now,
+    last_used_at: null,
+  }));
+
+  await syncedBulkPut(db.cardio_types, rows);
 }

@@ -95,8 +95,14 @@ export async function getCardioSummary(): Promise<CardioWeekSummary> {
 
   let lastSession: LastSession | null = null;
   if (lastRaw) {
+    // Phase 1 cardio_logs were keyed to a parent session and carried an
+    // inline `type` string. After Build 2.1's schema rewrite (step 1),
+    // cardio is logged through the new logger and queried directly off
+    // cardio_logs — the dashboard's full live wiring lands in step 5.
+    // Until then, we surface only what's safe to read off the legacy
+    // session row so this function compiles cleanly between commits.
     const cardioLog = await db.cardio_logs.where('session_id').equals(lastRaw.id).first();
-    const detail = cardioLog ? `${cardioLog.type} · ${cardioLog.duration_minutes}m` : '—';
+    const detail = cardioLog ? `${cardioLog.duration_minutes}m` : '—';
     lastSession = {
       date: lastRaw.date,
       summary: `${shortDayLabel(lastRaw.date)} — ${detail}`,

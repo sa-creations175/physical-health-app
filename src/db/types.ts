@@ -62,15 +62,32 @@ export interface SetEntry {
   created_at: string;
 }
 
+// User-visible cardio activity types (Stairmaster, Run, Bike, …). Seeded on
+// first launch and extended by the user via the cardio logger picker.
+export interface CardioType {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  last_used_at: string | null; // bumped on every cardio_log save
+}
+
 export interface CardioLog {
   id: string;
   user_id: string;
-  session_id: string;
-  type: string;
+  // Cardio doesn't always need a Session row — we can log a 12-min walk
+  // without conjuring a parent session. Strength sessions still create one.
+  session_id: string | null;
+  cardio_type_id: string;
   duration_minutes: number;
   intensity: Intensity;
-  notes: string;
+  // Precise timestamp for the *start* of the activity (local-time intent
+  // serialized to ISO). The morning/afternoon/evening/late-night bucket is
+  // computed at render time from this — never stored as a separate field.
+  started_at: string;
+  notes: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface NutritionLog {
@@ -127,6 +144,7 @@ export interface UserPreferences {
   lifting_target_upper: number;
   lifting_target_full_body: number;
   cardio_target_weekly: number;
+  cardio_threshold_minutes: number;
   protein_grams_daily: number;
   water_glasses_daily: number;
   veg_servings_daily: number;
