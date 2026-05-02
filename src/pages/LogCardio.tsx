@@ -259,21 +259,13 @@ export default function LogCardio() {
       <section className="mt-6">
         <SectionLabel>When</SectionLabel>
         <div className="grid grid-cols-2 gap-2 mt-2">
-          {/* Date and Time fields share the same structure. The input is
-              layered as an invisible overlay (inset-0, opacity-0) so a
-              tap on the surface lands directly on the input. Click then
-              explicitly calls showPicker() — this is the part the
-              previous fix missed: most browsers (Chrome, Safari macOS,
-              Firefox) don't open a popup on a plain *click* of a
-              type="time" input, they just focus it. Since the input is
-              transparent, that focus is invisible, so the field reads as
-              "broken." showPicker() is the API designed exactly to force
-              the popup; we call it on date as well for symmetry, with a
-              try/catch so older browsers fall back to natural click +
-              focus behavior. The console.log is intentional for
-              field diagnosis — if the user reports the time picker
-              broken on a new device, the log will tell us whether the
-              click is even reaching the input. */}
+          {/* Date uses an invisible-overlay input + explicit
+              showPicker() so we can keep our custom "Today / Yesterday"
+              relative label as the visible value while the native popup
+              still opens on tap. Time can't use the same trick:
+              showPicker() silently no-ops on opacity:0 type="time"
+              inputs in some browsers (Safari especially), so the time
+              field below uses a visible input instead. */}
           <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
             className="relative bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
@@ -302,20 +294,10 @@ export default function LogCardio() {
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
-          {/* Time field uses a real visible <input> styled to match the
-              block, NOT the invisible-overlay pattern that date uses.
-              Reason: showPicker() on type="time" silently no-ops when
-              the input is opacity:0 in some browsers (Safari especially
-              — date is more lenient about visibility, time is not).
-              With the input visible, native click → focus → picker
-              flow does its own thing reliably across browsers: Chrome
-              gets the small popup, iOS Safari gets the wheel sheet,
-              macOS Safari gets inline hour / minute spinners. Native
-              UI affordances (browser-rendered arrows / spinners)
-              replace our chevron — letting the browser draw its own
-              interactivity hint is the price of cross-browser
-              reliability. The console.log stays in for now;
-              strip after verifying the fix in real use. */}
+          {/* Visible time input — see comment on the date field above
+              for the asymmetry rationale. Native UI (Chrome popup /
+              iOS wheel sheet / macOS spinners) signals interactivity
+              instead of our chevron. */}
           <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
             className="bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
@@ -328,14 +310,7 @@ export default function LogCardio() {
               type="time"
               value={timeHHMM}
               onChange={(e) => setTimeHHMM(e.target.value)}
-              onFocus={() => {
-                setOpenNativePicker('time');
-                console.log('[LogCardio] time input focus', {
-                  hasShowPicker:
-                    !!timeInputRef.current &&
-                    typeof timeInputRef.current.showPicker === 'function',
-                });
-              }}
+              onFocus={() => setOpenNativePicker('time')}
               onBlur={() => setOpenNativePicker(null)}
               aria-label="Time"
               // colorScheme:dark nudges browsers that respect it to
