@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Suite-level reference docs (live alongside the project but aren't part of it)
+PERSONAL_OS_DESIGN_PRINCIPLES_*.md
