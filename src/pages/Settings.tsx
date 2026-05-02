@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { SectionLabel } from '../components/ui/primitives';
 import {
@@ -134,12 +134,30 @@ function NumberRow({
   onCommit: (next: number) => Promise<void> | void;
 }) {
   const [text, setText] = useState(String(value));
+  // Inline save confirmation. The mint ✓ next to the label fades in
+  // when the synced-write resolves and fades out ~2s later. Holding a
+  // timer ref instead of a Date.now() comparison so a quick re-edit
+  // (within the visible window) can clear the previous timeout
+  // cleanly and start a fresh 2s window from the new save.
+  const [showCheck, setShowCheck] = useState(false);
+  const checkTimerRef = useRef<number | null>(null);
 
   // Mirror the underlying value back into the local input when it changes
   // (e.g., another tab saved, or the value was clamped on the previous commit).
   useEffect(() => {
     setText(String(value));
   }, [value]);
+
+  // Clear any pending fade-out on unmount so a stale timer can't fire
+  // setShowCheck on a torn-down component.
+  useEffect(() => {
+    return () => {
+      if (checkTimerRef.current !== null) {
+        window.clearTimeout(checkTimerRef.current);
+        checkTimerRef.current = null;
+      }
+    };
+  }, []);
 
   async function commit() {
     const trimmed = text.trim();
@@ -150,7 +168,19 @@ function NumberRow({
     }
     const clamped = Math.max(min, Math.min(max, parsed));
     if (clamped !== value) {
+      // Await the synced-write before flipping the check on — the
+      // confirmation is for *save success*, not blur. If onCommit
+      // throws, control never reaches the lines below and the check
+      // stays hidden, which is the right signal.
       await onCommit(clamped);
+      if (checkTimerRef.current !== null) {
+        window.clearTimeout(checkTimerRef.current);
+      }
+      setShowCheck(true);
+      checkTimerRef.current = window.setTimeout(() => {
+        setShowCheck(false);
+        checkTimerRef.current = null;
+      }, 2000);
     }
     setText(String(clamped));
   }
@@ -161,7 +191,16 @@ function NumberRow({
       style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
     >
       <div className="min-w-0">
-        <p className="text-[14px] text-ink">{label}</p>
+        <p className="text-[14px] text-ink flex items-center gap-1.5">
+          <span>{label}</span>
+          <span
+            aria-hidden={!showCheck}
+            className="text-green-mint text-[14px] leading-none transition-opacity duration-500"
+            style={{ opacity: showCheck ? 1 : 0 }}
+          >
+            ✓
+          </span>
+        </p>
         {hint && (
           <p className="text-[11px] text-card-mute mt-0.5">{hint}</p>
         )}
