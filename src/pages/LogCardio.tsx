@@ -22,19 +22,18 @@ import {
 import { getUserPreferences } from '../lib/userPreferences';
 import type { Intensity } from '../db/types';
 
-// Semantic colors when active. Low = slate-blue (calm, Zone 2),
+// Semantic colors when a pill is selected. Low = blue (calm / Zone 2),
 // Moderate = deep green (the app's primary accent), High = amber
-// (exertion). Inactive pills stay grey on card. The mint border stripe
-// on each active pill keeps them visually adjacent to the rest of the
-// app's accent family despite the wider color split.
+// (exertion). Unselected pills are filled grey (#686868) — never outline-
+// only against the dark intensity block, which would render the affordance
+// invisible.
 interface IntensityVisual {
   bg: string;
-  border: string;
 }
 const INTENSITY_VISUAL: Record<Intensity, IntensityVisual> = {
-  low: { bg: '#3F6378', border: '#7B9CAE' },
-  moderate: { bg: '#0F6E56', border: '#5DCAA5' },
-  high: { bg: '#BA7517', border: '#E0A552' },
+  low: { bg: '#378ADD' },
+  moderate: { bg: '#0F6E56' },
+  high: { bg: '#BA7517' },
 };
 const INTENSITY_OPTIONS: { value: Intensity; label: string }[] = [
   { value: 'low', label: 'Low' },
@@ -98,31 +97,15 @@ export default function LogCardio() {
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
-  const dateButtonRef = useRef<HTMLButtonElement>(null);
-  const timeButtonRef = useRef<HTMLButtonElement>(null);
-  // Tracks which native picker the user just opened. The native date /
-  // time pickers don't always dismiss on outside-click in every browser
-  // (Chrome desktop in particular), so we listen for a mousedown outside
-  // the trigger and call blur() on the input to force-close. The state
-  // also lets us auto-clear the listener as soon as a value is picked.
+  // Tracks which native picker is currently open so we can render a
+  // fullscreen dismiss overlay behind it. The previous mousedown-on-
+  // document approach didn't fire reliably (Chrome desktop's date popup
+  // intercepts outside clicks before they bubble to document); the
+  // overlay approach is more reliable because clicks that miss the
+  // browser's picker UI hit our overlay directly.
   const [openNativePicker, setOpenNativePicker] = useState<
     'date' | 'time' | null
   >(null);
-
-  useEffect(() => {
-    if (!openNativePicker) return;
-    function handler(e: MouseEvent) {
-      const buttonRef =
-        openNativePicker === 'date' ? dateButtonRef : timeButtonRef;
-      const inputRef =
-        openNativePicker === 'date' ? dateInputRef : timeInputRef;
-      if (buttonRef.current?.contains(e.target as Node)) return;
-      inputRef.current?.blur();
-      setOpenNativePicker(null);
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [openNativePicker]);
 
   // Pull threshold from prefs so the duration default matches what the
   // dashboard uses to decide qualifying vs short. Falls back to the
@@ -207,34 +190,10 @@ export default function LogCardio() {
     setPicking(false);
   }
 
-  function openDatePicker() {
-    const el = dateInputRef.current;
-    if (!el) return;
-    setOpenNativePicker('date');
-    if (typeof el.showPicker === 'function') {
-      try {
-        el.showPicker();
-        return;
-      } catch {
-        // Fallback below.
-      }
-    }
-    el.click();
-  }
-
-  function openTimePicker() {
-    const el = timeInputRef.current;
-    if (!el) return;
-    setOpenNativePicker('time');
-    if (typeof el.showPicker === 'function') {
-      try {
-        el.showPicker();
-        return;
-      } catch {
-        // Fallback below.
-      }
-    }
-    el.click();
+  function dismissNativePicker() {
+    if (openNativePicker === 'date') dateInputRef.current?.blur();
+    if (openNativePicker === 'time') timeInputRef.current?.blur();
+    setOpenNativePicker(null);
   }
 
   async function performSave() {
@@ -299,38 +258,36 @@ export default function LogCardio() {
       <section className="mt-6">
         <SectionLabel>When</SectionLabel>
         <div className="grid grid-cols-2 gap-2 mt-2">
-          <button
-            ref={dateButtonRef}
-            type="button"
-            onClick={openDatePicker}
+          {/* Date and Time fields: input is layered over the styled
+              surface as an invisible overlay (inset-0, opacity-0). A tap
+              anywhere on the surface lands directly on the input and the
+              native picker opens via the input's own click handling — no
+              showPicker() proxy, no <input> nested inside <button>
+              (invalid HTML that broke the time picker). onFocus / onBlur
+              drive the dismiss overlay state. */}
+          <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[64px] flex flex-col"
+            className="relative bg-card border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-card-mute">Date</p>
             <span className="mt-1 flex items-center justify-between gap-2">
               <span className="text-[15px] text-ink font-medium">{dateText}</span>
               <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
             </span>
-            {/* Hidden native input — the styled button drives it. */}
             <input
               ref={dateInputRef}
               type="date"
               value={dateISO}
-              onChange={(e) => {
-                setDateISO(e.target.value);
-                setOpenNativePicker(null);
-              }}
-              className="absolute opacity-0 w-0 h-0 pointer-events-none"
-              tabIndex={-1}
-              aria-hidden="true"
+              onChange={(e) => setDateISO(e.target.value)}
+              onFocus={() => setOpenNativePicker('date')}
+              onBlur={() => setOpenNativePicker(null)}
+              aria-label="Date"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-          </button>
-          <button
-            ref={timeButtonRef}
-            type="button"
-            onClick={openTimePicker}
+          </div>
+          <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[64px] flex flex-col"
+            className="relative bg-card border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-card-mute">
               Time · {bucket}
@@ -343,15 +300,13 @@ export default function LogCardio() {
               ref={timeInputRef}
               type="time"
               value={timeHHMM}
-              onChange={(e) => {
-                setTimeHHMM(e.target.value);
-                setOpenNativePicker(null);
-              }}
-              className="absolute opacity-0 w-0 h-0 pointer-events-none"
-              tabIndex={-1}
-              aria-hidden="true"
+              onChange={(e) => setTimeHHMM(e.target.value)}
+              onFocus={() => setOpenNativePicker('time')}
+              onBlur={() => setOpenNativePicker(null)}
+              aria-label="Time"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-          </button>
+          </div>
         </div>
       </section>
 
@@ -406,21 +361,24 @@ export default function LogCardio() {
         )}
       </section>
 
-      {/* Duration */}
-      <section className="mt-6">
-        <SectionLabel>Duration</SectionLabel>
+      {/* Duration + Intensity — paired blocks, equal width, equal
+          height (intensity stretches to match duration's natural
+          height via the grid's items-stretch default). Both share the
+          near-black surface and the mint left accent so they read as
+          a single visual unit. */}
+      <section className="mt-6 grid grid-cols-2 gap-2 items-stretch">
+        {/* Duration block */}
         <div
-          className="bg-card border border-card-edge rounded-xl py-1.5 px-2 mt-2 flex items-center gap-2"
-          style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+          style={{
+            borderLeftWidth: '2px',
+            borderLeftColor: '#5DCAA5',
+            padding: '14px 12px',
+          }}
+          className="bg-[#1a1a1a] rounded-lg flex flex-col items-center"
         >
-          <button
-            type="button"
-            onClick={() => bumpDuration(-5)}
-            aria-label="decrease duration by 5 minutes"
-            className="bg-charcoal text-ink rounded-lg w-11 h-11 text-[15px] font-medium border border-card-edge"
-          >
-            −5
-          </button>
+          <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+            Duration
+          </p>
           <input
             type="number"
             inputMode="numeric"
@@ -428,31 +386,48 @@ export default function LogCardio() {
             onChange={(e) => setDurationText(e.target.value)}
             onBlur={commitDuration}
             aria-label="duration in minutes"
-            // appearance overrides strip the native up/down spinner —
-            // the −5/+5 buttons own that interaction so the spinner is
-            // visual clutter that throws off the row's balance.
-            className="flex-1 min-w-0 bg-charcoal border border-card-edge text-ink rounded-lg px-2 h-11 text-[16px] text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            // Input itself is the grey panel — tap to type. Native up/
+            // down spinner suppressed so it doesn't fight the −5 / +5
+            // buttons or distort the panel proportions.
+            style={{ padding: '10px 24px' }}
+            className="mt-3 bg-card text-[#f0f0f0] text-[32px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
           />
-          <button
-            type="button"
-            onClick={() => bumpDuration(5)}
-            aria-label="increase duration by 5 minutes"
-            className="bg-charcoal text-ink rounded-lg w-11 h-11 text-[15px] font-medium border border-card-edge"
-          >
-            +5
-          </button>
-          <span className="text-[12px] text-card-mute pr-1">min</span>
+          <p className="text-[11px] text-card-mute mt-1">min</p>
+          <div className="flex gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => bumpDuration(-5)}
+              aria-label="decrease duration by 5 minutes"
+              className="bg-card text-white text-[16px] font-medium rounded-md"
+              style={{ width: '52px', height: '40px' }}
+            >
+              −5
+            </button>
+            <button
+              type="button"
+              onClick={() => bumpDuration(5)}
+              aria-label="increase duration by 5 minutes"
+              className="bg-card text-white text-[16px] font-medium rounded-md"
+              style={{ width: '52px', height: '40px' }}
+            >
+              +5
+            </button>
+          </div>
         </div>
-      </section>
 
-      {/* Intensity */}
-      <section className="mt-6">
-        <SectionLabel>Intensity</SectionLabel>
+        {/* Intensity block */}
         <div
-          className="bg-card border border-card-edge rounded-xl p-2 mt-2"
-          style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+          style={{
+            borderLeftWidth: '2px',
+            borderLeftColor: '#5DCAA5',
+            padding: '14px 12px',
+          }}
+          className="bg-[#1a1a1a] rounded-lg flex flex-col"
         >
-          <div className="grid grid-cols-3 gap-2">
+          <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold text-center">
+            Intensity
+          </p>
+          <div className="flex flex-col gap-1.5 mt-3">
             {INTENSITY_OPTIONS.map((opt) => {
               const active = opt.value === intensity;
               const visual = INTENSITY_VISUAL[opt.value];
@@ -463,16 +438,10 @@ export default function LogCardio() {
                   onClick={() => setIntensity(opt.value)}
                   style={
                     active
-                      ? {
-                          background: visual.bg,
-                          borderColor: visual.border,
-                          color: '#ffffff',
-                        }
-                      : undefined
+                      ? { background: visual.bg, color: '#f0f0f0' }
+                      : { background: '#686868', color: '#dddddd' }
                   }
-                  className={`min-h-[44px] rounded-lg text-[14px] font-medium border transition-colors ${
-                    active ? '' : 'bg-charcoal text-ink-body border-card-edge'
-                  }`}
+                  className="w-full rounded-md text-[13px] font-medium py-2.5 text-center transition-colors"
                 >
                   {opt.label}
                 </button>
@@ -520,6 +489,23 @@ export default function LogCardio() {
           onConfirm={() => {
             setRetroPrompt(null);
             void performSave();
+          }}
+        />
+      )}
+
+      {/* Dismiss overlay for native date / time picker. Sits above page
+          content but below the browser's system-rendered picker UI.
+          Clicking the picker itself goes to the picker (system layer);
+          clicking anywhere else hits this overlay and closes. mousedown
+          fires before the native picker can re-take focus, so the
+          subsequent blur() reliably closes the popup. */}
+      {openNativePicker && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-30"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            dismissNativePicker();
           }}
         />
       )}
