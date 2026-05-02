@@ -258,20 +258,30 @@ export default function LogCardio() {
       <section className="mt-6">
         <SectionLabel>When</SectionLabel>
         <div className="grid grid-cols-2 gap-2 mt-2">
-          {/* Date and Time fields: input is layered over the styled
-              surface as an invisible overlay (inset-0, opacity-0). A tap
-              anywhere on the surface lands directly on the input and the
-              native picker opens via the input's own click handling — no
-              showPicker() proxy, no <input> nested inside <button>
-              (invalid HTML that broke the time picker). onFocus / onBlur
-              drive the dismiss overlay state. */}
+          {/* Date and Time fields share the same structure. The input is
+              layered as an invisible overlay (inset-0, opacity-0) so a
+              tap on the surface lands directly on the input. Click then
+              explicitly calls showPicker() — this is the part the
+              previous fix missed: most browsers (Chrome, Safari macOS,
+              Firefox) don't open a popup on a plain *click* of a
+              type="time" input, they just focus it. Since the input is
+              transparent, that focus is invisible, so the field reads as
+              "broken." showPicker() is the API designed exactly to force
+              the popup; we call it on date as well for symmetry, with a
+              try/catch so older browsers fall back to natural click +
+              focus behavior. The console.log is intentional for
+              field diagnosis — if the user reports the time picker
+              broken on a new device, the log will tell us whether the
+              click is even reaching the input. */}
           <div
-            style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="relative bg-card border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
+            style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
+            className="relative bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
-            <p className="text-[10px] tracking-micro uppercase text-card-mute">Date</p>
+            <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+              Date
+            </p>
             <span className="mt-1 flex items-center justify-between gap-2">
-              <span className="text-[15px] text-ink font-medium">{dateText}</span>
+              <span className="text-[15px] text-[#f0f0f0] font-medium">{dateText}</span>
               <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
             </span>
             <input
@@ -281,19 +291,25 @@ export default function LogCardio() {
               onChange={(e) => setDateISO(e.target.value)}
               onFocus={() => setOpenNativePicker('date')}
               onBlur={() => setOpenNativePicker(null)}
+              onClick={() => {
+                const el = dateInputRef.current;
+                if (el && typeof el.showPicker === 'function') {
+                  try { el.showPicker(); } catch { /* fall back to focus */ }
+                }
+              }}
               aria-label="Date"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
           </div>
           <div
-            style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="relative bg-card border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
+            style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
+            className="relative bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
-            <p className="text-[10px] tracking-micro uppercase text-card-mute">
+            <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
               Time · {bucket}
             </p>
             <span className="mt-1 flex items-center justify-between gap-2">
-              <span className="text-[15px] text-ink font-medium">{timeText}</span>
+              <span className="text-[15px] text-[#f0f0f0] font-medium">{timeText}</span>
               <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
             </span>
             <input
@@ -303,6 +319,18 @@ export default function LogCardio() {
               onChange={(e) => setTimeHHMM(e.target.value)}
               onFocus={() => setOpenNativePicker('time')}
               onBlur={() => setOpenNativePicker(null)}
+              onClick={() => {
+                const el = timeInputRef.current;
+                console.log('[LogCardio] time input click', {
+                  hasShowPicker: !!el && typeof el.showPicker === 'function',
+                  active: document.activeElement === el,
+                });
+                if (el && typeof el.showPicker === 'function') {
+                  try { el.showPicker(); } catch (err) {
+                    console.warn('[LogCardio] showPicker(time) threw', err);
+                  }
+                }
+              }}
               aria-label="Time"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
