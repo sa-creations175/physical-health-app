@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: April 30, 2026 (v1.5)
+Last updated: May 2, 2026 (v1.6)
+
+**What changed in v1.6 (May 2, 2026):** Phase 2, Build 2.1 complete — cardio logger end-to-end, dashboard cardio card live-data-bound, Settings extended with the cardio threshold. Adds §Build 2.1 session log with the 7-commit trail, decisions log, schema additions, and follow-ups carried forward. Schema bumped to v4: new `cardio_types` store seeded with 10 starter activities, `cardio_logs` reshaped (session_id nullable, `cardio_type_id` FK, precise `started_at` ISO timestamp, `notes` nullable, indexed on `started_at` instead of `session_id`), `user_preferences` gains `cardio_threshold_minutes`. HealthKit + repeat-last-session + resume-in-progress strength remain Phase 2 follow-ups; this build is foundation for them.
 
 **What changed in v1.5 (April 30, 2026):** Phase 1 complete. Adds §Phase 1 complete — checkpoint with the full 31-commit trail (scaffold → close), grouped done-vs-deferred summary, the small follow-ups carried into Phase 2, and current build state. Schema bumped to v3 with the new `user_preferences` table; the design-philosophy body is unchanged. Phase 1 ships an installable, offline-capable PWA at 382 KB JS / 117 KB gzipped.
 
@@ -723,3 +725,104 @@ End-of-Phase-1 closure. Strength logging end-to-end, dashboard, exercise library
 - **Bundle**: 382 KB JS (117 KB gzipped), 9.8 KB CSS (3.0 KB gzipped). No PWA tooling dep; service worker is hand-rolled.
 - **Schema**: Dexie v3. Eleven tables, all `user_id`-keyed.
 - **Tree clean**, all 31 commits descriptive, Vercel-safe author email throughout. Ready to deploy whenever the user is.
+
+---
+
+## Build 2.1 session log — May 2, 2026
+
+End-of-session checkpoint for Phase 2's first build. Cardio is now first-class: a full logger lives at `/log/cardio`, the dashboard cardio card binds to live `cardio_logs` data, the streak counts cardio days from the new table, Settings exposes a configurable threshold for "qualifying" sessions, and a generic toast component is in place for any future save flow to reuse. HealthKit + Apple Watch import + repeat-last-session + resume-in-progress strength sessions remain Phase 2 follow-ups — none of them are blocked by this build.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `5b97c3d` | step 2.1.1: schema v4 — cardio_types + reshape cardio_logs |
+| 2 | `87bcb35` | step 2.1.2: timeBucket + cardioDateLabel helpers |
+| 3 | `eaf6e6d` | step 2.1.3: cardio peer in type-select + /log/cardio + Toast provider |
+| 4 | `889de02` | step 2.1.4: cardio logger screen |
+| 5 | `dadff2e` | step 2.1.5: cardio dashboard card live + streak counts cardio_logs |
+| 6 | `8d6be61` | step 2.1.6: Settings — Min cardio duration |
+| 7 | _(this commit)_ | docs: v1.6 Build 2.1 checkpoint |
+
+### Schema additions (Dexie v4)
+
+| Change | Detail |
+|---|---|
+| New store: `cardio_types` | `id, user_id, name, created_at, last_used_at`. Indexed on `user_id, last_used_at`. |
+| Reshape: `cardio_logs.session_id` | now `string \| null` — cardio doesn't always conjure a parent Session row. |
+| Reshape: `cardio_logs.type` (string) → `cardio_type_id` (FK) | inline activity name replaced by FK to `cardio_types`. |
+| New: `cardio_logs.started_at` | precise local-time intent serialized to ISO. Bucket label is computed at render time, never stored. |
+| New: `cardio_logs.updated_at` | for parity with the rest of the schema's audit columns. |
+| Reshape: `cardio_logs.notes` | now `string \| null`. |
+| Index move | `cardio_logs` indexed on `started_at` instead of `session_id` (week queries). |
+| New: `user_preferences.cardio_threshold_minutes` | default 20, backfilled by upgrade hook on the existing single row. |
+| Seeder | `cardio_types` seeded on first launch with Stairmaster, Run, Bike, Walk, Row, Elliptical, Swim, Hike, Jump rope, Dance via the existing in-flight-promise + dedupe pattern. |
+
+Twelve tables now (`cardio_types` is the new addition); all rows still carry `user_id = LOCAL_USER_ID` for clean Phase 6 sync migration.
+
+### Decisions made (and why)
+
+- **Cardio is its own data plane — no `Session` row.** Phase 1 cardio (in the `sessions` table with `type='cardio'`) was vestigial; the Build 2.1 logger writes straight to `cardio_logs` and `session_id` becomes nullable. The Session row was a tax on every cardio entry without giving anything back. `computeStreak` was updated to pull cardio days from `cardio_logs.started_at` directly so the streak doesn't silently break.
+- **Bucket label is computed, not stored.** Morning / Afternoon / Evening / Late night are derived from the timestamp at render time via `src/lib/timeBucket.ts`. A future tweak to the boundaries (or a "user picks their own boundaries" feature later) flows everywhere a log is rendered without a backfill.
+- **Threshold is `cardio_threshold_minutes`, not `cardio_minimum_minutes`.** Default 20. Below it = `SHORT` badge + 65% opacity in the expand panel + excluded from qualifying weekly count. Above-the-line minutes still count toward the "X min total" subline so a day of two 12-min walks isn't invisible. This honors the principle "attempts and time, not just outcomes" — short sessions are surfaced, just not falsely promoted.
+- **Tap-to-pick on Cardio peer in type-select; tap-to-select on strength peers.** Cardio routes immediately to `/log/cardio` because cardio doesn't need a "Start session" confirmation step. Strength still goes through "select then Start" so the user can change their pick before a Session row opens.
+- **Suggestion math stays strength-only.** The "Due next" badge was a strength-pillar concept driven by weekly lifting targets; cross-pillar suggestions ("you're behind on cardio — pick that") are deferred to a later design pass to avoid stacking heuristics before the principles for them are locked.
+- **Retroactive guard at >7 days.** Anything within the last week is logged silently. Past that window, a soft confirm modal names the date and the days-ago count and asks "Save anyway?" — same Personal-OS philosophy as truth-honoring defaults: no silent backdating into a stale week, but the user keeps full agency.
+- **Threshold default is read from prefs once on mount.** A `useRef` flag prevents a later live-query re-resolution from yanking a value out from under the user mid-edit. The `DEFAULT_CARDIO_THRESHOLD_MINUTES` constant is the fallback for the brief first-render frame before prefs resolve.
+- **Toast as a generic provider.** Even though only cardio save uses it today, it's wired through a `ToastProvider` at the app root with a `useToast()` hook, so the next save flow (nutrition, mobility) just imports and calls. Bottom-center, charcoal bg, 2s auto-dismiss, tap-to-dismiss, single-line. Positioned with `env(safe-area-inset-bottom) + 84px` so it floats above the bottom nav on notched iPhones.
+- **Most-used cardio chips fall back to alphabetical.** Five chips above the type field. With no logging history, fallback is the first five seeded types alphabetically (Bike, Dance, Elliptical, Hike, Jump rope) — keeps the chip row populated on a fresh install instead of leaving a hole.
+
+### What shipped
+
+**Logger (`/log/cardio`):**
+- Header with Cancel.
+- When section: side-by-side date / time fields. Native iOS picker triggered via hidden `<input>` + `showPicker()` (with `.click()` fallback). Time field shows the bucket label inline ("Time · Morning") so the user always sees the bucket the system has decided on.
+- Type section: most-used chips (top-right green when selected) + tap-to-open full picker (alphabetical, search, "+ Add new type" inline). Selected type surfaces "Last logged: {Type} · {duration} min · {Intensity}, {N} days ago." (or "earlier today" / "yesterday" for tight windows).
+- Duration section: −5 / +5 nudge buttons (44×44) + tap-to-type input. Default seeded once from `cardio_threshold_minutes`. 16px input text on iOS to dodge auto-zoom. Sanity ceiling 600 minutes.
+- Intensity: 3-pill segmented (Low / Moderate / High), default Moderate.
+- Notes: optional 2-row textarea.
+- Save: full-width green CTA → writes `cardio_logs` row + bumps the type's `last_used_at` via synced wrappers → fires toast → navigates to dashboard. Retro-guard intercepts saves >7 days back with a soft confirm.
+
+**Dashboard cardio card:**
+- Top-row mint micro-label + ✓ on completion.
+- Pills row: target count, qualifying = filled, remaining = dashed grey ring, all-filled when at-or-over target.
+- Count headline: "{qualifying}" + "/ {target} sessions".
+- Subline: "{minutes} min total" + " · {N} short" (suffix vanishes when N=0).
+- Progress bar: qualifying-only fill on a charcoal track.
+- Sub-copy: "{N} more to hit your week" / "You crushed your week" (mint).
+- Celebration: 3px mint top stripe + ✓ next to title when complete.
+- Overshoot: "+N OVER TARGET" mint micro-text right-aligned.
+- Whole card tappable → expand panel: "This week's sessions" grouped by day. Day label appears once per day, subsequent rows align in the same column. Below-threshold sessions render at 65% opacity with a SHORT badge. Intensity abbreviates to lowercase low / mod / high. Empty state: "No sessions logged this week yet" centered.
+
+**Settings:**
+- Existing weekly cardio target verified editable (was already in Phase 1; clamped 0–14).
+- New "Min cardio duration" row, default 20, clamped 1–180, save-on-blur, hint copy explains its effect on the dashboard.
+
+**Plumbing:**
+- `cardio_types` seeded with 10 starter activities via the lifecycle-aware seeder.
+- `getCardioSummary(threshold)` reads cardio_logs directly. Threshold is plumbed in from a live-queried `user_preferences` so dashboard re-renders the moment the user edits the threshold in Settings — no forced refetch needed.
+- `computeStreak` updated to union strength session dates with `cardio_logs.started_at` local-dates.
+- `ToastProvider` at the app root, `useToast()` hook for callsites.
+- Helpers: `src/lib/timeBucket.ts` (`timeBucketFor`, `timeBucketLabel`, `cardioDateLabel`, `clockLabel`), `src/lib/cardioHelpers.ts` (`createCardioLog`, `createCardioType`, `getMostUsedCardioTypes`, `getLastLogOfType`, `isRetroactive`, `localDateOf`).
+
+### What's deferred (Phase 2 follow-ups)
+
+- **HealthKit bridge decision (PWA WebView vs Capacitor) + integration.** Steps, active calories, resting HR, workout duration. One-tap import for Apple-Watch-detected workouts. Apple Watch dashboard card binding. Independent of this build — design doc still lists the decision as "assess at build time".
+- **Repeat last session** on the strength type-select screen (Phase 2 follow-up from Phase 1).
+- **Resume in-progress strength session** UX (orphan-tolerant data model is in place from Phase 1).
+- **Cardio target: sessions vs sessions + minutes.** Open question from v1; current Settings only exposes weekly session count. Revisit if the "X min total" subline starts feeling like the more meaningful metric in real use.
+
+### Known follow-ups carried into Phase 2.2+
+
+- **Cardio history page.** Out of scope for 2.1 by design. The expand panel covers this-week visibility; longer-range history would benefit from a dedicated route. Helpers (`getMostUsedCardioTypes`, `getLastLogOfType`, the bucket helper) are already shaped to power it.
+- **Cardio PRs / progressive-overload signals for cardio.** Same shape as strength — quiet inline indicators on a per-type detail surface. Not in 2.1.
+- **Per-cardio-type detail view.** A library-style "Run" detail page with sparkline + history. Pattern from `ExerciseDetail.tsx` ports cleanly when needed.
+- **Edit / delete a cardio_log.** Today saves are one-shot — no editing surface. Low-priority polish; the data model already supports it (we wrote `updated_at` on schema purpose, not just for sync).
+- **Bucket-boundary user override.** Current boundaries are locked. If a user genuinely lives nights, "Morning" starting at 5 AM may not match. Defer until a real complaint surfaces.
+
+### Current state
+
+- **Schema**: Dexie v4. Twelve tables, all `user_id`-keyed.
+- **Bundle**: 401 KB JS (122 KB gzipped), 11.4 KB CSS (3.4 KB gzipped). Modest growth from Phase 1's 382 / 117 — the new logger screen + toast + cardio query path account for it.
+- **Dev experience**: `npm run dev` boots clean, every step 2.1.* commit type-checks, `npm run build` succeeds.
+- **Tree clean**, 7 new commits descriptive, Vercel-safe author email throughout.
