@@ -65,6 +65,16 @@ export default function Settings() {
             updateUserPreferences({ cardio_target_weekly: v })
           }
         />
+        <NumberRow
+          label="Min cardio duration"
+          hint="Sessions below this minute count surface as 'short' on the dashboard and don't add to the qualifying weekly total."
+          value={prefs.cardio_threshold_minutes}
+          min={TARGET_RANGES.cardio_threshold.min}
+          max={TARGET_RANGES.cardio_threshold.max}
+          onCommit={(v) =>
+            updateUserPreferences({ cardio_threshold_minutes: v })
+          }
+        />
       </section>
 
       <section className="mt-7">
