@@ -187,6 +187,11 @@ function SessionList({ rows }: { rows: CardioSessionRow[] }) {
             <span className="text-ink-body whitespace-nowrap">
               {row.duration_minutes} min
             </span>
+            {row.distance_miles !== null && (
+              <span className="text-ink-body whitespace-nowrap">
+                {row.distance_miles.toFixed(1)} mi
+              </span>
+            )}
             <span className="text-card-mute w-10 text-right whitespace-nowrap">
               {INTENSITY_SHORT[row.intensity]}
             </span>

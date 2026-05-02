@@ -85,6 +85,11 @@ export interface CardioLog {
   // serialized to ISO). The morning/afternoon/evening/late-night bucket is
   // computed at render time from this — never stored as a separate field.
   started_at: string;
+  // Optional, only populated for distance-eligible types (Run / Bike /
+  // Walk / Hike / Row). Stored in miles to one decimal. null means
+  // "not measured" — informational only; qualifying-vs-short logic
+  // still runs off duration_minutes alone.
+  distance_miles: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

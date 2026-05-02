@@ -9,6 +9,7 @@ import {
   createCardioType,
   getMostUsedCardioTypes,
   getLastLogOfType,
+  isDistanceEligible,
   isRetroactive,
 } from '../lib/cardioHelpers';
 import {
@@ -89,6 +90,13 @@ export default function LogCardio() {
     String(DEFAULT_CARDIO_THRESHOLD_MINUTES),
   );
   const [intensity, setIntensity] = useState<Intensity>('moderate');
+  // Distance is opt-in: distanceShown gates the input (false → render
+  // the "Add distance" tap-target; true → render the input + nudge
+  // buttons). Only persisted when the selected type is in
+  // DISTANCE_ELIGIBLE_TYPES — see save handler below.
+  const [distanceShown, setDistanceShown] = useState(false);
+  const [distance, setDistance] = useState<number>(0);
+  const [distanceText, setDistanceText] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [picking, setPicking] = useState(false);
   const [retroPrompt, setRetroPrompt] = useState<{ daysAgo: number } | null>(null);
@@ -133,6 +141,7 @@ export default function LogCardio() {
     () => allTypes.find((t) => t.id === cardioTypeId) ?? null,
     [allTypes, cardioTypeId],
   );
+  const distanceEligible = isDistanceEligible(selectedType?.name);
 
   const [lastLog, setLastLog] = useState<{
     duration_minutes: number;
@@ -180,6 +189,44 @@ export default function LogCardio() {
     setDurationText(String(clamped));
   }
 
+  // 0.1-step nudges with floating-point safe rounding (0.1 + 0.2 isn't
+  // exactly 0.3 in IEEE-754, so round through *10). Clamp 0..100 — a
+  // 100-mile session covers Ironman + then some, plenty of headroom.
+  function bumpDistance(delta: number) {
+    const next = Math.max(
+      0,
+      Math.min(100, Math.round(((distance ?? 0) + delta) * 10) / 10),
+    );
+    setDistance(next);
+    setDistanceText(next.toFixed(1));
+  }
+
+  function commitDistance() {
+    const trimmed = distanceText.trim();
+    if (trimmed === '') {
+      // User cleared the field → revert to "Add distance" affordance.
+      setDistance(0);
+      setDistanceText('');
+      setDistanceShown(false);
+      return;
+    }
+    const parsed = parseFloat(trimmed);
+    if (Number.isNaN(parsed) || parsed < 0) {
+      setDistance(0);
+      setDistanceText('0.0');
+      return;
+    }
+    const clamped = Math.max(0, Math.min(100, Math.round(parsed * 10) / 10));
+    setDistance(clamped);
+    setDistanceText(clamped.toFixed(1));
+  }
+
+  function showDistanceInput() {
+    setDistanceShown(true);
+    setDistance(0);
+    setDistanceText('0.0');
+  }
+
   function openPicker() {
     setPicking(true);
   }
@@ -200,11 +247,17 @@ export default function LogCardio() {
     setSaving(true);
     try {
       const startedAt = composeStartedAt(dateISO, timeHHMM);
+      // Distance only persists when both the type is eligible AND the
+      // user actually entered a value (distanceShown). State for the
+      // input is preserved across type toggles, but a non-eligible
+      // type at save time always writes null.
+      const eligibleNow = isDistanceEligible(selectedType?.name);
       await createCardioLog({
         cardio_type_id: cardioTypeId,
         duration_minutes: duration,
         intensity,
         started_at: startedAt,
+        distance_miles: eligibleNow && distanceShown ? distance : null,
         notes: notes.trim() === '' ? null : notes.trim(),
       });
       const typeName = selectedType?.name ?? 'session';
@@ -381,7 +434,9 @@ export default function LogCardio() {
           near-black surface and the mint left accent so they read as
           a single visual unit. */}
       <section className="mt-6 grid grid-cols-2 gap-2 items-stretch">
-        {/* Duration block */}
+        {/* Duration block — collapses to a single Duration section on
+            non-eligible types; expands to stacked Time + Distance
+            sub-sections on Run / Bike / Walk / Hike / Row. */}
         <div
           style={{
             borderLeftWidth: '2px',
@@ -390,43 +445,147 @@ export default function LogCardio() {
           }}
           className="bg-[#1a1a1a] rounded-lg flex flex-col items-center"
         >
-          <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
-            Duration
-          </p>
-          <input
-            type="number"
-            inputMode="numeric"
-            value={durationText}
-            onChange={(e) => setDurationText(e.target.value)}
-            onBlur={commitDuration}
-            aria-label="duration in minutes"
-            // Input itself is the grey panel — tap to type. Native up/
-            // down spinner suppressed so it doesn't fight the −5 / +5
-            // buttons or distort the panel proportions.
-            style={{ padding: '10px 24px' }}
-            className="mt-3 bg-card text-[#f0f0f0] text-[32px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
-          />
-          <p className="text-[11px] text-card-mute mt-1">min</p>
-          <div className="flex gap-2 mt-3">
-            <button
-              type="button"
-              onClick={() => bumpDuration(-5)}
-              aria-label="decrease duration by 5 minutes"
-              className="bg-card text-white text-[16px] font-medium rounded-md"
-              style={{ width: '52px', height: '40px' }}
-            >
-              −5
-            </button>
-            <button
-              type="button"
-              onClick={() => bumpDuration(5)}
-              aria-label="increase duration by 5 minutes"
-              className="bg-card text-white text-[16px] font-medium rounded-md"
-              style={{ width: '52px', height: '40px' }}
-            >
-              +5
-            </button>
-          </div>
+          {distanceEligible ? (
+            <>
+              {/* TIME sub-section */}
+              <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+                Time
+              </p>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={durationText}
+                onChange={(e) => setDurationText(e.target.value)}
+                onBlur={commitDuration}
+                aria-label="duration in minutes"
+                style={{ padding: '8px 18px' }}
+                className="mt-3 bg-card text-[#f0f0f0] text-[28px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+              />
+              <p className="text-[11px] text-card-mute mt-1">min</p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => bumpDuration(-5)}
+                  aria-label="decrease duration by 5 minutes"
+                  className="bg-card text-white text-[15px] font-medium rounded-md"
+                  style={{ width: '44px', height: '32px' }}
+                >
+                  −5
+                </button>
+                <button
+                  type="button"
+                  onClick={() => bumpDuration(5)}
+                  aria-label="increase duration by 5 minutes"
+                  className="bg-card text-white text-[15px] font-medium rounded-md"
+                  style={{ width: '44px', height: '32px' }}
+                >
+                  +5
+                </button>
+              </div>
+
+              {/* Divider — 0.5px hairline using transform so subpixel
+                  thickness survives DPR rounding on high-density displays. */}
+              <div
+                aria-hidden="true"
+                className="w-full bg-[#333]"
+                style={{
+                  height: '1px',
+                  transform: 'scaleY(0.5)',
+                  marginTop: '14px',
+                  marginBottom: '14px',
+                }}
+              />
+
+              {/* DISTANCE sub-section */}
+              <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+                Distance
+              </p>
+              {distanceShown ? (
+                <>
+                  <input
+                    key="distance-input"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    autoFocus
+                    onFocus={(e) => e.currentTarget.select()}
+                    value={distanceText}
+                    onChange={(e) => setDistanceText(e.target.value)}
+                    onBlur={commitDistance}
+                    aria-label="distance in miles"
+                    style={{ padding: '8px 18px' }}
+                    className="mt-3 bg-card text-[#f0f0f0] text-[28px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                  />
+                  <p className="text-[11px] text-card-mute mt-1">mi</p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => bumpDistance(-0.1)}
+                      aria-label="decrease distance by 0.1 mile"
+                      className="bg-card text-white text-[15px] font-medium rounded-md"
+                      style={{ width: '44px', height: '32px' }}
+                    >
+                      −.1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => bumpDistance(0.1)}
+                      aria-label="increase distance by 0.1 mile"
+                      className="bg-card text-white text-[15px] font-medium rounded-md"
+                      style={{ width: '44px', height: '32px' }}
+                    >
+                      +.1
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={showDistanceInput}
+                  className="mt-3 w-full text-center text-green-mint font-medium text-[14px] py-2"
+                >
+                  Add distance
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+                Duration
+              </p>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={durationText}
+                onChange={(e) => setDurationText(e.target.value)}
+                onBlur={commitDuration}
+                aria-label="duration in minutes"
+                style={{ padding: '10px 24px' }}
+                className="mt-3 bg-card text-[#f0f0f0] text-[32px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+              />
+              <p className="text-[11px] text-card-mute mt-1">min</p>
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => bumpDuration(-5)}
+                  aria-label="decrease duration by 5 minutes"
+                  className="bg-card text-white text-[16px] font-medium rounded-md"
+                  style={{ width: '52px', height: '40px' }}
+                >
+                  −5
+                </button>
+                <button
+                  type="button"
+                  onClick={() => bumpDuration(5)}
+                  aria-label="increase duration by 5 minutes"
+                  className="bg-card text-white text-[16px] font-medium rounded-md"
+                  style={{ width: '52px', height: '40px' }}
+                >
+                  +5
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Intensity block */}

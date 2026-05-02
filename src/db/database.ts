@@ -179,6 +179,34 @@ export class PhysicalHealthDB extends Dexie {
       prompts: 'id, user_id, type, fired_at, dismissed_at',
       user_preferences: 'id, user_id',
     });
+
+    // v6: add cardio_logs.distance_miles for distance-eligible cardio
+    // types (Run / Bike / Walk / Hike / Row). Non-indexed column;
+    // backfill on upgrade so consumer code can treat the field as
+    // always-present, with null meaning "not measured."
+    this.version(6)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('cardio_logs')
+          .toCollection()
+          .modify((row: { distance_miles?: number | null }) => {
+            if (row.distance_miles === undefined) row.distance_miles = null;
+          });
+      });
   }
 }
 

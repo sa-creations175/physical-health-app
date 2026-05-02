@@ -35,6 +35,7 @@ export interface CardioSessionRow {
   duration_minutes: number;
   intensity: Intensity;
   qualifying: boolean; // duration_minutes >= threshold
+  distance_miles: number | null;
 }
 
 export interface CardioWeekSummary {
@@ -133,6 +134,7 @@ export async function getCardioSummary(
       duration_minutes: log.duration_minutes,
       intensity: log.intensity,
       qualifying,
+      distance_miles: log.distance_miles ?? null,
     });
   }
 

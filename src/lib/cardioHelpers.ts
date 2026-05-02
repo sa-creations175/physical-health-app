@@ -11,7 +11,28 @@ export interface CreateCardioLogInput {
   duration_minutes: number;
   intensity: Intensity;
   started_at: string; // ISO datetime — precise local intent serialized
+  distance_miles: number | null;
   notes: string | null;
+}
+
+// Distance is opt-in per type because measuring distance only makes
+// sense for certain activities (a 30-min Stairmaster session has no
+// meaningful "distance"). Match is case-insensitive against the
+// canonical name; user-added types fall outside the eligible set
+// unless they happen to share a name with one of these five.
+export const DISTANCE_ELIGIBLE_TYPES = [
+  'Run',
+  'Bike',
+  'Walk',
+  'Hike',
+  'Row',
+] as const;
+const DISTANCE_ELIGIBLE_SET = new Set(
+  DISTANCE_ELIGIBLE_TYPES.map((n) => n.toLowerCase()),
+);
+export function isDistanceEligible(typeName: string | null | undefined): boolean {
+  if (!typeName) return false;
+  return DISTANCE_ELIGIBLE_SET.has(typeName.trim().toLowerCase());
 }
 
 export async function createCardioLog(
@@ -26,6 +47,7 @@ export async function createCardioLog(
     duration_minutes: input.duration_minutes,
     intensity: input.intensity,
     started_at: input.started_at,
+    distance_miles: input.distance_miles,
     notes: input.notes,
     created_at: now,
     updated_at: now,
