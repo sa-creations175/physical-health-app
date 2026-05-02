@@ -98,6 +98,14 @@ export class PhysicalHealthDB extends Dexie {
     //   them as required even on rows that predate the migration.
     // - user_preferences: cardio_threshold_minutes backfilled on the
     //   existing single row.
+    //
+    // ⚠ NOTE FOR FUTURE READERS: v4's cardio_types index list omitted
+    // `name`, which broke the LogCardio picker's `orderBy('name')` query
+    // with SchemaError on first paint. Fix landed in v5 (below) — that
+    // version is index-only, so no upgrade callback is needed. Leaving
+    // this v4 declaration unchanged so any client that briefly opened
+    // the app between the v4 release and the v5 fix still walks a clean
+    // ladder. Newer code should treat v5 as the floor.
     this.version(4)
       .stores({
         sessions: 'id, user_id, type, date, created_at',
@@ -152,6 +160,25 @@ export class PhysicalHealthDB extends Dexie {
             },
           );
       });
+
+    // v5 (Build 2.1 hotfix): add `name` to the cardio_types index list
+    // so the LogCardio picker's `orderBy('name')` query resolves.
+    // Index-only change — Dexie auto-rebuilds the indexes on upgrade,
+    // no callback needed. All other stores stay byte-identical to v4.
+    this.version(5).stores({
+      sessions: 'id, user_id, type, date, created_at',
+      exercises: 'id, user_id, name, muscle_group, last_used_at',
+      session_exercises: 'id, session_id, exercise_id, order_index',
+      sets: 'id, session_exercise_id, set_number, created_at',
+      cardio_types: 'id, user_id, name, last_used_at',
+      cardio_logs: 'id, user_id, started_at, created_at',
+      nutrition_logs: 'id, user_id, date',
+      supplements: 'id, user_id, active',
+      health_checkins: 'id, user_id, type',
+      goals: 'id, user_id, pillar, parent_goal_id',
+      prompts: 'id, user_id, type, fired_at, dismissed_at',
+      user_preferences: 'id, user_id',
+    });
   }
 }
 
