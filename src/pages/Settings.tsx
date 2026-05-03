@@ -191,29 +191,29 @@ function NumberRow({
       style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
     >
       <div className="min-w-0">
-        <p className="text-[14px] text-ink flex items-center gap-1.5">
-          <span>{label}</span>
-          <span
-            aria-hidden={!showCheck}
-            className="text-green-mint text-[14px] leading-none transition-opacity duration-500"
-            style={{ opacity: showCheck ? 1 : 0 }}
-          >
-            ✓
-          </span>
-        </p>
+        <p className="text-[14px] text-ink">{label}</p>
         {hint && (
           <p className="text-[11px] text-card-mute mt-0.5">{hint}</p>
         )}
       </div>
-      <input
-        type="number"
-        inputMode="numeric"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={commit}
-        aria-label={label}
-        className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[72px] h-11 text-[16px] text-center"
-      />
+      <div className="flex items-center gap-2 shrink-0">
+        <input
+          type="number"
+          inputMode="numeric"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={commit}
+          aria-label={label}
+          className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[72px] h-11 text-[16px] text-center"
+        />
+        <span
+          aria-hidden={!showCheck}
+          className="text-green-mint text-[16px] leading-none w-3 transition-opacity duration-500"
+          style={{ opacity: showCheck ? 1 : 0 }}
+        >
+          ✓
+        </span>
+      </div>
     </div>
   );
 }
