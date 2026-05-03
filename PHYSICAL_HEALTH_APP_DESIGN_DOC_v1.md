@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 2, 2026 (v1.6)
+Last updated: May 3, 2026 (v1.7)
+
+**What changed in v1.7 (May 3, 2026):** Build 2.1 polish session — 11 commits covering principles-doc untrack, type-select tap-to-route parity, three iterations on the cardio time picker (the third one cracked it), date/time visual treatment to the dark-block style, paired Duration + Intensity side-by-side row, distance for distance-eligible cardio types (Run / Bike / Walk / Hike / Row), and Settings inline save confirmation. Schema bumped to v6: v5 was an index-only hotfix (added `name` to `cardio_types`) and v6 added `distance_miles` to `cardio_logs` with backfill. Adds §Build 2.1 polish session log with the full commit trail, decisions, schema deltas, UI/UX changes, and follow-ups.
 
 **What changed in v1.6 (May 2, 2026):** Phase 2, Build 2.1 complete — cardio logger end-to-end, dashboard cardio card live-data-bound, Settings extended with the cardio threshold. Adds §Build 2.1 session log with the 7-commit trail, decisions log, schema additions, and follow-ups carried forward. Schema bumped to v4: new `cardio_types` store seeded with 10 starter activities, `cardio_logs` reshaped (session_id nullable, `cardio_type_id` FK, precise `started_at` ISO timestamp, `notes` nullable, indexed on `started_at` instead of `session_id`), `user_preferences` gains `cardio_threshold_minutes`. HealthKit + repeat-last-session + resume-in-progress strength remain Phase 2 follow-ups; this build is foundation for them.
 
@@ -826,3 +828,111 @@ Twelve tables now (`cardio_types` is the new addition); all rows still carry `us
 - **Bundle**: 401 KB JS (122 KB gzipped), 11.4 KB CSS (3.4 KB gzipped). Modest growth from Phase 1's 382 / 117 — the new logger screen + toast + cardio query path account for it.
 - **Dev experience**: `npm run dev` boots clean, every step 2.1.* commit type-checks, `npm run build` succeeds.
 - **Tree clean**, 7 new commits descriptive, Vercel-safe author email throughout.
+
+---
+
+## Build 2.1 polish session log — May 3, 2026
+
+End-of-session checkpoint for the polish round that followed Build 2.1's close. Eleven commits, all incremental — fixes against real-use friction (tap behavior, picker dismiss, time picker), visual treatment unification (dark blocks across the cardio logger), and two new features that surfaced from in-use review (distance for run/bike/walk/hike/row, Settings inline save confirmation). Schema moved from v4 to v6 over the course of the session.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `57b4862` | chore: untrack principles doc (suite-level reference) |
+| 2 | `d3acd03` | fix(cardio): index name on cardio_types (Dexie v5) |
+| 3 | `da93d5b` | fix(log): tap-to-route on all type-select tiles |
+| 4 | `61ac3dc` | polish(cardio): dismiss + chip order + visual pass on /log/cardio |
+| 5 | `3302a08` | fix(cardio): picker dismiss + time picker open + paired duration/intensity layout |
+| 6 | `d2b788e` | fix(cardio): time picker showPicker() + dark date/time block treatment |
+| 7 | `5332152` | fix(cardio): use visible <input type="time"> — opacity-0 silently no-ops showPicker on time |
+| 8 | `e04c500` | chore(cardio): strip diagnostic console.log on time input |
+| 9 | `f531e53` | feat(cardio): distance for distance-eligible types |
+| 10 | `73b80cf` | feat(settings): inline save confirmation on every field |
+| 11 | `3b9ec4d` | fix(settings): move save check next to input, not label |
+
+### Decisions made (and why)
+
+- **Suite-level docs don't belong in the app's repo.** `PERSONAL_OS_DESIGN_PRINCIPLES_*.md` lives alongside the project but isn't part of its source tree. After it got pulled into a commit by a stray `add -A` sweep, untracked it (commit 1) and added a `.gitignore` pattern so future sweeps can't grab it back. Local copy preserved on disk for reference.
+- **All four type-select tiles tap-to-route — no select-then-Start.** Phase 1 strength tiles required a two-step (select tile, then tap Start), while cardio (added in 2.1) routed immediately on tap. The asymmetry was friction that Silas noticed in real use. Strength tiles still open a fresh `Session` row before navigating, so type plumbing through `createSession → /log/strength/active/:id → ActiveSession.session.type` is unchanged. A `routing` flag locks the tiles for the brief async window so a double-tap can't open two sessions.
+- **Suggestion math stays strength-only — explicitly preserved through the tap-to-route change.** Cross-pillar suggestion ("you're behind on cardio — pick that") is deferred to a later design pass. The "Due next" badge continues to surface only on strength tiles. Cardio peers without it.
+- **Native time picker fight: third attempt was the keeper.** Three commits (5, 6, 7) iterated on getting the time picker to open reliably. (1) Removed `<input>` nested inside `<button>` (invalid HTML — Safari was quietly refusing showPicker for time in that structure). (2) Added explicit `showPicker()` calls on click. (3) Discovered that `showPicker()` silently no-ops on `type="time"` when the input is `opacity:0` in some browsers (Safari especially — date is more lenient about visibility, time is not). Resolution: drop the invisible-overlay pattern for time, use a real visible `<input type="time">` styled to match the dark block. Date keeps the invisible-overlay + showPicker since it works there. Asymmetric structure but each input type uses the pattern that works for it. Console.log diagnostic stayed in for one verification round, then stripped (commit 8).
+- **Date/time picker outside-tap dismiss = fullscreen overlay.** Document mousedown listener didn't fire reliably (Chrome desktop's date popup intercepts outside clicks before they bubble to document). Switched to a fullscreen overlay rendered while a picker is open: clicks on the system-layer picker UI go to the picker, clicks anywhere else hit our overlay and call `blur()` on the input to force-close. More reliable across browsers.
+- **Cardio chip fallback is curated, not alphabetical.** Stairmaster, Run, Bike, Walk, Row — in that order — when the user has no cardio history. Alphabetical buried Run behind Bike / Dance / Elliptical. Used types still take priority and sort by recency; the curated list only fills remaining slots and skips any name already present.
+- **Picker placeholder copy: "Search or pick another."** Read clearer than "Pick activity" once the chip row is populated above the field. Explicitly names the relationship between chips and full picker.
+- **Dark-block visual treatment, applied unifiedly across the logger.** The Duration + Intensity row landed first in `#1a1a1a` near-black with a 2px mint left accent and mint micro-labels. The date/time fields followed in commit 6 — flipped from `#686868` (card grey) to the same near-black block, mint left accent matched, mini-labels became mint, values became `#f0f0f0`. The whole logger now reads as a unified palette.
+- **Duration + Intensity collapse into a single paired side-by-side row.** Two equal-width blocks instead of two stacked full-width sections. Intensity stretches via the grid's `items-stretch` to match Duration's natural height — pills get more room, which looks intentional rather than empty.
+- **Pills carry semantic color when selected.** Low = `#378ADD` (calm / Zone 2), Moderate = `#0F6E56` (primary accent), High = `#BA7517` (exertion). Unselected pills are filled grey `#686868` — never outline-only against the dark block (which would render the affordance invisible).
+- **Distance is opt-in per type — not a universal field.** A 30-min Stairmaster session has no meaningful "distance," so the section only appears for Run / Bike / Walk / Hike / Row. Match is case-insensitive against canonical names; user-added types fall outside the eligible set unless they share a name. Eligibility lives in `cardioHelpers.DISTANCE_ELIGIBLE_TYPES` so any future surface (history, per-type detail) reads the same source of truth.
+- **Distance state is preserved across type toggles.** A user who second-guesses their pick and switches Run → Stairmaster → Run shouldn't lose what they typed. State stays in memory; the *current* selected type's eligibility decides at save time. A non-eligible type at save always writes `null`.
+- **Distance is purely informational.** Qualifying-vs-short logic, the threshold, total-minutes summation, most-used chip ranking — all unchanged. Dashboard expand panel just appends a `5.2 mi` cell when present.
+- **Settings save confirmation fires on save success, not blur.** The mint ✓ only flips on after `await onCommit(...)` resolves. If the synced-write throws, control never reaches the line and the check stays hidden — correct error signal. A `useRef`-held timer drives a 2-second visible window with a 500ms opacity fade-out; quick consecutive edits clear and reschedule the timer so the check stays continuously visible through the re-edit instead of flickering off.
+- **Save check sits next to the value, not the label.** Initial implementation (commit 10) put the ✓ inline with the label on the left column. Real-use observation: the eye watches the input column when typing, so the confirmation should appear there. Commit 11 wrapped input + check in a small flex group with reserved space (`w-3`) so the check has somewhere to fade in/out without causing layout shift.
+- **All Settings fields go through `NumberRow`.** That meant the save-check feature lands once and covers all nine fields (lifting × 3, cardio target, cardio threshold, nutrition × 3, plus full-body) — no per-field plumbing.
+
+### Schema changes
+
+**Dexie v5 (`d3acd03`) — index-only hotfix.** `cardio_types` index list gained `name` so `LogCardio`'s picker `orderBy('name')` query resolves. v4 had omitted it, which broke the page on first paint with a `SchemaError`. No upgrade callback needed — Dexie auto-rebuilds indexes on upgrade. All other stores byte-identical to v4. The v4 declaration was preserved so any client that briefly opened the app between v4 release and this hotfix still walks a clean upgrade ladder.
+
+**Dexie v6 (`f531e53`) — distance for cardio.** `cardio_logs` gained `distance_miles: number | null`. Non-indexed column. Backfilled to `null` on upgrade so consumer code can treat the field as always-present. Indexes unchanged.
+
+| Version | Change | Upgrade |
+|---|---|---|
+| v5 | `cardio_types` index list adds `name` | Index-only — no callback |
+| v6 | `cardio_logs.distance_miles` added | Backfill `null` on existing rows |
+
+Twelve tables. All rows still carry `user_id = LOCAL_USER_ID` for clean Phase 6 sync migration.
+
+### UI / UX changes
+
+**Type-select screen (`/log/strength`):**
+- All four tiles tap-to-route — no separate "Start session" button.
+- In-flight tile keeps mint border for visual feedback while the others dim to 50%.
+- Subtext copy: "Pre-selected based on what's due this week" → "Tap to start logging."
+
+**Cardio logger (`/log/cardio`) — visual unification:**
+- Header gains a small mint heart-pulse glyph (inline SVG, no icon-lib dep).
+- Date / time fields flip to dark `#1a1a1a` block treatment with 2px mint left accent, mint micro-labels, `#f0f0f0` values, ⌄ chevrons (date only — time field uses native browser-rendered arrows / spinners since the visible-input pattern doesn't support our custom chevron without conflict).
+- Type picker placeholder: "Search or pick another."
+- Most-used chip fallback: curated order Stairmaster, Run, Bike, Walk, Row.
+- Native picker dismiss on outside tap via fullscreen overlay (replaces document mousedown approach).
+
+**Cardio logger — Duration + Intensity:**
+- Paired side-by-side blocks in dark `#1a1a1a` with mint left accents.
+- Duration block (non-eligible types): centered "DURATION" mint micro-label, 32px white digit on grey `#686868` panel (tap-to-type), "min" sublabel, −5 / +5 buttons (52×40, FILLED grey, no border, white 16px text).
+- Duration block (eligible types: Run / Bike / Walk / Hike / Row): expands to two stacked sub-sections. Top "TIME" sub-section (28px digit, 44×32 buttons), 0.5px `#333` divider, bottom "DISTANCE" sub-section ("Add distance" mint tap-target when empty; once tapped, same grey panel pattern with 28px input, "mi" sublabel, ±0.1 nudge buttons with floating-point-safe rounding).
+- Intensity block: three pills stacked vertically with 6px gap, FILLED grey `#686868` unselected, semantic color when selected (Low `#378ADD`, Moderate `#0F6E56`, High `#BA7517`). Block stretches to match Duration's natural height.
+- Notes textarea: mint left accent (extends the row-anchoring pattern).
+
+**Time picker (specifically):**
+- Real visible `<input type="time">` in the dark block (not the invisible-overlay pattern that date uses). Native UI affordances (Chrome popup / iOS wheel sheet / macOS spinners) signal interactivity.
+- `colorScheme: 'dark'` style nudge so browsers that respect it render picker UI in dark mode.
+- 16px font-size on the input dodges iOS Safari's auto-zoom-on-focus behavior.
+
+**Dashboard cardio card expand panel:**
+- When a session has distance, append a `5.2 mi` cell between duration and intensity (preserves the existing gap-3 visual rhythm).
+
+**Settings:**
+- Inline save confirmation: mint ✓ next to the input, fades in on save success, holds 2s, fades out (500ms transition).
+- Re-edit within the visible window cleans the timer and starts fresh — check stays continuously visible through the re-edit.
+- Reserved space (`w-3`) so the fade in/out doesn't cause layout shift.
+
+### Known follow-ups carried into next build
+
+- **HealthKit integration.** Steps, active calories, resting HR, workout duration; Apple Watch dashboard card binding; one-tap import for Watch-detected workouts. Bridge decision (PWA WebView vs Capacitor) still deferred. Independent of everything in this session.
+- **Repeat last session** on the strength type-select screen (Phase 2 follow-up from Phase 1).
+- **Resume in-progress strength session** UX (orphan-tolerant data model is in place from Phase 1).
+- **Cardio target: sessions vs sessions + minutes.** Open question; current Settings only exposes weekly session count. Revisit if "X min total" subline starts feeling like the more meaningful metric.
+- **Cardio history page.** Out of scope for 2.1 by design. The expand panel covers this-week visibility; longer-range history would benefit from a dedicated route. Helpers (`getMostUsedCardioTypes`, `getLastLogOfType`, `timeBucket`) are shaped to power it.
+- **Per-cardio-type detail view.** Library-style "Run" detail page with sparkline + history. Pattern from `ExerciseDetail.tsx` ports cleanly when needed.
+- **Edit / delete a cardio_log.** Today saves are one-shot. Low-priority polish; data model already supports it (`updated_at` is written on save).
+- **Distance unit (mi vs km).** Hard-coded to miles. If a user is metric-native, a setting flips the unit. Not on the radar for this build.
+- **Save-confirmation accessibility.** The ✓ is `aria-hidden` (visual-only). A polite live-region with "Saved" text would announce the success to screen readers. Defer.
+- **Bucket-boundary user override.** Locked at Morning 05:00 / Afternoon 12:00 / Evening 18:00 / Late night 00:00–04:59. Defer until a real complaint surfaces.
+
+### Current state
+
+- **Schema**: Dexie v6. Twelve tables, all `user_id`-keyed.
+- **Bundle**: 407.5 KB JS (122.9 KB gzipped), 12.8 KB CSS (3.6 KB gzipped). Up from v1.6's 401 / 122 — distance UI + save-confirmation timer state account for it.
+- **Dev experience**: `npm run dev` boots clean, every commit since v1.6 type-checks, `npm run build` succeeds.
+- **Tree clean**, 11 new commits descriptive, Vercel-safe author email throughout.
