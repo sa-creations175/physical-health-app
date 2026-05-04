@@ -17,6 +17,7 @@ import type {
 } from '../db/types';
 import { todayISODate, startOfWeekISODate } from './dateHelpers';
 import { getUserPreferences } from './userPreferences';
+import { getExerciseHistory } from './exerciseHistory';
 
 export async function createSession(type: SessionType): Promise<string> {
   const now = new Date().toISOString();
@@ -161,6 +162,171 @@ export async function getPreviousSessionForExercise(
     .sortBy('created_at');
 
   return { date: last.date, sets };
+}
+
+// ---------------------------------------------------------------------
+// Repeat last session (Build 2.2)
+// ---------------------------------------------------------------------
+
+export interface LastSessionSummary {
+  sessionId: string;
+  date: string;        // ISO YYYY-MM-DD — feeds shortDateLabel for the panel.
+  exerciseCount: number;
+}
+
+// Most recent COMPLETED session of the given type. Sort key is created_at
+// (ISO datetime) so two sessions logged on the same day still resolve in
+// the right order — same idiom composeExerciseHistory uses. Returns null
+// when no completed session of this type exists.
+export async function getLastSessionSummaryByType(
+  type: 'upper' | 'lower' | 'full_body',
+): Promise<LastSessionSummary | null> {
+  const sessions = await db.sessions
+    .where('type').equals(type)
+    .filter((s) => s.feel_rating !== null)
+    .toArray();
+  if (sessions.length === 0) return null;
+  sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const last = sessions[0];
+
+  const exerciseCount = await db.session_exercises
+    .where('session_id').equals(last.id)
+    .count();
+
+  return {
+    sessionId: last.id,
+    date: last.date,
+    exerciseCount,
+  };
+}
+
+// Repeat the most recent completed session of the given type:
+//   1. New Session row (feel_rating null = in-progress, today's date).
+//   2. For each exercise from the previous session (in order_index order):
+//        - Skip if the exercise no longer exists in the library.
+//        - Otherwise: new session_exercise link with the same order_index.
+//        - Pre-populate ONE set row from the previous session's last set
+//          (highest set_number) for that exercise. Carries: weight, reps,
+//          set_type, duration_seconds. Skip the set if the previous
+//          session had no sets logged for this exercise.
+//        - PR bump: if the most recent completed session set a PR for
+//          the exercise (per getExerciseHistory.entries[0].isPR) AND
+//          the carried set is rep-mode, weight += 5. Duration sets
+//          carry over unchanged.
+// Returns the new session id. Throws if no previous session exists —
+// caller should gate the entry point with getLastSessionSummaryByType
+// so this branch is unreachable through the UI.
+export async function repeatLastSession(
+  type: 'upper' | 'lower' | 'full_body',
+): Promise<string> {
+  // Fetch the most recent completed session + its exercise links + sets
+  // up front. The PR check per exercise uses getExerciseHistory below
+  // (one query per exercise — bounded N at typical 6–10).
+  const previous = await getMostRecentCompletedSession(type);
+  if (!previous) {
+    throw new Error('repeatLastSession: no completed session of this type');
+  }
+
+  const now = new Date().toISOString();
+  const newSession: Session = {
+    id: crypto.randomUUID(),
+    user_id: LOCAL_USER_ID,
+    type,
+    date: todayISODate(),
+    duration_minutes: null,
+    notes: '',
+    feel_rating: null,
+    created_at: now,
+    updated_at: now,
+  };
+  await syncedAdd(db.sessions, newSession);
+
+  for (const link of previous.exercises) {
+    const exists = await db.exercises.get(link.exercise_id);
+    if (!exists) continue;
+
+    const newLink: SessionExercise = {
+      id: crypto.randomUUID(),
+      session_id: newSession.id,
+      exercise_id: link.exercise_id,
+      order_index: link.order_index,
+    };
+    await syncedAdd(db.session_exercises, newLink);
+
+    const previousSets = previous.setsByLink.get(link.id) ?? [];
+    if (previousSets.length === 0) continue;
+
+    const lastSet = previousSets.reduce((best, s) =>
+      s.set_number > best.set_number ? s : best,
+    previousSets[0]);
+
+    // PR check: did the most recent completed session for this exercise
+    // hit the threshold? entries[0] is most-recent-first per
+    // composeExerciseHistory's slice/reverse contract.
+    const history = await getExerciseHistory(link.exercise_id, 1);
+    const wasPR = history.entries[0]?.isPR ?? false;
+
+    const carryWeight =
+      wasPR && lastSet.set_type === 'reps' ? lastSet.weight + 5 : lastSet.weight;
+
+    const newSet: SetEntry = {
+      id: crypto.randomUUID(),
+      session_exercise_id: newLink.id,
+      set_number: 1,
+      weight: carryWeight,
+      reps: lastSet.set_type === 'reps' ? lastSet.reps : 0,
+      duration_seconds: lastSet.duration_seconds,
+      set_type: lastSet.set_type,
+      completed: true,
+      created_at: new Date().toISOString(),
+    };
+    await syncedAdd(db.sets, newSet);
+
+    await syncedUpdate(db.exercises, link.exercise_id, {
+      last_used_at: new Date().toISOString(),
+    });
+  }
+
+  return newSession.id;
+}
+
+// Internal: bundles the previous session + its exercise links + a sets
+// map keyed by session_exercise_id. Pulled out so repeatLastSession
+// reads as a flat sequence rather than nesting the fetches inline.
+interface PreviousSessionBundle {
+  session: Session;
+  exercises: SessionExercise[];
+  setsByLink: Map<string, SetEntry[]>;
+}
+
+async function getMostRecentCompletedSession(
+  type: 'upper' | 'lower' | 'full_body',
+): Promise<PreviousSessionBundle | null> {
+  const sessions = await db.sessions
+    .where('type').equals(type)
+    .filter((s) => s.feel_rating !== null)
+    .toArray();
+  if (sessions.length === 0) return null;
+  sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const session = sessions[0];
+
+  const exercises = await db.session_exercises
+    .where('session_id').equals(session.id)
+    .sortBy('order_index');
+
+  const linkIds = exercises.map((e) => e.id);
+  const sets = linkIds.length === 0
+    ? []
+    : await db.sets.where('session_exercise_id').anyOf(linkIds).toArray();
+
+  const setsByLink = new Map<string, SetEntry[]>();
+  for (const s of sets) {
+    const arr = setsByLink.get(s.session_exercise_id) ?? [];
+    arr.push(s);
+    setsByLink.set(s.session_exercise_id, arr);
+  }
+
+  return { session, exercises, setsByLink };
 }
 
 // Pick the lifting type with the largest unmet target this week.

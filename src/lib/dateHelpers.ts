@@ -48,6 +48,17 @@ export function narrowDayLabel(isoDate: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'narrow' });
 }
 
+// Short weekday + month + day for inline context lines (e.g. the
+// repeat-last-session panel: "Mon Apr 28"). No comma between weekday
+// and date — the default locale rendering would emit "Mon, Apr 28";
+// we trim the comma to keep the line tight in dense surfaces.
+export function shortDateLabel(isoDate: string): string {
+  const d = new Date(isoDate + 'T00:00:00');
+  return d
+    .toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    .replace(',', '');
+}
+
 export function addDaysISO(iso: string, n: number): string {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + n);
