@@ -17,7 +17,6 @@ import type {
 } from '../db/types';
 import { todayISODate, startOfWeekISODate } from './dateHelpers';
 import { getUserPreferences } from './userPreferences';
-import { getExerciseHistory } from './exerciseHistory';
 
 export async function createSession(
   type: SessionType,
@@ -304,22 +303,20 @@ export async function getLastSessionSummaryByType(
 //        - Otherwise: new session_exercise link with the same order_index.
 //        - Pre-populate ONE set row from the previous session's last set
 //          (highest set_number) for that exercise. Carries: weight, reps,
-//          set_type, duration_seconds. Skip the set if the previous
-//          session had no sets logged for this exercise.
-//        - PR bump: if the most recent completed session set a PR for
-//          the exercise (per getExerciseHistory.entries[0].isPR) AND
-//          the carried set is rep-mode, weight += 5. Duration sets
-//          carry over unchanged.
+//          set_type, duration_seconds verbatim. Skip the set if the
+//          previous session had no sets logged for this exercise.
 // Returns the new session id. Throws if no previous session exists —
 // caller should gate the entry point with getLastSessionSummaryByType
 // so this branch is unreachable through the UI.
+//
+// NOTE (Build 2.2): the prior PR-driven `weight += 5` auto-bump was
+// removed alongside the overload prompt. The user decides when to add
+// weight; PR detection still surfaces visually in the exercise library
+// sparkline, but it no longer prescribes the next number.
 export async function repeatLastSession(
   type: 'upper' | 'lower' | 'full_body',
   date: string = todayISODate(),
 ): Promise<string> {
-  // Fetch the most recent completed session + its exercise links + sets
-  // up front. The PR check per exercise uses getExerciseHistory below
-  // (one query per exercise — bounded N at typical 6–10).
   const previous = await getMostRecentCompletedSession(type);
   if (!previous) {
     throw new Error('repeatLastSession: no completed session of this type');
@@ -359,20 +356,11 @@ export async function repeatLastSession(
       s.set_number > best.set_number ? s : best,
     previousSets[0]);
 
-    // PR check: did the most recent completed session for this exercise
-    // hit the threshold? entries[0] is most-recent-first per
-    // composeExerciseHistory's slice/reverse contract.
-    const history = await getExerciseHistory(link.exercise_id, 1);
-    const wasPR = history.entries[0]?.isPR ?? false;
-
-    const carryWeight =
-      wasPR && lastSet.set_type === 'reps' ? lastSet.weight + 5 : lastSet.weight;
-
     const newSet: SetEntry = {
       id: crypto.randomUUID(),
       session_exercise_id: newLink.id,
       set_number: 1,
-      weight: carryWeight,
+      weight: lastSet.weight,
       reps: lastSet.set_type === 'reps' ? lastSet.reps : 0,
       duration_seconds: lastSet.duration_seconds,
       set_type: lastSet.set_type,

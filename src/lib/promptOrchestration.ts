@@ -5,7 +5,7 @@ import type { PromptPriority, PromptRecord } from '../db/types';
 
 // Phase-1 scaffold for proactive prompts. The prompts table already exists
 // (Dexie v1) — this module is the thin coordinator that future triggers
-// (Phases 4/5: mobility staleness, progressive overload, etc.) will call to
+// (Phases 4/5: mobility staleness, weekly review, etc.) will call to
 // surface a prompt. It enforces the design doc's three rules:
 //
 //   1. Daily soft cap — no more than 2 prompts surface in a single day
@@ -29,9 +29,13 @@ interface PromptTypeDefinition {
 // Triggers can override the re-prompt window when calling firePrompt if a
 // specific instance warrants a different cooldown (e.g., week_review fires
 // once on Sunday evening and shouldn't re-surface mid-week).
+//
+// The earlier `progressive_overload_ready` type was removed in Build 2.2:
+// the in-session "ready to add weight?" suggestion is not coming back —
+// PR detection still lives in the exercise library sparkline, where it
+// surfaces quietly without prescribing the next number.
 export const PROMPT_TYPES = {
   mobility_stale: { priority: 'high', re_prompt_after_days: 3 },
-  progressive_overload_ready: { priority: 'medium', re_prompt_after_days: 7 },
   weekly_cardio_on_track: { priority: 'low', re_prompt_after_days: 7 },
   supplement_missed: { priority: 'low', re_prompt_after_days: 1 },
   health_checkin_overdue: { priority: 'high', re_prompt_after_days: 7 },
