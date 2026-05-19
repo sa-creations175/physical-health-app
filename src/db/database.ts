@@ -7,6 +7,7 @@ import type {
   SetEntry,
   CardioType,
   CardioLog,
+  DeliveryDay,
   NutritionLog,
   Supplement,
   HealthCheckin,
@@ -22,6 +23,7 @@ export class PhysicalHealthDB extends Dexie {
   sets!: Table<SetEntry, string>;
   cardio_types!: Table<CardioType, string>;
   cardio_logs!: Table<CardioLog, string>;
+  delivery_days!: Table<DeliveryDay, string>;
   nutrition_logs!: Table<NutritionLog, string>;
   supplements!: Table<Supplement, string>;
   health_checkins!: Table<HealthCheckin, string>;
@@ -236,6 +238,28 @@ export class PhysicalHealthDB extends Dexie {
             if (row.notes === undefined) row.notes = null;
           });
       });
+
+    // v8 (Build 2.3): new `delivery_days` store powering the
+    // "no-delivery streak" dashboard card. One row per user per day,
+    // present only when the user has actively marked the day. Absence
+    // of a row = unmarked. Indexed on user_id + date so weekly + streak
+    // queries don't scan. New store has no rows on upgrade, so no
+    // backfill hook is needed — every other store stays byte-identical.
+    this.version(8).stores({
+      sessions: 'id, user_id, type, date, created_at',
+      exercises: 'id, user_id, name, muscle_group, last_used_at',
+      session_exercises: 'id, session_id, exercise_id, order_index',
+      sets: 'id, session_exercise_id, set_number, created_at',
+      cardio_types: 'id, user_id, name, last_used_at',
+      cardio_logs: 'id, user_id, started_at, created_at',
+      delivery_days: 'id, user_id, date',
+      nutrition_logs: 'id, user_id, date',
+      supplements: 'id, user_id, active',
+      health_checkins: 'id, user_id, type',
+      goals: 'id, user_id, pillar, parent_goal_id',
+      prompts: 'id, user_id, type, fired_at, dismissed_at',
+      user_preferences: 'id, user_id',
+    });
   }
 }
 

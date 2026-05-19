@@ -158,6 +158,21 @@ export interface UserPreferences {
   updated_at: string;
 }
 
+// One row per day per user — only present for days the user has actively
+// marked. Absence of a row = unmarked (neither clean nor ordered);
+// presence with status 'clean' = a no-delivery day; 'ordered' = the
+// user broke the streak. The streak math walks backward from today
+// over the rows; "ordered" or "no row at this date" both break the
+// streak. Eating out socially does NOT count — only delivery orders.
+export interface DeliveryDay {
+  id: string;
+  user_id: string;
+  date: string; // YYYY-MM-DD (local)
+  status: 'clean' | 'ordered';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PromptRecord {
   id: string;
   user_id: string;
