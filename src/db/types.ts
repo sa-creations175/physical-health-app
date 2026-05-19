@@ -46,6 +46,7 @@ export interface SessionExercise {
   session_id: string;
   exercise_id: string;
   order_index: number;
+  notes: string | null;
 }
 
 export interface SetEntry {

@@ -48,6 +48,7 @@ export async function addExerciseToSession(
     session_id: sessionId,
     exercise_id: exerciseId,
     order_index: existing.length,
+    notes: null,
   };
   await syncedAdd(db.session_exercises, link);
   await syncedUpdate(db.exercises, exerciseId, {
@@ -250,6 +251,7 @@ export async function repeatLastSession(
       session_id: newSession.id,
       exercise_id: link.exercise_id,
       order_index: link.order_index,
+      notes: null,
     };
     await syncedAdd(db.session_exercises, newLink);
 

@@ -207,6 +207,35 @@ export class PhysicalHealthDB extends Dexie {
             if (row.distance_miles === undefined) row.distance_miles = null;
           });
       });
+
+    // v7 (Build 2.2): add `notes` to session_exercises so each exercise
+    // inside an active session can carry a free-form note (e.g. form
+    // cue, equipment swap). Non-indexed column; backfill to null on
+    // upgrade so consumer code can treat the field as always-present,
+    // with null meaning "no note." Index list unchanged.
+    this.version(7)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('session_exercises')
+          .toCollection()
+          .modify((row: { notes?: string | null }) => {
+            if (row.notes === undefined) row.notes = null;
+          });
+      });
   }
 }
 
