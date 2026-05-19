@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 3, 2026 (v1.7)
+Last updated: May 19, 2026 (v1.8)
+
+**What changed in v1.8 (May 19, 2026):** Build 2.2 — strength logger gets its in-session ergonomics pass. Drafts (sessions with `feel_rating` null) now surface as a Resume badge on the type-select tile, tagged with the start time; a "Discard session" link in the active screen cascades sets → links → session for clean exit. Session date is editable on both the type-select screen (defaults today) and the completion screen (in case retro is decided last). Exercises in an active session can be deleted (with confirm) and drag-reordered (HTML5 DnD, ☰ handle). Each exercise carries a free-form note that surfaces on the completion summary. The dashboard lifting tiles now tap-to-route (`/log/strength?type=X`) instead of expanding an in-place detail panel — that panel is removed. The cardio card swaps total minutes for **qualifying** minutes ("X min this week") so the stat tracks the same definition of "counts" as the headline. The in-session progressive-overload suggestion is removed entirely — no prompt, no +5lb pre-fill, no indicator; PR detection still surfaces quietly in the exercise library sparkline. Schema bumps to v7: `session_exercises.notes` non-indexed column, backfilled to null on upgrade. Adds §Build 2.2 session log with the full commit trail, decisions, and schema delta.
 
 **What changed in v1.7 (May 3, 2026):** Build 2.1 polish session — 11 commits covering principles-doc untrack, type-select tap-to-route parity, three iterations on the cardio time picker (the third one cracked it), date/time visual treatment to the dark-block style, paired Duration + Intensity side-by-side row, distance for distance-eligible cardio types (Run / Bike / Walk / Hike / Row), and Settings inline save confirmation. Schema bumped to v6: v5 was an index-only hotfix (added `name` to `cardio_types`) and v6 added `distance_miles` to `cardio_logs` with backfill. Adds §Build 2.1 polish session log with the full commit trail, decisions, schema deltas, UI/UX changes, and follow-ups.
 
@@ -446,6 +448,7 @@ exercises (library)
 
 session_exercises
   id, session_id, exercise_id, order_index
+  notes: string | null                    -- added v1.8 (Dexie v7)
 
 sets
   id, session_exercise_id, set_number
@@ -707,7 +710,7 @@ End-of-Phase-1 closure. Strength logging end-to-end, dashboard, exercise library
 **Phase 5 — Health check-ins + Goals + Prompts**
 - Health check-in tracker.
 - Goals layer per pillar.
-- Register prompt triggers (mobility stale, progressive overload, supplement missed, weekly cardio, health overdue, week review) into the orchestrator built in step 8.
+- Register prompt triggers (mobility stale, supplement missed, weekly cardio, health overdue, week review) into the orchestrator built in step 8. The progressive-overload trigger that was originally on this list was dropped in Build 2.2 — the user decides when to add weight; PR detection still surfaces visually in the exercise library.
 - PR-on-save trigger as the orchestrator's first consumer (visual PR surface already ships via live query; the explicit save-time hook is deferred since there's no consumer in Phase 1).
 
 **Phase 6+** — Supabase backend, cross-device sync, Personal OS meta-dashboard integration, detraining detection after gaps.
@@ -920,9 +923,7 @@ Twelve tables. All rows still carry `user_id = LOCAL_USER_ID` for clean Phase 6 
 ### Known follow-ups carried into next build
 
 - **HealthKit integration.** Steps, active calories, resting HR, workout duration; Apple Watch dashboard card binding; one-tap import for Watch-detected workouts. Bridge decision (PWA WebView vs Capacitor) still deferred. Independent of everything in this session.
-- **Repeat last session** on the strength type-select screen (Phase 2 follow-up from Phase 1).
-- **Resume in-progress strength session** UX (orphan-tolerant data model is in place from Phase 1).
-- **Cardio target: sessions vs sessions + minutes.** Open question; current Settings only exposes weekly session count. Revisit if "X min total" subline starts feeling like the more meaningful metric.
+- **Cardio target: sessions vs sessions + minutes.** Open question; current Settings only exposes weekly session count. Revisit if "X min this week" starts feeling like the more meaningful metric.
 - **Cardio history page.** Out of scope for 2.1 by design. The expand panel covers this-week visibility; longer-range history would benefit from a dedicated route. Helpers (`getMostUsedCardioTypes`, `getLastLogOfType`, `timeBucket`) are shaped to power it.
 - **Per-cardio-type detail view.** Library-style "Run" detail page with sparkline + history. Pattern from `ExerciseDetail.tsx` ports cleanly when needed.
 - **Edit / delete a cardio_log.** Today saves are one-shot. Low-priority polish; data model already supports it (`updated_at` is written on save).
@@ -936,3 +937,102 @@ Twelve tables. All rows still carry `user_id = LOCAL_USER_ID` for clean Phase 6 
 - **Bundle**: 407.5 KB JS (122.9 KB gzipped), 12.8 KB CSS (3.6 KB gzipped). Up from v1.6's 401 / 122 — distance UI + save-confirmation timer state account for it.
 - **Dev experience**: `npm run dev` boots clean, every commit since v1.6 type-checks, `npm run build` succeeds.
 - **Tree clean**, 11 new commits descriptive, Vercel-safe author email throughout.
+
+---
+
+## Build 2.2 session log — May 19, 2026
+
+End-of-session checkpoint for the strength logger's in-session ergonomics pass. Nine commits, three threads: (a) draft / resume + discard + retroactive dates close the long-standing "I tapped Log session twice and got a ghost row" gap; (b) per-exercise affordances (delete, drag-reorder, free-form notes) reach feature parity with the cardio logger's tactile polish; (c) the dashboard catches up — lifting tiles route directly into logging, the cardio card swaps total minutes for qualifying minutes. The overload prompt scaffold (including its weight pre-fill in `repeatLastSession`) is removed entirely — the user decides when to add weight.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `86bd137` | feat(db): schema v7 — session_exercises.notes |
+| 2 | `4f8ca26` | feat(strength): resume in-progress drafts; discard option |
+| 3 | `4efab41` | feat(strength): editable session date on log + complete screens |
+| 4 | `bf58ecd` | feat(strength): remove exercise from active session |
+| 5 | `7a1be9f` | feat(strength): drag to reorder exercises in active session |
+| 6 | `3ac4c2e` | feat(strength): per-exercise notes in active session |
+| 7 | `d0392e1` | refactor: remove progressive overload prompt scaffolding |
+| 8 | `4ede96d` | feat(dashboard): lifting tiles route straight to /log/strength |
+| 9 | `d5f0474` | feat(cardio): qualifying weekly minutes on dashboard card |
+| 10 | _(this commit)_ | docs: v1.8 Build 2.2 session log |
+
+### Schema delta (Dexie v7)
+
+| Change | Detail |
+|---|---|
+| `session_exercises.notes: string \| null` | Per-exercise free-form note (form cue, equipment swap, etc.). Non-indexed column; backfilled to `null` on upgrade via `tx.table('session_exercises').toCollection().modify(...)`. Index list unchanged. Consumer code can treat the field as always-present. |
+
+The store index strings stay byte-identical to v6 — only the row shape changes, so Dexie's upgrade path is the standard "modify each row" hook. Twelve tables now; no new ones.
+
+### Decisions made (and why)
+
+- **Resume beats Repeat-panel beats Fresh.** When a tile has an orphan draft AND a completed last session, Resume wins — the half-finished workout is the more actionable signal. The repeat-panel only opens when no draft exists. Conceptually: orphan = active work; repeat panel = pick a plan; fresh creation = no history.
+- **Resume badge shows the START TIME, not "x minutes ago".** Two reasons: (a) the start time anchors the draft to a moment the user remembers ("oh, the 2:14 PM one — that was the lower body I bailed on after squats"); (b) "X min ago" creeps every render and would force a re-render heartbeat on the type-select screen, which is otherwise inert.
+- **Discard is below the primary CTAs and styled quiet.** Dotted underline, card-mute text, sits at the bottom — same pattern as "Cancel" affordances elsewhere. A confirm dialog with a destructive-red action gates the actual delete. Cascade order is sets → links → session so a partial failure can't leave dangling children that the tile would still see as a draft.
+- **Session date editable on both ends.** The type-select screen defaults to today and the chosen date threads through `createSession` / `repeatLastSession` into the new row. The completion screen exposes the same field so a forgotten retro decision (or a wrong-tap on the dashboard tile) is still recoverable before save. Existing dashboard queries already read `session.date` (not `created_at`), so retroactive sessions land in the correct week / streak / dashboard count without a separate audit.
+- **Exercise delete with confirm, set delete without.** The per-set × is one tap because a misclick costs one row and the prior weight is right there to retype. The per-exercise × wipes the whole exercise plus all its sets — that's a heavier mistake to make accidentally, so it gets an inline confirm with a destructive-red action and a Cancel.
+- **HTML5 drag-and-drop, no new dependency.** The spec said no new library; native drag events handle this fine at six-to-ten rows. Optimistic ordering during drag via a local override state so the reorder feels instant; once the persistence call resolves and the live query catches up, the override clears. The handle (☰) is decorative — the whole row is `draggable` — so the user doesn't have to thumb a small target.
+- **Note input opens expanded when a saved note exists, collapsed otherwise.** Two states for the same field — collapsed shows an "Add note" mint tap-target (low visual weight, no border), expanded shows a single-line input. Saves on blur, not keystroke. Clearing the field on blur stores `null` and collapses again so the affordance is self-cleaning. The completion-screen summary surfaces all non-empty notes in their `order_index` order.
+- **Progressive-overload prompt removed in full.** No prompt, no `+= 5lb` pre-fill in `repeatLastSession`, no `progressive_overload_ready` entry in `PROMPT_TYPES`. PR detection in `composeExerciseHistory` and the library sparkline stays — PRs still surface visually, they just no longer prescribe the next number. Decision rationale: prescribing weight removes the user's judgment from the action that requires the most judgment (load progression on the right day, with the right body).
+- **Dashboard tile tap-to-route replaces the in-place detail panel.** The expanded "7-day dots + last session summary" panel is removed. Reasoning: the panel's job overlapped with what the tile already shows (count + streak), and tapping the tile to expand a panel and THEN tap "Log session" is two motions for one decision. Now: tap the tile → land in the type-select screen with the type pre-fired through `?type=X`, which runs the same Resume / repeat-panel / new-session decision tree as a manual tap. The primary "Log session" CTA still routes to type-select with no pre-selection for the "I'll decide on the screen" path.
+- **Cardio "qualifying minutes" replaces "total minutes."** The dashboard headline counts qualifying sessions (≥ threshold); a stat labeled "total minutes" that included sub-threshold sessions was inconsistent with that headline. The new "X min this week" stat counts only qualifying sessions. Short sessions stay visible — both as a "· N short" tail on the same line and as 65%-opacity rows in the expanded list — but the headline-level number is now self-consistent.
+
+### What shipped
+
+**Schema:**
+- Dexie v7: `session_exercises.notes` non-indexed, backfilled to null on upgrade. v6→v7 is a row-shape-only migration; index strings unchanged.
+
+**Type-select screen (`/log/strength`):**
+- Resume badge replaces the "Due next" badge on a tile when an orphan draft exists for that type. Sub-label: `started 2:14 PM`. Tapping a Resume tile bypasses the repeat panel and routes straight to `/log/strength/active/:id` for the draft — no new row.
+- `Session date` DateBlock below the four tiles. Defaults to today; tapping opens the native date picker. The chosen date threads through `createSession` and `repeatLastSession`.
+- Query-param entry: `/log/strength?type=lower` (etc.) — when both async queries have loaded, the page auto-fires the same `handleTap` it would on a manual tap.
+- DateBlock primitive (`src/components/ui/DateBlock.tsx`) — the cardio logger's date field factored out: dark `#1a1a1a` surface, mint `#5DCAA5` left accent, "Today / Yesterday / Mon Apr 28" rendered value, invisible-overlay `<input type="date">` with `showPicker()`.
+
+**Active session screen:**
+- ☰ drag handle on each exercise row header (decorative). Whole row is draggable via HTML5 DnD. Optimistic local override during drag; `reorderSessionExercises` rewrites `order_index` for every row whose position actually changed.
+- `×` exercise delete in the header. Inline confirm strip below the header with Cancel / destructive-red Remove. `removeExerciseFromSession` cascades sets → link.
+- `Add note` collapsible per exercise. Tap to expand into a single-line input; existing notes open expanded. Blur saves via `updateSessionExerciseNotes` (null on empty, trimmed string otherwise).
+- `Discard session` quiet text link below the Finish CTA. Confirm dialog → `discardSession` cascades sets → links → session, then navigates back to type-select.
+
+**Completion screen:**
+- Editable `Session date` DateBlock above the feel-rating selector. Writes through to `session.date` on change via `updateSessionDate`.
+- `Exercise notes` summary section (only mounts when at least one note is non-empty): exercise name + note text per row, ordered by `order_index`, muted style.
+
+**Dashboard:**
+- Lifting tiles: tap navigates to `/log/strength?type=X`. The in-place 7-day-dots + last-session panel and its toggle state are removed.
+- Cardio card: "X min total" replaced with "X min this week" (qualifying minutes only). Short-count tail kept (` · N short` suffix when N > 0). `CardioWeekSummary.totalMinutes` renamed `qualifyingMinutes`; CardioSection was the only consumer.
+
+**Strength helpers (`src/lib/strengthHelpers.ts`):**
+- `createSession(type, date?)` — date optional, defaults today.
+- `repeatLastSession(type, date?)` — date optional, defaults today. PR-driven `+= 5` removed; carried set copies weight verbatim.
+- `updateSessionDate(sessionId, date)` — used by the completion screen.
+- `getDraftSessionByType(type)` / `DraftSessionSummary` — most-recent orphan + start timestamp.
+- `discardSession(sessionId)` — cascade delete.
+- `removeExerciseFromSession(sessionExerciseId)` — cascade delete for one exercise.
+- `reorderSessionExercises(orderedIds, current)` — rewrite `order_index` only where it changed.
+- `updateSessionExerciseNotes(sessionExerciseId, notes)`.
+
+**Date helpers:** `timeOfDayLabel(iso)` — "2:14 PM" (12h, no leading zero, uppercase AM/PM). Drives the Resume badge's secondary line.
+
+**Prompt orchestration:** `progressive_overload_ready` removed from `PROMPT_TYPES`. Header comment updated to note the change. No registered triggers in Phase 1 — the change is scaffold-level.
+
+### Known follow-ups carried into next build
+
+- **Retroactive edit of an already-completed session date.** v1.8 ships editable date *before* and *during* a session (type-select default, completion screen). Once a session is saved, there's no editing surface — a misdated session has to be discarded and re-created. Next sensible home for this is the dashboard's expanded lifting panel, or a future strength history page. Schema already supports it (`updated_at` ticks on every write).
+- **HealthKit integration.** Still deferred. Bridge decision (PWA WebView vs Capacitor) outstanding.
+- **Cardio target: sessions vs sessions + minutes.** Open. Now that "X min this week" is qualifying-only, the question of whether to expose a minutes target alongside the session count becomes more answerable — revisit after some real-use weeks.
+- **Per-cardio-type detail view + cardio history page.** Same as v1.7.
+- **Edit / delete a cardio_log.** Same as v1.7.
+- **Distance unit (mi vs km).** Same as v1.7.
+- **Save-confirmation accessibility (Settings).** Same as v1.7.
+- **Bucket-boundary user override (cardio).** Same as v1.7.
+- **Drag affordance on touch devices.** HTML5 DnD works on touch in modern WebKit, but the spec is desktop-first. If a touch user reports the drag feels unresponsive, the fallback would be a long-press-to-grab gesture or moving to a pointer-events library. Not blocking — current pass is fine for the target device's WebKit.
+
+### Current state
+
+- **Schema**: Dexie v7. Twelve tables, all `user_id`-keyed. `session_exercises.notes` added (null backfill).
+- **Dev experience**: `npm run dev` boots clean, every Build 2.2 commit type-checks, `npm run build` succeeds.
+- **Tree clean**, 10 new commits descriptive (including this docs commit), Vercel-safe author email throughout.
