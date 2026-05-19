@@ -19,13 +19,16 @@ import { todayISODate, startOfWeekISODate } from './dateHelpers';
 import { getUserPreferences } from './userPreferences';
 import { getExerciseHistory } from './exerciseHistory';
 
-export async function createSession(type: SessionType): Promise<string> {
+export async function createSession(
+  type: SessionType,
+  date: string = todayISODate(),
+): Promise<string> {
   const now = new Date().toISOString();
   const session: Session = {
     id: crypto.randomUUID(),
     user_id: LOCAL_USER_ID,
     type,
-    date: todayISODate(),
+    date,
     duration_minutes: null,
     notes: '',
     feel_rating: null,
@@ -96,6 +99,16 @@ export async function updateSet(
 
 export async function deleteSet(setId: string): Promise<void> {
   await syncedDelete(db.sets, setId);
+}
+
+export async function updateSessionDate(
+  sessionId: string,
+  date: string,
+): Promise<void> {
+  await syncedUpdate(db.sessions, sessionId, {
+    date,
+    updated_at: new Date().toISOString(),
+  });
 }
 
 export async function completeSession(
@@ -261,6 +274,7 @@ export async function getLastSessionSummaryByType(
 // so this branch is unreachable through the UI.
 export async function repeatLastSession(
   type: 'upper' | 'lower' | 'full_body',
+  date: string = todayISODate(),
 ): Promise<string> {
   // Fetch the most recent completed session + its exercise links + sets
   // up front. The PR check per exercise uses getExerciseHistory below
@@ -275,7 +289,7 @@ export async function repeatLastSession(
     id: crypto.randomUUID(),
     user_id: LOCAL_USER_ID,
     type,
-    date: todayISODate(),
+    date,
     duration_minutes: null,
     notes: '',
     feel_rating: null,

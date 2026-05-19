@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
-import { completeSession } from '../lib/strengthHelpers';
+import { completeSession, updateSessionDate } from '../lib/strengthHelpers';
 import { SectionLabel } from '../components/ui/primitives';
+import DateBlock from '../components/ui/DateBlock';
 import type { FeelRating } from '../db/types';
 
 const FEEL_OPTIONS: {
@@ -121,6 +122,22 @@ export default function SessionComplete() {
             </p>
             <p className="text-[10px] text-card-mute mt-0.5">lb·reps</p>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <SectionLabel>Session date</SectionLabel>
+        <div className="mt-2">
+          <DateBlock
+            value={session.date}
+            onChange={(next) => {
+              if (next && next !== session.date) {
+                void updateSessionDate(session.id, next);
+              }
+            }}
+            label="Date"
+            ariaLabel="Session date"
+          />
         </div>
       </div>
 

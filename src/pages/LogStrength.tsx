@@ -10,7 +10,12 @@ import {
   type DraftSessionSummary,
   type LastSessionSummary,
 } from '../lib/strengthHelpers';
-import { shortDateLabel, timeOfDayLabel } from '../lib/dateHelpers';
+import {
+  shortDateLabel,
+  timeOfDayLabel,
+  todayISODate,
+} from '../lib/dateHelpers';
+import DateBlock from '../components/ui/DateBlock';
 import type { SessionType } from '../db/types';
 
 // Strength tiles: tap-to-route by default. When a completed session of the
@@ -51,6 +56,7 @@ export default function LogStrength() {
   const [draftByType, setDraftByType] = useState<
     Record<StrengthValue, DraftSessionSummary | null>
   >({ upper: null, lower: null, full_body: null });
+  const [sessionDate, setSessionDate] = useState(() => todayISODate());
 
   const tileRefs = useRef<Partial<Record<StrengthValue, HTMLButtonElement>>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -163,7 +169,7 @@ export default function LogStrength() {
 
     setRouting(value);
     try {
-      const id = await createSession(value);
+      const id = await createSession(value, sessionDate);
       navigate(`/log/strength/active/${id}`);
     } catch (err) {
       console.error('Failed to start session:', err);
@@ -175,7 +181,7 @@ export default function LogStrength() {
     if (routing) return;
     setRouting(value);
     try {
-      const id = await createSession(value);
+      const id = await createSession(value, sessionDate);
       navigate(`/log/strength/active/${id}`);
     } catch (err) {
       console.error('Failed to start fresh session:', err);
@@ -187,7 +193,7 @@ export default function LogStrength() {
     if (routing) return;
     setRouting(value);
     try {
-      const id = await repeatLastSession(value);
+      const id = await repeatLastSession(value, sessionDate);
       navigate(`/log/strength/active/${id}`);
     } catch (err) {
       console.error('Failed to repeat last session:', err);
@@ -278,6 +284,20 @@ export default function LogStrength() {
             </div>
           );
         })}
+      </div>
+
+      {/* Session date — defaults to today, editable for retroactive
+          logging. Threaded into createSession / repeatLastSession so
+          the chosen date lands on the row when it's created. A tapped
+          tile with an existing draft ignores this field — the draft's
+          original date persists; edit it on the completion screen. */}
+      <div className="mt-4">
+        <DateBlock
+          value={sessionDate}
+          onChange={setSessionDate}
+          label="Session date"
+          ariaLabel="Session date"
+        />
       </div>
     </div>
   );
