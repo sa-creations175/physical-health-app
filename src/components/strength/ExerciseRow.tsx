@@ -6,6 +6,7 @@ import {
   addSet,
   getPreviousSessionForExercise,
   removeExerciseFromSession,
+  updateSessionExerciseNotes,
 } from '../../lib/strengthHelpers';
 import { relativeDateLabel } from '../../lib/dateHelpers';
 import { formatSetMagnitude } from '../../lib/setFormat';
@@ -145,6 +146,56 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       >
         + Add Set
       </button>
+
+      <NoteField sessionExerciseId={link.id} notes={link.notes} />
     </div>
+  );
+}
+
+// Per-exercise free-form note. Collapsed by default ("Add note"); opens
+// expanded if a note is already saved so the user sees the existing
+// text on entry. Saves on blur via syncedUpdate — no per-keystroke
+// writes. Clearing the field on blur stores null so the collapsed
+// affordance returns next time.
+function NoteField({
+  sessionExerciseId,
+  notes,
+}: {
+  sessionExerciseId: string;
+  notes: string | null;
+}) {
+  const [expanded, setExpanded] = useState<boolean>(Boolean(notes));
+  const [draft, setDraft] = useState<string>(notes ?? '');
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="mt-2 w-full text-left text-[12px] text-green-mint font-medium py-1.5"
+      >
+        Add note
+      </button>
+    );
+  }
+
+  return (
+    <input
+      type="text"
+      autoFocus={!notes}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        const trimmed = draft.trim();
+        const next = trimmed === '' ? null : trimmed;
+        if (next !== (notes ?? null)) {
+          void updateSessionExerciseNotes(sessionExerciseId, next);
+        }
+        if (next === null) setExpanded(false);
+      }}
+      placeholder="Note for this exercise"
+      aria-label="Exercise note"
+      className="mt-2 w-full bg-charcoal border border-card-edge text-ink rounded-lg px-3 py-2 text-[16px] placeholder:text-card-mute"
+    />
   );
 }

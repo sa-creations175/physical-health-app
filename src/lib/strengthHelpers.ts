@@ -135,6 +135,13 @@ export async function reorderSessionExercises(
   );
 }
 
+export async function updateSessionExerciseNotes(
+  sessionExerciseId: string,
+  notes: string | null,
+): Promise<void> {
+  await syncedUpdate(db.session_exercises, sessionExerciseId, { notes });
+}
+
 export async function updateSessionDate(
   sessionId: string,
   date: string,

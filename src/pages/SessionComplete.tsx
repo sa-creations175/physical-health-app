@@ -57,6 +57,33 @@ export default function SessionComplete() {
     [],
   );
 
+  // Notes joined with their exercise name for the summary "Notes" section.
+  // Empty / null notes are filtered out so the section only mounts when
+  // there's something to show.
+  const noteRows = useLiveQuery(
+    async () => {
+      if (!sessionId) return [];
+      const links = await db.session_exercises
+        .where('session_id')
+        .equals(sessionId)
+        .sortBy('order_index');
+      const withNotes = links.filter((l) => l.notes && l.notes.trim() !== '');
+      if (withNotes.length === 0) return [];
+      const exs = await db.exercises
+        .where('id')
+        .anyOf(withNotes.map((l) => l.exercise_id))
+        .toArray();
+      const nameById = new Map(exs.map((e) => [e.id, e.name]));
+      return withNotes.map((l) => ({
+        id: l.id,
+        name: nameById.get(l.exercise_id) ?? 'Exercise',
+        note: l.notes as string,
+      }));
+    },
+    [sessionId],
+    [],
+  );
+
   const totalSets = allSets.length;
   // Volume is lb·reps — only rep-mode sets contribute. Duration sets are
   // counted in totalSets but excluded here; weight × seconds isn't a
@@ -124,6 +151,20 @@ export default function SessionComplete() {
           </div>
         </div>
       </div>
+
+      {noteRows.length > 0 && (
+        <div className="mt-6">
+          <SectionLabel>Exercise notes</SectionLabel>
+          <ul className="mt-2 bg-card border border-card-edge rounded-xl p-3 space-y-2">
+            {noteRows.map((row) => (
+              <li key={row.id} className="text-[12px] leading-snug">
+                <span className="text-ink font-medium">{row.name}</span>
+                <span className="text-card-mute"> — {row.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-6">
         <SectionLabel>Session date</SectionLabel>
