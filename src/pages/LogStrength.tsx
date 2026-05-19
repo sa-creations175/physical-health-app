@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { SectionLabel } from '../components/ui/primitives';
 import {
   createSession,
+  getDraftSessionByType,
   getLastSessionSummaryByType,
   repeatLastSession,
   suggestNextLiftingType,
+  type DraftSessionSummary,
   type LastSessionSummary,
 } from '../lib/strengthHelpers';
-import { shortDateLabel } from '../lib/dateHelpers';
+import { shortDateLabel, timeOfDayLabel } from '../lib/dateHelpers';
 import type { SessionType } from '../db/types';
 
 // Strength tiles: tap-to-route by default. When a completed session of the
@@ -45,6 +47,9 @@ export default function LogStrength() {
   const [panelType, setPanelType] = useState<StrengthValue | null>(null);
   const [lastByType, setLastByType] = useState<
     Record<StrengthValue, LastSessionSummary | null>
+  >({ upper: null, lower: null, full_body: null });
+  const [draftByType, setDraftByType] = useState<
+    Record<StrengthValue, DraftSessionSummary | null>
   >({ upper: null, lower: null, full_body: null });
 
   const tileRefs = useRef<Partial<Record<StrengthValue, HTMLButtonElement>>>({});
@@ -86,6 +91,25 @@ export default function LogStrength() {
     };
   }, []);
 
+  // Draft (in-progress) sessions per type. Tapping a tile with a draft
+  // jumps straight to /active/:id — no new row created. Refires on
+  // mount so returning from a discard / completion sees fresh state.
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(STRENGTH_VALUES.map((t) => getDraftSessionByType(t)))
+      .then(([upper, lower, full_body]) => {
+        if (cancelled) return;
+        setDraftByType({ upper, lower, full_body });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load draft sessions:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Outside-click closes the panel. We also dismiss on Escape so keyboard
   // users aren't trapped.
   useEffect(() => {
@@ -115,6 +139,17 @@ export default function LogStrength() {
       setPanelType(null);
       setRouting(value);
       navigate('/log/cardio');
+      return;
+    }
+
+    // Resume takes priority over both the repeat panel and a fresh
+    // session — a half-finished workout should never get silently
+    // shadowed by a new row.
+    const draft = draftByType[value];
+    if (draft) {
+      setPanelType(null);
+      setRouting(value);
+      navigate(`/log/strength/active/${draft.sessionId}`);
       return;
     }
 
@@ -189,6 +224,10 @@ export default function LogStrength() {
             opt.value === 'lower' ||
             opt.value === 'full_body';
 
+          const draft = isStrength
+            ? draftByType[opt.value as StrengthValue]
+            : null;
+
           return (
             <div key={opt.value} className="contents">
               <button
@@ -206,10 +245,22 @@ export default function LogStrength() {
                 } ${muted ? 'opacity-50' : ''}`}
               >
                 <span className="text-[15px] font-medium text-ink">{opt.label}</span>
-                {opt.value !== 'cardio' && suggested === opt.value && (
-                  <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint">
-                    Due next
+                {/* Resume badge takes priority over "Due next" — surfacing
+                    both would be redundant, and the unfinished work is the
+                    more actionable signal. */}
+                {draft ? (
+                  <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint text-right leading-tight">
+                    Resume
+                    <span className="block text-card-mute normal-case tracking-normal font-normal mt-0.5">
+                      started {timeOfDayLabel(draft.created_at)}
+                    </span>
                   </span>
+                ) : (
+                  opt.value !== 'cardio' && suggested === opt.value && (
+                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint">
+                      Due next
+                    </span>
+                  )
                 )}
               </button>
 

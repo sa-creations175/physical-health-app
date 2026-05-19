@@ -76,6 +76,19 @@ export function relativeDateLabel(isoDate: string, ref: Date = new Date()): stri
   return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+// 12h clock time-of-day label for the Resume badge ("2:14 PM"). Skips
+// leading-zero on the hour and uppercases AM/PM so it reads naturally
+// next to "started …" in the muted secondary line.
+export function timeOfDayLabel(iso: string): string {
+  return new Date(iso)
+    .toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+    .toUpperCase();
+}
+
 export function currentWeekISODates(today: Date = new Date()): string[] {
   // Returns 7 dates Sun → Sat of the week containing `today`.
   const startISO = startOfWeekISODate(today);

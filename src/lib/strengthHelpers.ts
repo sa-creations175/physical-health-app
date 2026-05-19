@@ -175,6 +175,48 @@ export interface LastSessionSummary {
   exerciseCount: number;
 }
 
+// In-progress draft = session row of the given type with feel_rating still
+// null (the type-select screen creates the row up front, so abandoning
+// the active screen mid-flow leaves an orphan behind). Most-recent first
+// — pragmatically a user only has one draft per type, but if multiple
+// exist we surface the latest so the badge maps to the freshest attempt.
+export interface DraftSessionSummary {
+  sessionId: string;
+  created_at: string; // ISO datetime — drives the "started 2:14 PM" tag.
+}
+
+export async function getDraftSessionByType(
+  type: 'upper' | 'lower' | 'full_body',
+): Promise<DraftSessionSummary | null> {
+  const sessions = await db.sessions
+    .where('type').equals(type)
+    .filter((s) => s.feel_rating === null)
+    .toArray();
+  if (sessions.length === 0) return null;
+  sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const draft = sessions[0];
+  return { sessionId: draft.id, created_at: draft.created_at };
+}
+
+// Hard-delete a draft session and everything underneath it. Order:
+// sets → session_exercises → session, so a partial failure can't leave
+// dangling children that getDraftSessionByType would resurface. Used by
+// the "Discard session" action on the active session screen.
+export async function discardSession(sessionId: string): Promise<void> {
+  const links = await db.session_exercises
+    .where('session_id').equals(sessionId)
+    .toArray();
+  const linkIds = links.map((l) => l.id);
+  if (linkIds.length > 0) {
+    const setIds = (
+      await db.sets.where('session_exercise_id').anyOf(linkIds).toArray()
+    ).map((s) => s.id);
+    for (const id of setIds) await syncedDelete(db.sets, id);
+    for (const id of linkIds) await syncedDelete(db.session_exercises, id);
+  }
+  await syncedDelete(db.sessions, sessionId);
+}
+
 // Most recent COMPLETED session of the given type. Sort key is created_at
 // (ISO datetime) so two sessions logged on the same day still resolve in
 // the right order — same idiom composeExerciseHistory uses. Returns null
