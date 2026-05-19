@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { SectionLabel } from '../components/ui/primitives';
 import {
   createSession,
@@ -44,6 +44,7 @@ const STRENGTH_LABEL: Record<StrengthValue, string> = {
 
 export default function LogStrength() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   // Suggestion math is strength-only (cross-pillar logic deferred). Cardio
   // never receives a "Due next" badge.
   const [suggested, setSuggested] = useState<SessionType | null>(null);
@@ -60,6 +61,11 @@ export default function LogStrength() {
 
   const tileRefs = useRef<Partial<Record<StrengthValue, HTMLButtonElement>>>({});
   const panelRef = useRef<HTMLDivElement | null>(null);
+  // Loaded flags for the two async sets — gate the ?type=X auto-tap so
+  // we don't fire before lastByType / draftByType know what they are.
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [lastLoaded, setLastLoaded] = useState(false);
+  const autoTappedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +93,7 @@ export default function LogStrength() {
       .then(([upper, lower, full_body]) => {
         if (cancelled) return;
         setLastByType({ upper, lower, full_body });
+        setLastLoaded(true);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -106,6 +113,7 @@ export default function LogStrength() {
       .then(([upper, lower, full_body]) => {
         if (cancelled) return;
         setDraftByType({ upper, lower, full_body });
+        setDraftLoaded(true);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -115,6 +123,21 @@ export default function LogStrength() {
       cancelled = true;
     };
   }, []);
+
+  // Dashboard tiles route here with ?type=lower|upper|full_body so a tap
+  // on the dashboard feels like one motion. Once both async sets have
+  // loaded we auto-fire handleTap for that type — preserves the same
+  // resume / repeat-panel / new-session decision tree the user would
+  // get tapping the tile by hand. Fires exactly once per mount.
+  useEffect(() => {
+    if (autoTappedRef.current) return;
+    if (!draftLoaded || !lastLoaded) return;
+    const param = searchParams.get('type');
+    if (param !== 'upper' && param !== 'lower' && param !== 'full_body') return;
+    autoTappedRef.current = true;
+    void handleTap(param);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftLoaded, lastLoaded, searchParams]);
 
   // Outside-click closes the panel. We also dismiss on Escape so keyboard
   // users aren't trapped.

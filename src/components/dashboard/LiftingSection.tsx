@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { SectionLabel, SevenDayDotRow } from '../ui/primitives';
+import { SectionLabel } from '../ui/primitives';
 import {
   getLiftingSummary,
   type LiftingType,
@@ -21,7 +21,7 @@ const STRIPE_DEFAULT = '#0F6E56';
 const STRIPE_COMPLETE = '#5DCAA5';
 
 export default function LiftingSection() {
-  const [expanded, setExpanded] = useState<LiftingType | null>(null);
+  const navigate = useNavigate();
   const prefs = useLiveQuery(() => getUserPreferences(), []);
 
   // Targets fall back to module defaults during the brief first-render window
@@ -45,14 +45,10 @@ export default function LiftingSection() {
             label={label}
             optional={optional}
             target={targets[type]}
-            isExpanded={expanded === type}
-            onToggle={() =>
-              setExpanded((cur) => (cur === type ? null : type))
-            }
+            onTap={() => navigate(`/log/strength?type=${type}`)}
           />
         ))}
       </div>
-      {expanded && <ExpandedDetail key={expanded} type={expanded} />}
     </section>
   );
 }
@@ -62,15 +58,13 @@ function LiftingCard({
   label,
   optional,
   target,
-  isExpanded,
-  onToggle,
+  onTap,
 }: {
   type: LiftingType;
   label: string;
   optional?: boolean;
   target: number;
-  isExpanded: boolean;
-  onToggle: () => void;
+  onTap: () => void;
 }) {
   const summary = useLiveQuery(() => getLiftingSummary(type), [type]);
   const count = summary?.thisWeekCount ?? 0;
@@ -81,15 +75,13 @@ function LiftingCard({
   return (
     <button
       type="button"
-      onClick={onToggle}
-      aria-expanded={isExpanded}
+      onClick={onTap}
+      aria-label={`Log ${label} session`}
       style={{
         borderLeftWidth: '2px',
         borderLeftColor: complete ? STRIPE_COMPLETE : STRIPE_DEFAULT,
       }}
-      className={`bg-card border rounded-xl p-3 text-left min-h-[80px] transition-colors ${
-        isExpanded ? 'border-green-mint' : 'border-card-edge'
-      }`}
+      className="bg-card border border-card-edge rounded-xl p-3 text-left min-h-[80px] transition-colors"
     >
       <div className="flex items-start justify-between gap-1">
         <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
@@ -112,25 +104,5 @@ function LiftingCard({
         <p className="text-[9px] text-card-mute mt-1.5 lowercase">optional</p>
       )}
     </button>
-  );
-}
-
-function ExpandedDetail({ type }: { type: LiftingType }) {
-  const summary = useLiveQuery(() => getLiftingSummary(type), [type]);
-  if (!summary) return null;
-
-  return (
-    <div className="bg-card border border-card-edge rounded-xl p-4 mt-2">
-      <SevenDayDotRow dots={summary.weekDots} />
-      <div className="mt-3 pt-3 border-t border-divider">
-        {summary.lastSession ? (
-          <p className="text-[12px] text-card-mute">
-            <span className="text-card-mute">Last:</span> {summary.lastSession.summary}
-          </p>
-        ) : (
-          <p className="text-[12px] text-card-mute">no data yet</p>
-        )}
-      </div>
-    </div>
   );
 }
