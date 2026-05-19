@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 19, 2026 (v1.8)
+Last updated: May 19, 2026 (v1.9)
+
+**What changed in v1.9 (May 19, 2026):** Build 2.3 — no-delivery streak tracker shipped as a dedicated Nutrition-pillar card on the dashboard. New `delivery_days` store (one row per user per day, present only when the user actively marks the day). Card shows current streak ("X days"), all-time best ("Best: Y days"), and a Sun→Sat grid of 44px tappable squares; each square cycles unmarked → clean (green ✓) → ordered (red ✗) → unmarked on tap. Streak math walks backward from today with the same "today forgiveness" rule the workout streak uses. Slip definition is locked to delivery orders only — eating out socially doesn't count. Schema bumps to v8 (new store, no upgrade backfill). Adds §Build 2.3 session log and a "No-delivery streak" subsection inside §Nutrition tracker design.
 
 **What changed in v1.8 (May 19, 2026):** Build 2.2 — strength logger gets its in-session ergonomics pass. Drafts (sessions with `feel_rating` null) now surface as a Resume badge on the type-select tile, tagged with the start time; a "Discard session" link in the active screen cascades sets → links → session for clean exit. Session date is editable on both the type-select screen (defaults today) and the completion screen (in case retro is decided last). Exercises in an active session can be deleted (with confirm) and drag-reordered (HTML5 DnD, ☰ handle). Each exercise carries a free-form note that surfaces on the completion summary. The dashboard lifting tiles now tap-to-route (`/log/strength?type=X`) instead of expanding an in-place detail panel — that panel is removed. The cardio card swaps total minutes for **qualifying** minutes ("X min this week") so the stat tracks the same definition of "counts" as the headline. The in-session progressive-overload suggestion is removed entirely — no prompt, no +5lb pre-fill, no indicator; PR detection still surfaces quietly in the exercise library sparkline. Schema bumps to v7: `session_exercises.notes` non-indexed column, backfilled to null on upgrade. Adds §Build 2.2 session log with the full commit trail, decisions, and schema delta.
 
@@ -253,6 +255,17 @@ Optional deep-dive mode for cut phases.
 
 These live in a nutrition detail screen, accessible but not front-and-center.
 
+### No-delivery streak (added Build 2.3)
+
+A separate Nutrition-pillar card on the dashboard tracking the daily habit of skipping food delivery. Locked decisions:
+
+- **Own card, sibling to the nutrition shell.** Not a sub-metric. The nutrition card stays focused on macros + supplements; the streak card is the habit / behavior surface. Both live in the Nutrition pillar.
+- **Slip definition is delivery-only.** Eating out socially (restaurants, dinner with friends) does NOT count as a slip. Only delivery orders (UberEats, DoorDash, etc.) qualify. This is intentional — the friction the user is breaking is the at-home tap-an-app habit, not the social-meal behavior.
+- **Three-state daily toggle.** Each day's square cycles through unmarked → clean → ordered → unmarked on tap. Unmarked = no decision (grey + day initial); clean = a no-delivery day (green + ✓); ordered = a delivery day (red + ✗). Absence of a row IS the unmarked state — only marked days persist.
+- **Streak forgiveness for today.** A still-unmarked today doesn't break the current streak — the walk starts from yesterday in that case. Same forgiveness rule the workout streak uses. An 'ordered' day always breaks the streak, including today. Any future day is ignored.
+- **Best (longest) streak surfaces alongside.** The card shows "X days" current and "Best: Y days" historical. The current run can also be the best — a live record stays visible without needing an "ordered" cap to count.
+- **Weekly grid is the primary interaction.** Sun–Sat, 44×44 tappable squares, day initials below. Today gets a 2px mint border on the grey fill when still unmarked — passive nudge, no animation.
+
 ---
 
 ## Health check-ins design
@@ -480,6 +493,11 @@ goals
 prompts
   id, user_id, type, priority, fired_at, dismissed_at
   re_prompt_after_days
+
+delivery_days                                -- added v1.9 (Dexie v8)
+  id, user_id, date
+  status: 'clean' | 'ordered'
+  created_at, updated_at
 ```
 
 ---
@@ -1036,3 +1054,72 @@ The store index strings stay byte-identical to v6 — only the row shape changes
 - **Schema**: Dexie v7. Twelve tables, all `user_id`-keyed. `session_exercises.notes` added (null backfill).
 - **Dev experience**: `npm run dev` boots clean, every Build 2.2 commit type-checks, `npm run build` succeeds.
 - **Tree clean**, 10 new commits descriptive (including this docs commit), Vercel-safe author email throughout.
+
+---
+
+## Build 2.3 session log — May 19, 2026
+
+End-of-session checkpoint for the no-delivery streak tracker. Five commits, single-feature: a dedicated dashboard card lets the user mark each day as clean (no delivery) or ordered (delivery happened) and surfaces both the current streak and an all-time best. The feature is its own Nutrition-pillar card — sibling to, not subordinate of, the existing nutrition shell. Eating out socially does not count as a slip; the friction this targets is the at-home tap-an-app habit.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `9100af6` | feat(db): schema v8 — delivery_days table |
+| 2 | `f04bdf9` | feat(delivery): helpers for week query, three-state toggle, streak math |
+| 3 | `8afca06` | feat(delivery): DeliveryStreakCard with weekly grid + three-state taps |
+| 4 | `fba21ef` | feat(dashboard): mount DeliveryStreakCard below nutrition |
+| 5 | _(this commit)_ | docs: v1.9 Build 2.3 session log |
+
+### Schema delta (Dexie v8)
+
+| Change | Detail |
+|---|---|
+| New store: `delivery_days` | `id, user_id, date, status, created_at, updated_at`. Indexed on `user_id` and `date`. Status is `'clean' \| 'ordered'`. No upgrade backfill — new store, every existing store byte-identical at the index layer. |
+
+Thirteen tables now (`delivery_days` is the new addition); all rows still carry `user_id = LOCAL_USER_ID` for clean Phase 6 sync migration.
+
+### Decisions made (and why)
+
+- **Own card, not a row inside the nutrition shell.** The nutrition shell is dedicated to macros + supplements — a domain of *measurement* (grams, glasses, servings). The delivery streak is a domain of *behavior* (a daily yes/no habit). Mashing them into one panel would muddy both. Two cards under the same Nutrition pillar reads cleanly and lets each surface evolve at its own pace.
+- **Slip definition is delivery-only.** Eating out socially (restaurants, dinner with friends) is explicitly NOT a slip. The friction the user is targeting is the at-home tap-an-app loop, not the social-meal behavior. This is a hard product decision — if it ever expands, it goes in via a separate dimension (e.g. an `eat_out` status, NOT by widening "ordered").
+- **Three-state daily toggle (unmarked / clean / ordered).** Two-state (toggle clean) would force a row for every day the user wanted to register a slip, and "ordered" would have to live somewhere else. Three-state on one tap target keeps the model tight and the UI single-purpose: every square represents exactly one day, and the tap cycle is `unmarked → clean → ordered → unmarked`.
+- **Absence of a row IS the unmarked state.** The table holds only marked days, not 365 rows per year. The streak math reads "no row" as "decision not made," which is the same in-memory shape as "today not yet logged" — so the today-forgiveness rule applies for free.
+- **Today forgiveness.** A still-unmarked today doesn't count as a streak break. The walk-backward starts from `today` if it has a row, otherwise from `today - 1`. Mirrors the existing `computeStreak` (workouts) so the two streaks behave consistently for the user. An 'ordered' day still breaks the streak, including today — only the *unmarked today* gets the pass.
+- **Best streak counted from the same data, not a separate "max" field.** A scan over the clean rows finds the longest historical run; the current run is compared against it so a live streak surfaces as the best while it's still in progress. No denormalized counter to drift out of sync.
+- **Live record alongside best.** Surfaces both numbers always — the current streak headline and a "Best: Y days" tail. Reasoning: when the user just broke a 12-day run, seeing "0 days · Best: 12 days" is more honest than just "0 days." Personal-OS principle — honest metrics, not flattering ones.
+- **Mint border on today (when unmarked), no animation.** A passive nudge that today's square is the one the user might want to tap. Animation would feel like a notification; the goal is a visual hint, not pressure. The border lives on the grey background only — clean/ordered states don't get it (already decided).
+- **Day initials in the grid AND below.** Each unmarked square shows its day initial (S/M/T/W/T/F/S) on the grey fill itself, and the same initials repeat below the row in 9px. Some redundancy, but it lets the user identify a day without counting positions when the grid has mixed clean/ordered/unmarked squares.
+- **44×44 tap target.** Matches every other tappable affordance in the app. Below 44px, the spec calls it inaccessible; above it, the row gets crowded on a phone-width container. Equal squares on a 7-column grid with gap-1.5 fit comfortably inside the standard card padding.
+
+### What shipped
+
+**Schema:**
+- Dexie v8 adds `delivery_days` (id, user_id, date, status, created_at, updated_at). Indexed on user_id + date. No upgrade backfill (new store).
+
+**Helpers (`src/lib/deliveryHelpers.ts`):**
+- `getDeliveryWeek(startOfWeek)` — bulk-loads the seven dates of the user's week via `.anyOf` and returns a Map keyed by date string. (DeliveryStreakCard currently uses `db.delivery_days.toArray()` directly so the streak + grid share a single subscription, but this helper is in place for a future history page.)
+- `toggleDeliveryDay(date)` — cycles a row through unmarked → clean → ordered → unmarked via the synced* wrappers. Creates on the first tap, updates on the second, deletes on the third.
+- `computeDeliveryStreak()` — returns `{ currentStreak, longestStreak }`. Current walks backward from today (with today-forgiveness); longest scans all clean rows sorted by date, run-length-encoded.
+
+**DeliveryStreakCard:**
+- Mounted at `<DeliveryStreakCard />` in `src/pages/Dashboard.tsx`, directly below `<NutritionSection />`.
+- Top row: large streak number ("X days", 28px ink) + "Best: Y days" tail right-aligned (12px #777).
+- 7-column grid (Sun→Sat), 44px squares, gap-1.5. Visual states: clean = #0F6E56 fill + white ✓; ordered = #E24B4A fill + white ✗; unmarked = #3a3a3a fill + day initial (12px #777); today-when-unmarked adds a 2px mint (#5DCAA5) border.
+- Day-initial label row below the grid (9px #777, tracked).
+- Empty state (no rows yet): "Tap each day you skipped delivery" centered, 12px #777.
+- `aria-label` on each cell narrates the current state and the action the next tap will take.
+
+### Known follow-ups carried into next build
+
+- **Slip cause tagging.** Tap-and-hold or a separate detail surface to capture "why" (late night, hungover, no groceries, etc.) — useful for the Phase 5 pattern surface but not blocking the streak mechanic.
+- **Restaurant / social-meal counter.** Currently invisible to the data. If a future read tells us the user wants to see how often they're eating out (independent of delivery), a second status or a parallel table is the right shape — NOT a third state on `delivery_days`.
+- **Delivery history page.** No deeper surface yet. The week grid covers the immediate use case. A Phase 3+ "month / year heatmap" view ports cleanly when the volume of marked days makes a longer-range view interesting. `getDeliveryWeek` is shaped so a `getDeliveryRange(start, end)` is a one-line swap.
+- **Prompt trigger on a long live streak.** Possible Phase 5 hook — "you're 7 days clean, want to log a win?" — but only after the user has actually built a meaningful run. Premature to bake in now.
+- **Settings tile for slip definition.** If the user ever wants to widen the definition (e.g. include takeout pickup), Settings is the right home. Locked to delivery-only for now per the product decision; revisit only on explicit request.
+
+### Current state
+
+- **Schema**: Dexie v8. Thirteen tables, all `user_id`-keyed. `delivery_days` added.
+- **Dev experience**: `npm run dev` boots clean, every Build 2.3 commit type-checks, `npm run build` succeeds.
+- **Tree clean**, 5 new commits descriptive (including this docs commit), Vercel-safe author email throughout.
