@@ -116,6 +116,25 @@ export async function removeExerciseFromSession(
   await syncedDelete(db.session_exercises, sessionExerciseId);
 }
 
+// Persist a new ordering for the session_exercise rows inside an active
+// session. orderedIds is the desired final order; each row's
+// order_index is rewritten to its 0-based position. Only rows whose
+// index actually changes get an update call, so a no-op reorder (drop
+// onto self) costs zero writes.
+export async function reorderSessionExercises(
+  orderedIds: string[],
+  current: SessionExercise[],
+): Promise<void> {
+  const byId = new Map(current.map((l) => [l.id, l]));
+  await Promise.all(
+    orderedIds.map((id, i) => {
+      const link = byId.get(id);
+      if (!link || link.order_index === i) return Promise.resolve();
+      return syncedUpdate(db.session_exercises, id, { order_index: i });
+    }),
+  );
+}
+
 export async function updateSessionDate(
   sessionId: string,
   date: string,

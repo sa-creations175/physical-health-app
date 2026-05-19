@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
@@ -6,7 +6,11 @@ import ExerciseRow from '../components/strength/ExerciseRow';
 import ExercisePicker from '../components/strength/ExercisePicker';
 import { SectionLabel } from '../components/ui/primitives';
 import { dateLabel } from '../lib/dateHelpers';
-import { discardSession } from '../lib/strengthHelpers';
+import {
+  discardSession,
+  reorderSessionExercises,
+} from '../lib/strengthHelpers';
+import type { SessionExercise } from '../db/types';
 
 const TYPE_LABEL: Record<string, string> = {
   upper: 'Upper Body',
@@ -37,10 +41,67 @@ export default function ActiveSession() {
     [],
   );
 
+  // Optimistic local ordering for drag-and-drop. While the user is
+  // mid-drag (or just after drop, before Dexie's live query refires)
+  // we render from this override so the reorder feels instant. It's
+  // cleared once the live query catches up with the persisted order.
+  const [orderOverride, setOrderOverride] = useState<string[] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+
+  // Clear the override as soon as the live query's persisted order
+  // matches it — at that point the live data IS the new truth and the
+  // override would just paper over future external changes (e.g. a
+  // delete from elsewhere).
+  useEffect(() => {
+    if (!orderOverride) return;
+    const liveIds = sessionExercises.map((l) => l.id);
+    const matches =
+      liveIds.length === orderOverride.length &&
+      liveIds.every((id, i) => id === orderOverride[i]);
+    if (matches) setOrderOverride(null);
+  }, [sessionExercises, orderOverride]);
+
+  const orderedExercises = applyOrderOverride(sessionExercises, orderOverride);
+
   if (!session) {
     return (
       <div className="px-5 pt-8 text-card-mute text-[12px]">Loading session…</div>
     );
+  }
+
+  function handleDragStart(e: React.DragEvent, id: string) {
+    setDraggingId(id);
+    // Firefox needs data on the transfer object or dragstart is a no-op.
+    e.dataTransfer.setData('text/plain', id);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleDragOver(e: React.DragEvent, overId: string) {
+    if (!draggingId || draggingId === overId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const currentOrder = orderedExercises.map((l) => l.id);
+    const fromIdx = currentOrder.indexOf(draggingId);
+    const toIdx = currentOrder.indexOf(overId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const next = currentOrder.slice();
+    next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, draggingId);
+    setOrderOverride(next);
+  }
+
+  async function handleDragEnd() {
+    const settled = orderOverride;
+    setDraggingId(null);
+    if (!settled) return;
+    try {
+      await reorderSessionExercises(settled, sessionExercises);
+    } catch (err) {
+      console.error('Failed to persist reorder:', err);
+      // Drop the optimistic override on failure so the UI snaps back
+      // to whatever Dexie actually has.
+      setOrderOverride(null);
+    }
   }
 
   async function handleDiscard() {
@@ -66,13 +127,25 @@ export default function ActiveSession() {
       </p>
 
       <div className="mt-4">
-        {sessionExercises.length === 0 ? (
+        {orderedExercises.length === 0 ? (
           <div className="bg-card border border-card-edge rounded-xl p-5 text-card-mute text-[13px] text-center">
             No exercises yet — tap below to add the first one.
           </div>
         ) : (
-          sessionExercises.map((link) => (
-            <ExerciseRow key={link.id} link={link} />
+          orderedExercises.map((link) => (
+            <div
+              key={link.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, link.id)}
+              onDragOver={(e) => handleDragOver(e, link.id)}
+              onDragEnd={handleDragEnd}
+              onDrop={(e) => e.preventDefault()}
+              className={`transition-opacity ${
+                draggingId === link.id ? 'opacity-60' : ''
+              }`}
+            >
+              <ExerciseRow link={link} />
+            </div>
           ))
         )}
       </div>
@@ -125,6 +198,25 @@ export default function ActiveSession() {
       )}
     </div>
   );
+}
+
+// Re-order `links` to match `override` (a list of ids in the desired
+// order). Falls back to the raw list when override is null or doesn't
+// cover the current set — e.g. a row was added or deleted while the
+// override was still mid-flight.
+function applyOrderOverride(
+  links: SessionExercise[],
+  override: string[] | null,
+): SessionExercise[] {
+  if (!override) return links;
+  const byId = new Map(links.map((l) => [l.id, l]));
+  if (
+    override.length !== links.length ||
+    override.some((id) => !byId.has(id))
+  ) {
+    return links;
+  }
+  return override.map((id) => byId.get(id) as SessionExercise);
 }
 
 function DiscardConfirm({
