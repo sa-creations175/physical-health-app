@@ -33,7 +33,7 @@ export default function CardioSection() {
 
   const qualifying = summary?.qualifyingCount ?? 0;
   const shortCount = summary?.shortCount ?? 0;
-  const totalMinutes = summary?.totalMinutes ?? 0;
+  const qualifyingMinutes = summary?.qualifyingMinutes ?? 0;
   const remaining = Math.max(0, target - qualifying);
   const complete = target > 0 && qualifying >= target;
   const overshoot = complete ? Math.max(0, qualifying - target) : 0;
@@ -71,8 +71,12 @@ export default function CardioSection() {
                 / {target} sessions
               </span>
             </p>
+            {/* Qualifying minutes — sessions ≥ threshold only, so this
+                stat tracks the same definition of "counts" as the
+                headline. Short sessions are excluded here even though
+                they still appear in the expanded list below. */}
             <p className="text-[11px] text-card-mute mt-1">
-              {totalMinutes} min total
+              {qualifyingMinutes} min this week
               {shortCount > 0 && (
                 <span> · {shortCount} short</span>
               )}

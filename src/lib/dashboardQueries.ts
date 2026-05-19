@@ -41,7 +41,10 @@ export interface CardioSessionRow {
 export interface CardioWeekSummary {
   qualifyingCount: number;
   shortCount: number;
-  totalMinutes: number;
+  // Sum of duration_minutes across QUALIFYING sessions only (≥ threshold).
+  // Short sessions are excluded so this stat lines up with the headline
+  // "X / Y sessions" — both reflect the same definition of "counts."
+  qualifyingMinutes: number;
   threshold: number;
   sessions: CardioSessionRow[]; // chronological asc within the week
 }
@@ -107,7 +110,7 @@ export async function getCardioSummary(
   const typeNameById = new Map(allTypes.map((t) => [t.id, t.name]));
 
   const weekRows: CardioSessionRow[] = [];
-  let totalMinutes = 0;
+  let qualifyingMinutes = 0;
   let qualifyingCount = 0;
   let shortCount = 0;
 
@@ -122,9 +125,12 @@ export async function getCardioSummary(
     if (!typeName) continue;
 
     const qualifying = log.duration_minutes >= threshold;
-    if (qualifying) qualifyingCount++;
-    else shortCount++;
-    totalMinutes += log.duration_minutes;
+    if (qualifying) {
+      qualifyingCount++;
+      qualifyingMinutes += log.duration_minutes;
+    } else {
+      shortCount++;
+    }
 
     weekRows.push({
       id: log.id,
@@ -143,7 +149,7 @@ export async function getCardioSummary(
   return {
     qualifyingCount,
     shortCount,
-    totalMinutes,
+    qualifyingMinutes,
     threshold,
     sessions: weekRows,
   };
