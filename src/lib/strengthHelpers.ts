@@ -101,6 +101,21 @@ export async function deleteSet(setId: string): Promise<void> {
   await syncedDelete(db.sets, setId);
 }
 
+// Remove an exercise from an in-progress session, including all of its
+// sets. Sets first → link last so a partial failure can't orphan rows
+// that would render as "ghost" sets attached to nothing. Order_index
+// gaps are tolerated by the UI (sortBy renders in stored order) so we
+// don't re-pack the remaining links.
+export async function removeExerciseFromSession(
+  sessionExerciseId: string,
+): Promise<void> {
+  const sets = await db.sets
+    .where('session_exercise_id').equals(sessionExerciseId)
+    .toArray();
+  for (const s of sets) await syncedDelete(db.sets, s.id);
+  await syncedDelete(db.session_exercises, sessionExerciseId);
+}
+
 export async function updateSessionDate(
   sessionId: string,
   date: string,

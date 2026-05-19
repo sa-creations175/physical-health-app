@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import type { SessionExercise } from '../../db/types';
 import {
   addSet,
   getPreviousSessionForExercise,
+  removeExerciseFromSession,
 } from '../../lib/strengthHelpers';
 import { relativeDateLabel } from '../../lib/dateHelpers';
 import { formatSetMagnitude } from '../../lib/setFormat';
 import SetRow from './SetRow';
 
 export default function ExerciseRow({ link }: { link: SessionExercise }) {
+  const [confirming, setConfirming] = useState(false);
   const exercise = useLiveQuery(
     () => db.exercises.get(link.exercise_id),
     [link.exercise_id],
@@ -55,10 +58,49 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
     >
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-[15px] font-medium text-ink">{exercise.name}</h3>
-        <span className="text-[10px] tracking-micro uppercase text-green-mint font-semibold whitespace-nowrap">
-          {exercise.muscle_group.replace('_', ' ')}
-        </span>
+        <div className="flex items-center gap-2 whitespace-nowrap">
+          <span className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+            {exercise.muscle_group.replace('_', ' ')}
+          </span>
+          {/* Remove the whole exercise + its sets. Distinct from the
+              per-set × in SetRow; pinned at the header so the action
+              and its target are visually grouped. */}
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            aria-label={`Remove ${exercise.name}`}
+            className="text-card-mute text-[18px] w-8 h-8 flex items-center justify-center -mr-1"
+          >
+            ×
+          </button>
+        </div>
       </div>
+      {confirming && (
+        <div className="mt-2 px-3 py-2 bg-charcoal rounded-lg border border-card-edge">
+          <p className="text-[12px] text-ink leading-snug">
+            Remove {exercise.name} and all its sets?
+          </p>
+          <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="flex-1 bg-card border border-card-edge text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void removeExerciseFromSession(link.id);
+              }}
+              style={{ background: '#7a2222' }}
+              className="flex-1 text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      )}
 
       {previous && previous.sets.length > 0 && (
         <div className="mt-2 px-3 py-2 bg-charcoal rounded-lg">
