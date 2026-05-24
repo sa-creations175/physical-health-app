@@ -3,6 +3,7 @@ import LiftingSection from '../components/dashboard/LiftingSection';
 import CardioSection from '../components/dashboard/CardioSection';
 import NutritionSection from '../components/dashboard/NutritionSection';
 import DeliveryStreakCard from '../components/dashboard/DeliveryStreakCard';
+import DailyBundleCard from '../components/dashboard/DailyBundleCard';
 import AppleWatchSection from '../components/dashboard/AppleWatchSection';
 import DashboardCTAs from '../components/dashboard/DashboardCTAs';
 
@@ -15,6 +16,7 @@ export default function Dashboard() {
       <CardioSection />
       <NutritionSection />
       <DeliveryStreakCard />
+      <DailyBundleCard />
       <AppleWatchSection />
     </>
   );
