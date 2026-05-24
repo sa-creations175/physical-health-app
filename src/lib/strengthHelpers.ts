@@ -56,7 +56,47 @@ export async function addExerciseToSession(
   await syncedUpdate(db.exercises, exerciseId, {
     last_used_at: new Date().toISOString(),
   });
+
+  // Cross-populate: adding calf raises inherits the load from the session's
+  // most-recent completed squats set. `existing` is the session's links
+  // before this add, so it holds any squats already logged.
+  await maybeCrossPopulateCalfRaises(exerciseId, link.id, existing);
+
   return link.id;
+}
+
+// When the exercise just added is a calf-raise movement, seed its first set
+// with the weight + reps from the latest completed squat set already in this
+// session — so the user doesn't re-key the load they just used. Session-scoped
+// only: it never reads prior sessions. No squat sets yet → no set created
+// (normal empty-first-set behavior). Names are matched loosely (substring,
+// case-insensitive) because the library seeds "Calf Raise" and squat variants
+// ("Back Squat", "Front Squat", …) rather than the exact "Calf Raises"/"Squats".
+async function maybeCrossPopulateCalfRaises(
+  addedExerciseId: string,
+  newLinkId: string,
+  sessionLinksBefore: SessionExercise[],
+): Promise<void> {
+  const added = await db.exercises.get(addedExerciseId);
+  if (!added || !added.name.toLowerCase().includes('calf raise')) return;
+
+  const squatLinkIds: string[] = [];
+  for (const l of sessionLinksBefore) {
+    const ex = await db.exercises.get(l.exercise_id);
+    if (ex && ex.name.toLowerCase().includes('squat')) squatLinkIds.push(l.id);
+  }
+  if (squatLinkIds.length === 0) return;
+
+  const squatSets = await db.sets
+    .where('session_exercise_id').anyOf(squatLinkIds)
+    .toArray();
+  const completed = squatSets.filter((s) => s.completed);
+  if (completed.length === 0) return;
+
+  // Most recently completed squat set wins (latest created_at).
+  completed.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const src = completed[0];
+  await addSet(newLinkId, src.weight, src.reps);
 }
 
 export async function addSet(
