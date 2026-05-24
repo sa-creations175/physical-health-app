@@ -29,22 +29,20 @@ function Base({
   );
 }
 
-// Lower body — side-view bent leg (thigh → knee → shin → foot).
+// Lower body — bold downward arrow (shaft + chevron head), single path.
 export function LowerBodyIcon() {
   return (
     <Base>
-      <path d="M10 3v8l4 10" />
-      <path d="M14 21h3" />
+      <path d="M12 4v16m-6-6 6 6 6-6" strokeWidth="2.5" />
     </Base>
   );
 }
 
-// Upper body — flexed arm: upper arm + forearm up, bicep curve.
+// Upper body — bold upward arrow, mirror of Lower Body.
 export function UpperBodyIcon() {
   return (
     <Base>
-      <path d="M4 18h6v-8" />
-      <path d="M4 18c2-3.5 5-4.5 6-3.5" />
+      <path d="M12 20V4m-6 6 6-6 6 6" strokeWidth="2.5" />
     </Base>
   );
 }
