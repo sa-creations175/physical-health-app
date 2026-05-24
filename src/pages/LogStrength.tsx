@@ -373,7 +373,7 @@ function RepeatPanel({
     >
       <div
         className="text-[12px] mb-3"
-        style={{ color: '#777' }}
+        style={{ color: '#6b756e' }}
       >
         Last {STRENGTH_LABEL[type]} · {shortDateLabel(summary.date)} ·{' '}
         {summary.exerciseCount} exercise{summary.exerciseCount === 1 ? '' : 's'}
@@ -392,8 +392,8 @@ function RepeatPanel({
           type="button"
           onClick={onStartFresh}
           disabled={disabled}
-          style={{ backgroundColor: '#686868' }}
-          className="rounded-xl p-3 text-[14px] font-medium text-white"
+          style={{ backgroundColor: '#eef1ef' }}
+          className="rounded-xl p-3 text-[14px] font-medium text-ink border border-card-edge"
         >
           Start fresh
         </button>

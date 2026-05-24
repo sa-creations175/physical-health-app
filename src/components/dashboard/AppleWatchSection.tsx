@@ -1,4 +1,5 @@
 import { SectionLabel } from '../ui/primitives';
+import { HeartPulseIcon } from './PillarIcons';
 
 const STATS = [
   { key: 'steps', label: 'Steps' },
@@ -9,7 +10,10 @@ const STATS = [
 export default function AppleWatchSection() {
   return (
     <section className="px-5 mt-6">
-      <SectionLabel>Today — Apple Watch</SectionLabel>
+      <div className="flex items-center justify-between gap-2">
+        <SectionLabel>Today — Apple Watch</SectionLabel>
+        <HeartPulseIcon />
+      </div>
       <div className="grid grid-cols-3 gap-2 mt-2">
         {STATS.map(({ key, label }) => (
           <div

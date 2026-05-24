@@ -109,7 +109,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
                 void removeExerciseFromSession(link.id);
               }}
               style={{ background: '#7a2222' }}
-              className="flex-1 text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+              className="flex-1 text-white rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
             >
               Remove
             </button>

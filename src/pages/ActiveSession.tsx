@@ -163,7 +163,7 @@ export default function ActiveSession() {
         <button
           type="button"
           onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
-          className="mt-3 w-full bg-green-deep text-ink rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+          className="mt-3 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
         >
           Finish Session
         </button>
@@ -255,7 +255,7 @@ function DiscardConfirm({
             onClick={onConfirm}
             disabled={busy}
             style={{ background: '#7a2222' }}
-            className="flex-1 text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+            className="flex-1 text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
           >
             {busy ? 'Discarding…' : 'Discard'}
           </button>

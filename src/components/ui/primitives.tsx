@@ -16,7 +16,7 @@ export function Card({
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-  // All section micro-labels: mint #5DCAA5, 9px, weight 600, tracked.
+  // All section micro-labels: green (token green-mint #157A5C), 9px, weight 600, tracked.
   return (
     <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
       {children}
@@ -35,7 +35,7 @@ export function ProgressBar({
   value,
   max,
   color = 'green-deep',
-  trackColor = '#3a3a3a',
+  trackColor = '#e7ece8',
   height = 4,
 }: {
   value: number;
@@ -76,7 +76,7 @@ export function SevenDayDotRow({
             style={{
               width: size,
               height: size,
-              background: d.hadSession ? activeColor : '#1a2e22',
+              background: d.hadSession ? activeColor : '#d8ded9',
             }}
           />
           <span className="text-[9px] text-card-mute uppercase tracking-micro">

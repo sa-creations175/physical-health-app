@@ -5,7 +5,7 @@ export default function DashboardCTAs() {
     <section className="px-5 mt-6 mb-4 grid grid-cols-2 gap-2">
       <Link
         to="/log/strength"
-        className="bg-green-deep text-ink rounded-xl py-3.5 text-center text-[13px] font-medium uppercase tracking-micro min-h-[48px] flex items-center justify-center"
+        className="bg-green-deep text-white rounded-xl py-3.5 text-center text-[13px] font-medium uppercase tracking-micro min-h-[48px] flex items-center justify-center"
       >
         Log session
       </Link>

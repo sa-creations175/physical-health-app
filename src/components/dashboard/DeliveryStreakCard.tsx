@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { Card, SectionLabel } from '../ui/primitives';
+import { FlameIcon } from './PillarIcons';
 import {
   computeDeliveryStreak,
   toggleDeliveryDay,
@@ -40,16 +41,19 @@ export default function DeliveryStreakCard() {
 
   return (
     <section className="px-5 mt-6">
-      <SectionLabel>No-delivery streak</SectionLabel>
+      <div className="flex items-center justify-between gap-2">
+        <SectionLabel>No-delivery streak</SectionLabel>
+        <FlameIcon />
+      </div>
       <Card className="mt-2 p-4">
         <div className="flex items-end justify-between">
           <div className="flex items-baseline gap-2">
-            <span className="text-[28px] font-medium leading-none text-[#f0f0f0]">
+            <span className="text-[28px] font-medium leading-none text-[#0d1f18]">
               {summary.currentStreak}
             </span>
-            <span className="text-[12px] text-[#777]">days</span>
+            <span className="text-[12px] text-[#6b756e]">days</span>
           </div>
-          <span className="text-[12px] text-[#777]">
+          <span className="text-[12px] text-[#6b756e]">
             Best: {summary.longestStreak} days
           </span>
         </div>
@@ -70,7 +74,7 @@ export default function DeliveryStreakCard() {
           {DAY_INITIALS.map((letter, i) => (
             <div
               key={i}
-              className="text-[9px] text-[#777] text-center tracking-micro"
+              className="text-[9px] text-[#6b756e] text-center tracking-micro"
             >
               {letter}
             </div>
@@ -78,7 +82,7 @@ export default function DeliveryStreakCard() {
         </div>
 
         {!hasAnyHistory && (
-          <p className="mt-3 text-[12px] text-[#777] text-center">
+          <p className="mt-3 text-[12px] text-[#6b756e] text-center">
             Tap each day you skipped delivery
           </p>
         )}
@@ -102,9 +106,9 @@ function DayCell({
   // Three visual states. `today + unmarked` gets a 2px mint border on
   // top of the grey fill — a passive "you haven't decided yet" nudge,
   // explicitly without animation per spec.
-  let bg = '#3a3a3a';
+  let bg = '#eef1ef';
   let content: React.ReactNode = (
-    <span className="text-[12px] text-[#777] font-medium">{initial}</span>
+    <span className="text-[12px] text-[#6b756e] font-medium">{initial}</span>
   );
   let border: string | undefined;
   if (status === 'clean') {
@@ -122,7 +126,7 @@ function DayCell({
       </span>
     );
   } else if (isToday) {
-    border = '2px solid #5DCAA5';
+    border = '2px solid #0F6E56';
   }
 
   const aria =

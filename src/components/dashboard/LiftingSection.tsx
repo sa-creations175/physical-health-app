@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { SectionLabel } from '../ui/primitives';
+import { DumbbellIcon } from './PillarIcons';
 import {
   getLiftingSummary,
   type LiftingType,
@@ -36,7 +37,10 @@ export default function LiftingSection() {
 
   return (
     <section className="px-5 mt-2">
-      <SectionLabel>This week — lifting</SectionLabel>
+      <div className="flex items-center justify-between gap-2">
+        <SectionLabel>This week — lifting</SectionLabel>
+        <DumbbellIcon />
+      </div>
       <div className="grid grid-cols-3 gap-2 mt-2">
         {LIFTING_CARDS.map(({ type, label, optional }) => (
           <LiftingCard

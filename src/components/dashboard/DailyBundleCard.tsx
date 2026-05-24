@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { Card, SectionLabel, ProgressBar } from '../ui/primitives';
+import { BoltIcon } from './PillarIcons';
 import { getUserPreferences } from '../../lib/userPreferences';
 import { DEFAULT_BUNDLE_CONFIG } from '../../lib/defaults';
 import {
@@ -32,15 +33,15 @@ const WEEKLY_TARGET_FACTOR = 4;
 // objects (not Tailwind classes) because the dark-green ramp here is
 // bundle-specific and not in the shared palette tokens.
 const INTENSITY_FILL: Record<DayIntensity, string> = {
-  none: '#3a3a3a',
-  low: '#1a4a35',
-  medium: '#0a5a40',
+  none: '#eef1ef',
+  low: '#d3eee2',
+  medium: '#79caa9',
   full: '#0F6E56',
 };
 const INTENSITY_INITIAL: Record<DayIntensity, string> = {
-  none: '#777',
-  low: '#5DCAA5',
-  medium: '#9FE1CB',
+  none: '#6b756e',
+  low: '#0F6E56',
+  medium: '#0d3a2c',
   full: '#ffffff',
 };
 
@@ -88,17 +89,21 @@ export default function DailyBundleCard() {
     <section className="px-5 mt-6">
       {/* Standard divider separating the bundle card from the delivery
           streak card above it. */}
-      <div aria-hidden="true" className="h-px w-full" style={{ background: '#3a3a3a' }} />
+      <div aria-hidden="true" className="h-px w-full" style={{ background: '#e3e8e4' }} />
 
       <Card className="mt-4 p-4">
-        {/* Header: mint micro-label left, streak + best right. */}
+        {/* Header: mint micro-label left, streak + best mid-right, accent
+            glyph pinned to the top-right corner. */}
         <div className="flex items-start justify-between gap-3">
           <SectionLabel>Daily bundle</SectionLabel>
-          <div className="text-right leading-tight">
-            <p className="text-[14px] text-[#f0f0f0]">
-              {currentStreak} {currentStreak === 1 ? 'week' : 'weeks'} on target
-            </p>
-            <p className="text-[11px] text-[#777] mt-0.5">Best: {longestStreak}wk</p>
+          <div className="flex items-start gap-2">
+            <div className="text-right leading-tight">
+              <p className="text-[14px] text-[#0d1f18]">
+                {currentStreak} {currentStreak === 1 ? 'week' : 'weeks'} on target
+              </p>
+              <p className="text-[11px] text-[#6b756e] mt-0.5">Best: {longestStreak}wk</p>
+            </div>
+            <BoltIcon />
           </div>
         </div>
 
@@ -116,7 +121,7 @@ export default function DailyBundleCard() {
                 className="w-full h-11 rounded-md flex items-center justify-center"
                 style={{
                   background: INTENSITY_FILL[intensity],
-                  border: showNudge ? '2px solid #5DCAA5' : undefined,
+                  border: showNudge ? '2px solid #0F6E56' : undefined,
                 }}
               >
                 <span
@@ -133,7 +138,7 @@ export default function DailyBundleCard() {
           {DAY_INITIALS.map((letter, i) => (
             <div
               key={i}
-              className="text-[9px] text-[#777] text-center tracking-micro"
+              className="text-[9px] text-[#6b756e] text-center tracking-micro"
             >
               {letter}
             </div>
@@ -162,7 +167,7 @@ export default function DailyBundleCard() {
         {/* Weekly day count. */}
         <p
           className={`mt-3 text-[12px] text-center ${
-            weekOnTrack ? 'text-green-mint' : 'text-[#aaa]'
+            weekOnTrack ? 'text-green-mint' : 'text-[#5f6b65]'
           }`}
         >
           {weekOnTrack
@@ -173,7 +178,7 @@ export default function DailyBundleCard() {
         {/* Log section — today only. */}
         <div
           aria-hidden="true"
-          className="h-px w-full bg-[#555] mt-4"
+          className="h-px w-full bg-[#e3e8e4] mt-4"
           style={{ transform: 'scaleY(0.5)' }}
         />
         <div className="mt-3">
@@ -217,7 +222,7 @@ function WeeklyBar({
     <div>
       <div className="flex justify-between items-baseline">
         <SectionLabel>{label}</SectionLabel>
-        <span className="text-[11px] text-[#f0f0f0]">
+        <span className="text-[11px] text-[#0d1f18]">
           {total} / {weeklyTarget}
         </span>
       </div>
@@ -228,7 +233,7 @@ function WeeklyBar({
           value={total}
           max={weeklyTarget}
           color="green-deep"
-          trackColor="#3a3a3a"
+          trackColor="#e7ece8"
         />
       </div>
     </div>
@@ -272,7 +277,7 @@ function ExerciseLogRow({
 
   return (
     <div className="flex items-center gap-2 min-h-[44px]">
-      <span className="text-[12px] text-[#aaa] flex-1">{label}</span>
+      <span className="text-[12px] text-[#5f6b65] flex-1">{label}</span>
 
       {editing ? (
         <input
@@ -287,14 +292,14 @@ function ExerciseLogRow({
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           aria-label={`${label} reps today`}
-          className="bg-[#2a2a2a] text-[#f0f0f0] text-[16px] font-semibold text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+          className="bg-[#eef1ef] text-[#0d1f18] text-[16px] font-semibold text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
         />
       ) : (
         <button
           type="button"
           onClick={() => setEditing(true)}
           aria-label={`${label}: ${value} reps today — tap to type`}
-          className="text-[#f0f0f0] text-[16px] font-bold w-[64px] h-11 text-center"
+          className="text-[#0d1f18] text-[16px] font-bold w-[64px] h-11 text-center"
         >
           {value}
         </button>
@@ -304,8 +309,8 @@ function ExerciseLogRow({
         type="button"
         onClick={() => bump(-increment)}
         aria-label={`Subtract ${increment} ${label}`}
-        className="text-white text-[18px] font-medium rounded-md flex items-center justify-center"
-        style={{ width: '44px', height: '44px', background: '#686868' }}
+        className="text-ink text-[18px] font-medium rounded-md flex items-center justify-center border border-card-edge"
+        style={{ width: '44px', height: '44px', background: '#eef1ef' }}
       >
         −
       </button>

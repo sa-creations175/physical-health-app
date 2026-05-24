@@ -215,7 +215,7 @@ export default function SessionComplete() {
         type="button"
         onClick={handleSave}
         disabled={!feel || saving}
-        className="mt-6 w-full bg-green-deep text-ink rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+        className="mt-6 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save Session'}
       </button>

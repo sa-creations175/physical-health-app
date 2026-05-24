@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { SectionLabel, ProgressBar } from '../ui/primitives';
+import { PulseIcon } from './PillarIcons';
 import { getCardioSummary, type CardioSessionRow } from '../../lib/dashboardQueries';
 import {
   DEFAULT_CARDIO_WEEKLY_TARGET,
@@ -40,14 +41,17 @@ export default function CardioSection() {
 
   return (
     <section className="px-5 mt-6">
-      <SectionLabel>This week — cardio</SectionLabel>
+      <div className="flex items-center justify-between gap-2">
+        <SectionLabel>This week — cardio</SectionLabel>
+        <PulseIcon />
+      </div>
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         style={{
           borderTopWidth: complete ? '3px' : '1px',
-          borderTopColor: complete ? STRIPE_COMPLETE : '#555555',
+          borderTopColor: complete ? STRIPE_COMPLETE : '#e3e8e4',
           borderLeftWidth: '2px',
           borderLeftColor: complete ? STRIPE_COMPLETE : STRIPE_DEFAULT,
         }}
@@ -96,7 +100,7 @@ export default function CardioSection() {
             value={qualifying}
             max={target}
             color={complete ? 'green-light' : 'green-deep'}
-            trackColor="#1a2e22"
+            trackColor="#e7ece8"
           />
         </div>
         <p className="text-[11px] mt-2">
@@ -157,7 +161,7 @@ function SessionPills({
           <span
             key={i}
             className="block w-2.5 h-2.5 rounded-full border border-dashed"
-            style={{ borderColor: '#555' }}
+            style={{ borderColor: '#cdd5cf' }}
             aria-hidden="true"
           />
         ),

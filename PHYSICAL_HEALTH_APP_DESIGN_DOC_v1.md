@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 23, 2026 (v2.0)
+Last updated: May 24, 2026 (v2.1)
+
+**What changed in v2.1 (May 24, 2026):** Visual system overhaul. (1) Dashboard imagery — a deep-green hero band behind the header (day / date / streak) with decorative concentric arc rings (white, ~9% opacity, right-clipped), plus a 28px accent glyph at the top-right of every pillar (dumbbell / pulse / leaf / flame / bolt / heart-pulse; lotus reserved for the future mobility card). All inline SVG, no icon-library dependency. (2) **Light theme** — the app flips from the dark charcoal base to a near-white ground (matches Finance OS): background `#f5f7f5`, white cards (`#ffffff`), dark ink text (`#0d1f18`), readable green section labels (`#157A5C`). Green CTAs keep white text; the deep-green hero band remains a colored banner. (3) Type — display headings now use **Bricolage Grotesque**, body/UI uses **DM Sans** (loaded via Google Fonts). Updates §Visual identity (palette + typography). No schema or data-layer changes (still Dexie v9).
 
 **What changed in v2.0 (May 23, 2026):** Build 2.4 — daily bundle (calisthenics) tracker shipped as a second Nutrition-pillar dashboard card, sibling to the no-delivery streak. New `bundle_logs` store (one row per user per day, created lazily the first time any exercise is logged that date) tracks three exercises independently — push-ups, ab rolls, calf raises. Card shows a "weeks on target" streak ("Best: Nwk"), a Sun→Sat intensity grid (none/low/medium/full color ramp by combined progress vs daily targets), three weekly progress bars (total vs daily target × 4), an "N of 4 days this week" tracker, and a today-only log section with superset-sized −/+ buttons and tap-to-type direct entry per exercise. Locked product decisions: per-exercise independent logging (not a bundle requirement), any reps of anything = a qualifying day, consecutive weeks with ≥ 4 qualifying days = the streak, increments + targets editable in Settings. Schema bumps to v9: new `bundle_logs` store, plus six `user_preferences` fields (three daily targets 100/60/120, three increments 25/15/30) backfilled on the existing row. Adds §Build 2.4 session log and a "Daily bundle tracker" subsection inside §Nutrition tracker design.
 
@@ -66,25 +68,28 @@ Every feature, metric, and screen maps to one of these five domains:
 
 ### Color palette
 
+Light theme (v2.1, matches Finance OS). Was a dark charcoal base through v2.0.
+
 | Role | Value | Usage |
 |---|---|---|
-| Background | `#2a2a2a` | App base — true charcoal, no blue cast |
-| Card surface | `#686868` | All cards, panels, expandable sections |
-| Card border | `#555` | Subtle separation between cards |
-| Primary text | `#f0f0f0` | All primary numbers and headings on cards |
-| Secondary text | `#aaa` | Labels, sublabels inside cards |
-| Hint text | `#777` | Date, week number, section micro-labels |
-| Dividers | `#3a3a3a` | Horizontal rules between sections |
-| Green primary | `#0F6E56` | CTA buttons, supplement done pills, progress bars |
-| Green label | `#5DCAA5` | Section labels on grey cards (readable mint) |
-| Green text light | `#9FE1CB` | Text on green backgrounds |
+| Background | `#f5f7f5` | App base — near-white, no blue cast |
+| Card surface | `#ffffff` | All cards, panels, expandable sections |
+| Card border | `#e3e8e4` | Subtle separation between cards |
+| Primary text | `#0d1f18` | All primary numbers and headings on cards |
+| Secondary text | `#5f6b65` | Labels, sublabels inside cards |
+| Hint text | `#6b756e` | Date, week number, small hints |
+| Dividers | `#e3e8e4` / `#e7ece8` | Horizontal rules / progress-bar tracks |
+| Recessed surface | `#eef1ef` | Inputs, secondary buttons, unlogged grid cells |
+| Green primary | `#0F6E56` | CTA buttons (white text), progress bars, accents |
+| Green label | `#157A5C` | Section labels on white cards (readable green) |
+| Green text light | `#9FE1CB` | Text on green / deep surfaces (e.g. hero band) |
 | Green dark | `#3B6D11` | Progress bar fills, sparkline dots |
 | Blue accent | `#185FA5` | Water tracking bar |
 | Red / alert | `#E24B4A` | Stale indicators, missed targets |
 
 ### Typography
 
-All text is system sans-serif (SF Pro on iOS, Inter fallback). No custom fonts in Phase 1.
+Display headings (`h1`, `h2`) use **Bricolage Grotesque**; body and UI text use **DM Sans**. Both loaded via Google Fonts, with `system-ui` fallbacks. (Was system sans-serif through v2.0.)
 
 - Day / header: 22px, weight 500, `#f0f0f0`
 - Date subheader: 12px, weight 400, `#777`
@@ -96,7 +101,7 @@ All text is system sans-serif (SF Pro on iOS, Inter fallback). No custom fonts i
 
 ### Key aesthetic rules
 
-- Charcoal base, grey card surfaces — never pure black, never white
+- Near-white base, white card surfaces, dark ink text (light theme, v2.1) — the deep-green hero band is the one bold colored surface
 - Single accent color family: deep green does all the work
 - Red is reserved exclusively for truth-honoring alerts (stale, missed, behind)
 - Blue used only for water tracking — one semantic meaning, used consistently
@@ -111,9 +116,10 @@ All text is system sans-serif (SF Pro on iOS, Inter fallback). No custom fonts i
 The dashboard is the philosophical center. Opens the app. Answers: "How am I doing today?"
 
 ### Header
-- Day name (large, white)
-- Date + week number (small, muted)
-- Streak pill (green background, mint text) — top right. Counts consecutive days with at least one strength OR cardio session logged. Mobility, nutrition, and supplements alone do not contribute to the streak.
+Deep-green hero band (v2.1) with decorative concentric arc rings behind the text (white, ~9% opacity, clipped to the right edge).
+- Day name (large, white) — Bricolage Grotesque
+- Date + week number (small, mint `#9FE1CB`)
+- Streak pill (translucent-white background, white text) — top right. Counts consecutive days with at least one strength OR cardio session logged. Mobility, nutrition, and supplements alone do not contribute to the streak.
 
 ### Section: This week — lifting
 Three tappable stat cards side by side:

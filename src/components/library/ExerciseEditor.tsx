@@ -131,7 +131,7 @@ export default function ExerciseEditor({
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="flex-1 bg-green-deep text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+            className="flex-1 bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

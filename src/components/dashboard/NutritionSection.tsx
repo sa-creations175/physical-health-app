@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Card, SectionLabel, ProgressBar } from '../ui/primitives';
+import { LeafIcon } from './PillarIcons';
 import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../../lib/defaults';
 import { getUserPreferences } from '../../lib/userPreferences';
 
@@ -11,7 +12,10 @@ export default function NutritionSection() {
 
   return (
     <section className="px-5 mt-6">
-      <SectionLabel>Today — nutrition</SectionLabel>
+      <div className="flex items-center justify-between gap-2">
+        <SectionLabel>Today — nutrition</SectionLabel>
+        <LeafIcon />
+      </div>
       <Card className="mt-2 p-4 space-y-4">
         <NutritionRow
           label="Protein"

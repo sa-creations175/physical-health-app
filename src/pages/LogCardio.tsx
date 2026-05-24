@@ -24,9 +24,9 @@ import type { Intensity } from '../db/types';
 
 // Semantic colors when a pill is selected. Low = blue (calm / Zone 2),
 // Moderate = deep green (the app's primary accent), High = amber
-// (exertion). Unselected pills are filled grey (#686868) — never outline-
-// only against the dark intensity block, which would render the affordance
-// invisible.
+// (exertion). Unselected pills are filled light grey (#eef1ef) with dark
+// text — never outline-only against the recessed intensity block, which
+// would render the affordance invisible.
 interface IntensityVisual {
   bg: string;
 }
@@ -321,13 +321,13 @@ export default function LogCardio() {
               field below uses a visible input instead. */}
           <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
-            className="relative bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
+            className="relative bg-[#eef1ef] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
               Date
             </p>
             <span className="mt-1 flex items-center justify-between gap-2">
-              <span className="text-[15px] text-[#f0f0f0] font-medium">{dateText}</span>
+              <span className="text-[15px] text-[#0d1f18] font-medium">{dateText}</span>
               <span aria-hidden className="text-card-mute text-[12px] leading-none">⌄</span>
             </span>
             <input
@@ -353,7 +353,7 @@ export default function LogCardio() {
               instead of our chevron. */}
           <div
             style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
-            className="bg-[#1a1a1a] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
+            className="bg-[#eef1ef] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
           >
             <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
               Time · {bucket}
@@ -371,7 +371,7 @@ export default function LogCardio() {
               // doesn't flash white. font-size 16px dodges iOS Safari's
               // auto-zoom-on-focus behavior, same as our other inputs.
               style={{ colorScheme: 'dark' }}
-              className="mt-1 bg-transparent text-[#f0f0f0] text-[16px] font-medium border-0 outline-none p-0 w-full"
+              className="mt-1 bg-transparent text-[#0d1f18] text-[16px] font-medium border-0 outline-none p-0 w-full"
             />
           </div>
         </div>
@@ -391,7 +391,7 @@ export default function LogCardio() {
                   onClick={() => setCardioTypeId(t.id)}
                   className={`px-3 min-h-[44px] rounded-full text-[13px] font-medium transition-colors ${
                     active
-                      ? 'bg-green-deep text-ink border border-green-mint'
+                      ? 'bg-green-deep text-white border border-green-mint'
                       : 'bg-card text-ink-body border border-card-edge'
                   }`}
                 >
@@ -443,7 +443,7 @@ export default function LogCardio() {
             borderLeftColor: '#5DCAA5',
             padding: '14px 12px',
           }}
-          className="bg-[#1a1a1a] rounded-lg flex flex-col items-center"
+          className="bg-[#eef1ef] rounded-lg flex flex-col items-center"
         >
           {distanceEligible ? (
             <>
@@ -459,7 +459,7 @@ export default function LogCardio() {
                 onBlur={commitDuration}
                 aria-label="duration in minutes"
                 style={{ padding: '8px 18px' }}
-                className="mt-3 bg-card text-[#f0f0f0] text-[28px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                className="mt-3 bg-card text-[#0d1f18] text-[28px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
               />
               <p className="text-[11px] text-card-mute mt-1">min</p>
               <div className="flex gap-2 mt-2">
@@ -467,7 +467,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(-5)}
                   aria-label="decrease duration by 5 minutes"
-                  className="bg-card text-white text-[15px] font-medium rounded-md"
+                  className="bg-card border border-card-edge text-ink text-[15px] font-medium rounded-md"
                   style={{ width: '44px', height: '32px' }}
                 >
                   −5
@@ -476,7 +476,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(5)}
                   aria-label="increase duration by 5 minutes"
-                  className="bg-card text-white text-[15px] font-medium rounded-md"
+                  className="bg-card border border-card-edge text-ink text-[15px] font-medium rounded-md"
                   style={{ width: '44px', height: '32px' }}
                 >
                   +5
@@ -487,7 +487,7 @@ export default function LogCardio() {
                   thickness survives DPR rounding on high-density displays. */}
               <div
                 aria-hidden="true"
-                className="w-full bg-[#333]"
+                className="w-full bg-[#e3e8e4]"
                 style={{
                   height: '1px',
                   transform: 'scaleY(0.5)',
@@ -514,7 +514,7 @@ export default function LogCardio() {
                     onBlur={commitDistance}
                     aria-label="distance in miles"
                     style={{ padding: '8px 18px' }}
-                    className="mt-3 bg-card text-[#f0f0f0] text-[28px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                    className="mt-3 bg-card text-[#0d1f18] text-[28px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
                   />
                   <p className="text-[11px] text-card-mute mt-1">mi</p>
                   <div className="flex gap-2 mt-2">
@@ -522,7 +522,7 @@ export default function LogCardio() {
                       type="button"
                       onClick={() => bumpDistance(-0.1)}
                       aria-label="decrease distance by 0.1 mile"
-                      className="bg-card text-white text-[15px] font-medium rounded-md"
+                      className="bg-card border border-card-edge text-ink text-[15px] font-medium rounded-md"
                       style={{ width: '44px', height: '32px' }}
                     >
                       −.1
@@ -531,7 +531,7 @@ export default function LogCardio() {
                       type="button"
                       onClick={() => bumpDistance(0.1)}
                       aria-label="increase distance by 0.1 mile"
-                      className="bg-card text-white text-[15px] font-medium rounded-md"
+                      className="bg-card border border-card-edge text-ink text-[15px] font-medium rounded-md"
                       style={{ width: '44px', height: '32px' }}
                     >
                       +.1
@@ -561,7 +561,7 @@ export default function LogCardio() {
                 onBlur={commitDuration}
                 aria-label="duration in minutes"
                 style={{ padding: '10px 24px' }}
-                className="mt-3 bg-card text-[#f0f0f0] text-[32px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                className="mt-3 bg-card text-[#0d1f18] text-[32px] font-medium text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
               />
               <p className="text-[11px] text-card-mute mt-1">min</p>
               <div className="flex gap-2 mt-3">
@@ -569,7 +569,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(-5)}
                   aria-label="decrease duration by 5 minutes"
-                  className="bg-card text-white text-[16px] font-medium rounded-md"
+                  className="bg-card border border-card-edge text-ink text-[16px] font-medium rounded-md"
                   style={{ width: '52px', height: '40px' }}
                 >
                   −5
@@ -578,7 +578,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(5)}
                   aria-label="increase duration by 5 minutes"
-                  className="bg-card text-white text-[16px] font-medium rounded-md"
+                  className="bg-card border border-card-edge text-ink text-[16px] font-medium rounded-md"
                   style={{ width: '52px', height: '40px' }}
                 >
                   +5
@@ -595,7 +595,7 @@ export default function LogCardio() {
             borderLeftColor: '#5DCAA5',
             padding: '14px 12px',
           }}
-          className="bg-[#1a1a1a] rounded-lg flex flex-col"
+          className="bg-[#eef1ef] rounded-lg flex flex-col"
         >
           <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold text-center">
             Intensity
@@ -611,8 +611,8 @@ export default function LogCardio() {
                   onClick={() => setIntensity(opt.value)}
                   style={
                     active
-                      ? { background: visual.bg, color: '#f0f0f0' }
-                      : { background: '#686868', color: '#dddddd' }
+                      ? { background: visual.bg, color: '#ffffff' }
+                      : { background: '#eef1ef', color: '#2c3833' }
                   }
                   className="w-full rounded-md text-[13px] font-medium py-2.5 text-center transition-colors"
                 >
@@ -641,7 +641,7 @@ export default function LogCardio() {
         type="button"
         onClick={handleSaveTap}
         disabled={!canSave || saving}
-        className="mt-6 w-full bg-green-deep text-ink rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+        className="mt-6 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save session'}
       </button>
@@ -803,7 +803,7 @@ function CardioTypePicker({
               type="button"
               onClick={handleCreateNew}
               disabled={!newName.trim() || busy}
-              className="flex-1 bg-green-deep text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+              className="flex-1 bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
             >
               Create &amp; pick
             </button>
@@ -850,7 +850,7 @@ function RetroactiveConfirm({
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 bg-green-deep text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+            className="flex-1 bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
           >
             Save anyway
           </button>
