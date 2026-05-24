@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 24, 2026 (v2.2)
+Last updated: May 24, 2026 (v2.3)
+
+**What changed in v2.3 (May 24, 2026):** Build 2.6 — mobility tracking, cardio routing, iOS safe-area, and a strength QoL touch. (1) **Mobility / flexibility** joins the daily bundle as a fourth component: a "Flex / Mobility" row with a ±5-minute stepper + tap-to-type, a green check once the day clears the threshold, a "Mobility: X / N days" weekly count, and a collapsible **Links** section for saved follow-along videos (open in a new tab, add, delete). Any mobility minutes make a day qualifying; mobility folds into the grid-intensity percentage. (2) The **cardio card taps straight to `/log/cardio`** (matching the lifting tiles); the expand-in-place list is gone. (3) **iOS safe-area** — content clears the notch/home indicator and the green header bleeds behind the status bar. (4) Adding **Calf Raises** to a session pre-fills its first set from the session's most-recent completed **Squats** set. Schema bumps to v11 (mobility_minutes on `bundle_logs`; three mobility fields on `user_preferences`). Service worker cache bumped v2 → v3. Adds §Build 2.6 session log and a "Mobility" note to §Nutrition / daily bundle.
 
 **What changed in v2.2 (May 24, 2026):** Build 2.5 — dashboard reorder + section customization. The dashboard sections (lifting / cardio / nutrition / no-delivery streak / daily bundle / Apple Watch) can now be reordered with up/down arrow buttons, renamed inline, and shown/hidden — all from a per-user reorder mode entered via a "Reorder" pill in the header or a full-width "Reorder sections" button at the bottom of the scroll. Order + per-section `{ label, visible }` config persist on `user_preferences` as JSON strings. Section header labels now render from that config (not hardcoded), so renames show immediately. At least one section must stay visible. Schema bumps to v10 (two new `user_preferences` columns, backfilled on upgrade). Adds §Build 2.5 session log and a "Dashboard customization" subsection to §Dashboard design. New `green-mid` (#1a6b4a) accent token + `shadow-card` elevation.
 
@@ -299,6 +301,7 @@ A second Nutrition-pillar card on the dashboard tracking a daily calisthenics ha
 - **Weekly progress bars target daily × 4.** Each exercise's bar measures the week's running total against `daily_target × 4` (the four qualifying days the streak needs). The fill caps at 100% visually; the number shows the true total so an overflow week reads honestly.
 - **Superset-sized increments, editable in Settings.** The −/+ buttons on each today row step by the user's configured increment (default 25 / 15 / 30 — one superset), so a typical tap logs a real set, not +1. Both the increments and the daily targets live in a "Daily bundle" Settings section. Tapping the count opens a tap-to-type field for exact entry (same pattern as cardio duration).
 - **Today-only logging.** The log section edits today's row only; past days are read-only in the grid. Retroactive editing isn't a need yet (unlike cardio, which logs discrete past sessions) — the bundle is a same-day habit check.
+- **Mobility / flexibility is a fourth component (added Build 2.6).** A "Flex / Mobility" row tracks minutes instead of reps: a ±5-minute stepper with tap-to-type, and a green check the moment the day reaches the qualifying threshold (`bundle_mobility_min_minutes`, default 5). Any mobility minutes make the day qualifying (same "any work counts" rule as the rep components), and mobility folds into the grid-intensity percentage — credited at full value once the threshold is met, capped there so a long session can't distort the bar. A separate "Mobility: X / N days" weekly count (target `bundle_mobility_target`, default 4) sits below the log rows. A collapsible **Links** section holds saved follow-along videos (`{ id, label, url }` in a prefs JSON string): tap to open in a new tab (Safari / YouTube on iOS), `+ Add link` with inline label/URL inputs, `×` to delete. Stored on `bundle_logs.mobility_minutes` + three `user_preferences` fields (Dexie v11).
 
 ---
 
@@ -1297,3 +1300,58 @@ Still fourteen tables; no new stores. JSON-on-prefs was chosen over a `dashboard
 ### Follow-up — drag-and-drop → arrow buttons (same day)
 
 The drag-and-drop reorder shipped above was replaced with **up/down arrow buttons** the same day: HTML5 DnD is unreliable on iOS Safari (the app's primary target), and arrows are a more honest fit for a touch list. Each reorder card now shows a stacked ↑/↓ pair (44×44, green-mid) in place of the ☰ handle — ↑ disabled + `text-dim` on the first card, ↓ disabled on the last; a tap swaps the section with its neighbor and persists via `updateOrder`. All drag code (draggable attrs, dragstart/over/end handlers, the optimistic `orderOverride`/ghost styling) was removed. Eye toggle, pencil rename, banner, Done, and the min-visible guard are unchanged. New `dim` (#b8c2bc) token for the disabled-arrow color.
+
+---
+
+## Build 2.6 session log — May 24, 2026
+
+End-of-session checkpoint for the mobility tracker plus three smaller fixes. Mobility joins the daily bundle as a fourth component (minutes, not reps, with saved follow-along links); the cardio card becomes a direct entry point; the app respects iOS safe areas; and calf raises inherit the session's squat load. Six commits.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `1494f4b` | feat(db): schema v11 — mobility fields on user_preferences + bundle_logs |
+| 2 | `d6e796c` | feat(bundle): mobility / flexibility tracking on the daily bundle card |
+| 3 | `16dae06` | feat(dashboard): cardio tap-to-route + iOS safe-area insets |
+| 4 | `44e8a8a` | feat(strength): cross-populate calf raises from the session's squats |
+| 5 | `dbdea97` | fix(pwa): bump service worker cache v2 → v3 |
+| 6 | _(this commit)_ | docs: v2.3 Build 2.6 session log |
+
+### Schema delta (Dexie v11)
+
+| Change | Detail |
+|---|---|
+| `bundle_logs` +1 column | `mobility_minutes: number \| null` (null = not logged). Backfilled null on upgrade. |
+| `user_preferences` +3 columns | `bundle_mobility_target` (4), `bundle_mobility_min_minutes` (5), `bundle_mobility_youtube_links` (`'[]'` JSON of `{ id, label, url }`). Backfilled on the existing row; fresh installs seed via `buildDefaultPreferences`. |
+
+Still fourteen tables; no new stores. Index lists unchanged.
+
+### Decisions made (and why)
+
+- **Mobility tracks minutes, with a qualifying threshold rather than a hard target.** A session "counts" at `bundle_mobility_min_minutes` (5); minutes beyond that don't push the bar further. Mobility is about showing up and holding the stretch, not maximizing a number — so credit is binary-ish (full once you clear the floor), capped so a 60-min session doesn't dwarf the rep components in the combined-intensity math.
+- **Any mobility minutes make the day qualifying.** Same "any work counts" rule as the three rep components — consistent mental model across the bundle, and the streak (`computeBundleStreak`) picks up mobility-only days for free through the shared `isDayQualifying`.
+- **Links live in a prefs JSON string, opened in a new tab.** Saved follow-along videos are a tiny per-user list with no query needs — JSON on `user_preferences` (like the dashboard layout), parsed defensively. `window.open(url, '_blank')` hands off to Safari / the YouTube app on iOS rather than trying to embed.
+- **Cardio card becomes a direct entry, not an expander.** The lifting tiles already route on tap (Build 2.2); cardio now matches. The expand-in-place session list was low-value next to one-tap logging, so it (and its `SessionList`/`ShortBadge` helpers) was removed.
+- **Safe area via a header that re-bleeds into the inset.** Body carries `env(safe-area-inset-top/bottom)` so every page clears the notch and home indicator; the dashboard's green header cancels the top inset with a negative margin and re-pads its content, so the band fills behind the status bar while the text stays below it. One pattern, works for the colored header and the plain pages alike.
+- **Calf-raise cross-populate is session-scoped and name-loose.** Adding a calf-raise movement seeds its first set from the session's latest completed squat set — purely within the current session (never prior sessions). Names are matched by substring (`"calf raise"` / `"squat"`, case-insensitive) because the seeded library uses "Calf Raise" and squat *variants* ("Back Squat", "Front Squat", …) rather than the literal "Calf Raises" / "Squats" — substring matching makes the feature actually fire on real data while still catching the exact names.
+
+### What shipped
+
+- **Schema:** Dexie v11 (mobility_minutes + three mobility prefs, backfilled).
+- **Helpers (`bundleHelpers`):** mobility in `upsertBundleLog` / `isDayQualifying` / `getDayIntensity` / `getWeeklyTotals`; `parseMobilityLinks` + `MobilityLink`.
+- **Card:** "Flex / Mobility" row (±5-min stepper, tap-to-type, qualifying check), "Mobility: X / N days" weekly line, collapsible Links (open / add / delete).
+- **Cardio:** `CardioSection` routes to `/log/cardio` on tap; expand-in-place removed.
+- **Safe area:** body insets in `index.css`; `DashboardHeader` green bleed; bottom nav inset already present.
+- **Strength:** `addExerciseToSession` cross-populates calf raises from session squats.
+- **PWA:** service worker `CACHE_NAME` → `physical-health-v3`.
+
+### Verification
+
+`npm run build` clean. Driven headless at 390px: mobility row logs (+5 → check at 5 min, "Mobility: 1/4 days"), links add/persist/render, cardio card routes to `/log/cardio`, and cross-populate confirmed end-to-end (squat 95×8 → newly-added calf raise's first set = 95×8, read back from Dexie). Safe-area insets resolve to 0 in headless (no notch to simulate) — the CSS follows the standard `env()` + negative-margin pattern; worth a glance on a real device.
+
+### Current state
+
+- **Schema**: Dexie v11. Fourteen tables, all `user_id`-keyed. Mobility fields added to `bundle_logs` + `user_preferences`.
+- **Dev experience**: `npm run dev` boots clean, every Build 2.6 commit type-checks, `npm run build` succeeds.
+- **Tree clean**, 6 new commits descriptive (including this docs commit), pushed to origin/main, Vercel-safe author email throughout.
