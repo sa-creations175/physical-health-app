@@ -18,7 +18,16 @@ export default function DashboardHeader({
   // (white / mint / translucent-white) since the charcoal-era colors would
   // wash out on the green.
   return (
-    <header className="relative overflow-hidden bg-green-deep px-5 pt-8 pb-5 flex items-start justify-between gap-3">
+    <header
+      // The negative top margin cancels the body's safe-area top padding so the
+      // green band reaches the very top edge (behind the notch); the matching
+      // top padding pushes the day/date text back down below the inset.
+      style={{
+        marginTop: 'calc(-1 * env(safe-area-inset-top))',
+        paddingTop: 'calc(env(safe-area-inset-top) + 2rem)',
+      }}
+      className="relative overflow-hidden bg-green-deep px-5 pb-5 flex items-start justify-between gap-3"
+    >
       <HeroArcs />
       <div className="relative min-w-0">
         <h1 className="text-[22px] font-medium text-white leading-tight">

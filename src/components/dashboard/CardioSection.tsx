@@ -1,31 +1,23 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { SectionLabel, ProgressBar } from '../ui/primitives';
 import { PulseIcon } from './PillarIcons';
-import { getCardioSummary, type CardioSessionRow } from '../../lib/dashboardQueries';
+import { getCardioSummary } from '../../lib/dashboardQueries';
 import {
   DEFAULT_CARDIO_WEEKLY_TARGET,
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
 } from '../../lib/defaults';
 import { getUserPreferences } from '../../lib/userPreferences';
-import { shortDayLabel } from '../../lib/dateHelpers';
-import type { Intensity } from '../../db/types';
 
 const STRIPE_DEFAULT = '#0F6E56';
 const STRIPE_COMPLETE = '#5DCAA5';
-
-const INTENSITY_SHORT: Record<Intensity, string> = {
-  low: 'low',
-  moderate: 'mod',
-  high: 'high',
-};
 
 export default function CardioSection({
   label = 'This Week — Cardio',
 }: {
   label?: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
   const prefs = useLiveQuery(() => getUserPreferences(), []);
   const target = prefs?.cardio_target_weekly ?? DEFAULT_CARDIO_WEEKLY_TARGET;
   const threshold =
@@ -49,19 +41,19 @@ export default function CardioSection({
         <SectionLabel>{label}</SectionLabel>
         <PulseIcon />
       </div>
+      {/* Tap routes straight to the cardio logger (same pattern as the
+          lifting tiles). No expand-in-place — the card is a summary + entry. */}
       <button
         type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
+        onClick={() => navigate('/log/cardio')}
+        aria-label="Log cardio"
         style={{
           borderTopWidth: complete ? '3px' : '1px',
           borderTopColor: complete ? STRIPE_COMPLETE : '#e3e8e4',
           borderLeftWidth: '2px',
           borderLeftColor: complete ? STRIPE_COMPLETE : STRIPE_DEFAULT,
         }}
-        className={`mt-2 w-full bg-card border rounded-xl p-4 text-left transition-colors ${
-          expanded ? 'border-green-mint' : 'border-card-edge'
-        }`}
+        className="mt-2 w-full bg-card border border-card-edge rounded-xl p-4 text-left transition-colors"
       >
         <div className="flex justify-between items-start gap-3">
           <div className="flex-1 min-w-0">
@@ -117,23 +109,6 @@ export default function CardioSection({
           )}
         </p>
       </button>
-
-      {expanded && (
-        <div className="bg-card border border-card-edge rounded-xl p-4 mt-2">
-          <p className="text-[9px] tracking-micro uppercase text-card-mute font-semibold">
-            This week's sessions
-          </p>
-          {summary && summary.sessions.length > 0 ? (
-            <div className="mt-3">
-              <SessionList rows={summary.sessions} />
-            </div>
-          ) : (
-            <p className="text-[12px] text-card-mute mt-3 text-center">
-              No sessions logged this week yet
-            </p>
-          )}
-        </div>
-      )}
     </section>
   );
 }
@@ -174,53 +149,3 @@ function SessionPills({
   );
 }
 
-function SessionList({ rows }: { rows: CardioSessionRow[] }) {
-  // Day label appears only on the first session of each day; subsequent
-  // same-day rows leave the column blank but content stays aligned.
-  let lastDate: string | null = null;
-  return (
-    <ul className="space-y-2">
-      {rows.map((row) => {
-        const showDay = row.date !== lastDate;
-        lastDate = row.date;
-        return (
-          <li
-            key={row.id}
-            className="flex items-center gap-3 text-[12px]"
-            style={{ opacity: row.qualifying ? 1 : 0.65 }}
-          >
-            <span className="w-9 text-card-mute uppercase tracking-micro text-[10px]">
-              {showDay ? shortDayLabel(row.date) : ''}
-            </span>
-            <span className="flex-1 text-ink-body flex items-center gap-1.5 min-w-0">
-              <span className="truncate">{row.type_name}</span>
-              {!row.qualifying && <ShortBadge />}
-            </span>
-            <span className="text-ink-body whitespace-nowrap">
-              {row.duration_minutes} min
-            </span>
-            {row.distance_miles !== null && (
-              <span className="text-ink-body whitespace-nowrap">
-                {row.distance_miles.toFixed(1)} mi
-              </span>
-            )}
-            <span className="text-card-mute w-10 text-right whitespace-nowrap">
-              {INTENSITY_SHORT[row.intensity]}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function ShortBadge() {
-  return (
-    <span
-      className="inline-block px-1.5 py-0.5 rounded text-[9px] tracking-micro uppercase font-semibold text-card-mute border border-card-edge"
-      aria-label="Below threshold"
-    >
-      Short
-    </span>
-  );
-}
