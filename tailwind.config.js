@@ -21,6 +21,7 @@ export default {
         // (CTAs, fills); mint is darkened so 9px section labels stay legible
         // on white. green-light remains for use ON green/colored surfaces.
         'green-deep': '#0F6E56',
+        'green-mid': '#1a6b4a',
         'green-mint': '#157A5C',
         'green-light': '#9FE1CB',
         'green-leaf': '#3B6D11',
@@ -32,6 +33,10 @@ export default {
         // Body copy + UI → DM Sans; display headings → Bricolage Grotesque.
         sans: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        // Soft elevation for white cards on the light ground.
+        card: '0 1px 3px rgba(13, 31, 24, 0.08), 0 1px 2px rgba(13, 31, 24, 0.04)',
       },
       letterSpacing: {
         micro: '0.06em',

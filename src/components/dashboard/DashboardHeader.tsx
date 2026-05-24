@@ -2,7 +2,13 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { computeStreak } from '../../lib/dashboardQueries';
 import { dayName, dateLabel, weekNumber } from '../../lib/dateHelpers';
 
-export default function DashboardHeader() {
+export default function DashboardHeader({
+  onReorder,
+  reordering = false,
+}: {
+  onReorder?: () => void;
+  reordering?: boolean;
+}) {
   const streak = useLiveQuery(() => computeStreak(), [], 0) ?? 0;
   const now = new Date();
 
@@ -22,11 +28,22 @@ export default function DashboardHeader() {
           {dateLabel(now)} · Week {weekNumber(now)}
         </p>
       </div>
-      <div
-        className="relative bg-white/15 text-white text-[11px] font-medium uppercase tracking-micro rounded-full px-3 py-1.5 whitespace-nowrap"
-        title="Consecutive days with at least one strength or cardio session"
-      >
-        {streak} day{streak === 1 ? '' : 's'}
+      <div className="relative flex flex-col items-end gap-2">
+        <div
+          className="bg-white/15 text-white text-[11px] font-medium uppercase tracking-micro rounded-full px-3 py-1.5 whitespace-nowrap"
+          title="Consecutive days with at least one strength or cardio session"
+        >
+          {streak} day{streak === 1 ? '' : 's'}
+        </div>
+        {onReorder && !reordering && (
+          <button
+            type="button"
+            onClick={onReorder}
+            className="bg-white text-green-mid border border-green-mid rounded-full px-3 py-1 text-[14px] font-medium leading-none min-h-[28px] whitespace-nowrap"
+          >
+            Reorder
+          </button>
+        )}
       </div>
     </header>
   );

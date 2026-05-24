@@ -21,7 +21,11 @@ const LIFTING_CARDS: { type: LiftingType; label: string; optional?: boolean }[] 
 const STRIPE_DEFAULT = '#0F6E56';
 const STRIPE_COMPLETE = '#5DCAA5';
 
-export default function LiftingSection() {
+export default function LiftingSection({
+  label = 'This Week — Lifting',
+}: {
+  label?: string;
+}) {
   const navigate = useNavigate();
   const prefs = useLiveQuery(() => getUserPreferences(), []);
 
@@ -38,7 +42,7 @@ export default function LiftingSection() {
   return (
     <section className="px-5 mt-2">
       <div className="flex items-center justify-between gap-2">
-        <SectionLabel>This week — lifting</SectionLabel>
+        <SectionLabel>{label}</SectionLabel>
         <DumbbellIcon />
       </div>
       <div className="grid grid-cols-3 gap-2 mt-2">

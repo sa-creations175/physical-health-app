@@ -4,7 +4,11 @@ import { LeafIcon } from './PillarIcons';
 import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../../lib/defaults';
 import { getUserPreferences } from '../../lib/userPreferences';
 
-export default function NutritionSection() {
+export default function NutritionSection({
+  label = 'Today — Nutrition',
+}: {
+  label?: string;
+}) {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
   const protein = prefs?.protein_grams_daily ?? DEFAULT_DAILY_NUTRITION_TARGETS.protein_grams;
   const water = prefs?.water_glasses_daily ?? DEFAULT_DAILY_NUTRITION_TARGETS.water_glasses;
@@ -13,7 +17,7 @@ export default function NutritionSection() {
   return (
     <section className="px-5 mt-6">
       <div className="flex items-center justify-between gap-2">
-        <SectionLabel>Today — nutrition</SectionLabel>
+        <SectionLabel>{label}</SectionLabel>
         <LeafIcon />
       </div>
       <Card className="mt-2 p-4 space-y-4">

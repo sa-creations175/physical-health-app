@@ -18,7 +18,11 @@ import type { DeliveryDay } from '../../db/types';
 // position carries the meaning, the initials are just a hint.
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-export default function DeliveryStreakCard() {
+export default function DeliveryStreakCard({
+  label = 'No-Delivery Streak',
+}: {
+  label?: string;
+}) {
   const weekStart = startOfWeekISODate();
   const today = todayISODate();
   const weekDates = Array.from({ length: 7 }, (_, i) =>
@@ -42,7 +46,7 @@ export default function DeliveryStreakCard() {
   return (
     <section className="px-5 mt-6">
       <div className="flex items-center justify-between gap-2">
-        <SectionLabel>No-delivery streak</SectionLabel>
+        <SectionLabel>{label}</SectionLabel>
         <FlameIcon />
       </div>
       <Card className="mt-2 p-4">

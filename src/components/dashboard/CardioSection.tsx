@@ -20,7 +20,11 @@ const INTENSITY_SHORT: Record<Intensity, string> = {
   high: 'high',
 };
 
-export default function CardioSection() {
+export default function CardioSection({
+  label = 'This Week — Cardio',
+}: {
+  label?: string;
+}) {
   const [expanded, setExpanded] = useState(false);
   const prefs = useLiveQuery(() => getUserPreferences(), []);
   const target = prefs?.cardio_target_weekly ?? DEFAULT_CARDIO_WEEKLY_TARGET;
@@ -42,7 +46,7 @@ export default function CardioSection() {
   return (
     <section className="px-5 mt-6">
       <div className="flex items-center justify-between gap-2">
-        <SectionLabel>This week — cardio</SectionLabel>
+        <SectionLabel>{label}</SectionLabel>
         <PulseIcon />
       </div>
       <button

@@ -45,7 +45,11 @@ const INTENSITY_INITIAL: Record<DayIntensity, string> = {
   full: '#ffffff',
 };
 
-export default function DailyBundleCard() {
+export default function DailyBundleCard({
+  label = 'Daily Bundle',
+}: {
+  label?: string;
+}) {
   const weekStart = startOfWeekISODate();
   const today = todayISODate();
   const weekDates = Array.from({ length: 7 }, (_, i) =>
@@ -95,7 +99,7 @@ export default function DailyBundleCard() {
         {/* Header: mint micro-label left, streak + best mid-right, accent
             glyph pinned to the top-right corner. */}
         <div className="flex items-start justify-between gap-3">
-          <SectionLabel>Daily bundle</SectionLabel>
+          <SectionLabel>{label}</SectionLabel>
           <div className="flex items-start gap-2">
             <div className="text-right leading-tight">
               <p className="text-[14px] text-[#0d1f18]">

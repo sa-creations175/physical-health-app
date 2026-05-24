@@ -7,11 +7,15 @@ const STATS = [
   { key: 'rest_hr', label: 'Rest HR' },
 ];
 
-export default function AppleWatchSection() {
+export default function AppleWatchSection({
+  label = 'Apple Watch',
+}: {
+  label?: string;
+}) {
   return (
     <section className="px-5 mt-6">
       <div className="flex items-center justify-between gap-2">
-        <SectionLabel>Today — Apple Watch</SectionLabel>
+        <SectionLabel>{label}</SectionLabel>
         <HeartPulseIcon />
       </div>
       <div className="grid grid-cols-3 gap-2 mt-2">
