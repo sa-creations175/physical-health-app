@@ -114,6 +114,74 @@ export default function Settings() {
           }
         />
       </section>
+
+      <section className="mt-7">
+        <SectionLabel>Daily bundle</SectionLabel>
+        <p className="text-[11px] text-ink-soft mt-1">
+          Daily rep targets, and the amount each tap adds on the dashboard card.
+        </p>
+
+        <NumberRow
+          label="Push-up target"
+          hint="reps per day"
+          value={prefs.bundle_pushup_target}
+          min={TARGET_RANGES.bundle_target.min}
+          max={TARGET_RANGES.bundle_target.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_pushup_target: v })
+          }
+        />
+        <NumberRow
+          label="Ab roll target"
+          hint="reps per day"
+          value={prefs.bundle_abroll_target}
+          min={TARGET_RANGES.bundle_target.min}
+          max={TARGET_RANGES.bundle_target.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_abroll_target: v })
+          }
+        />
+        <NumberRow
+          label="Calf raise target"
+          hint="reps per day"
+          value={prefs.bundle_calfraise_target}
+          min={TARGET_RANGES.bundle_target.min}
+          max={TARGET_RANGES.bundle_target.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_calfraise_target: v })
+          }
+        />
+        <NumberRow
+          label="Push-up increment"
+          hint="Amount added per tap on the bundle card."
+          value={prefs.bundle_pushup_increment}
+          min={TARGET_RANGES.bundle_increment.min}
+          max={TARGET_RANGES.bundle_increment.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_pushup_increment: v })
+          }
+        />
+        <NumberRow
+          label="Ab roll increment"
+          hint="Amount added per tap on the bundle card."
+          value={prefs.bundle_abroll_increment}
+          min={TARGET_RANGES.bundle_increment.min}
+          max={TARGET_RANGES.bundle_increment.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_abroll_increment: v })
+          }
+        />
+        <NumberRow
+          label="Calf raise increment"
+          hint="Amount added per tap on the bundle card."
+          value={prefs.bundle_calfraise_increment}
+          min={TARGET_RANGES.bundle_increment.min}
+          max={TARGET_RANGES.bundle_increment.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_calfraise_increment: v })
+          }
+        />
+      </section>
     </div>
   );
 }
