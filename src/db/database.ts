@@ -427,6 +427,38 @@ export class PhysicalHealthDB extends Dexie {
             if (row.mobility_minutes === undefined) row.mobility_minutes = null;
           });
       });
+
+    // v12 (Build 2.7): promote the bundle's weekly qualifying-day target from a
+    // hardcoded constant to an editable pref (bundle_target). Single new
+    // user_preferences field, backfilled to the default on the existing row.
+    // Index list unchanged.
+    this.version(12)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify((row: { bundle_target?: number }) => {
+            if (row.bundle_target === undefined) {
+              row.bundle_target = DEFAULT_BUNDLE_CONFIG.weekly_target;
+            }
+          });
+      });
   }
 }
 

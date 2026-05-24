@@ -33,6 +33,8 @@ export const DEFAULT_BUNDLE_CONFIG = {
   // session counts once it reaches 5 minutes.
   mobility_target: 4,
   mobility_min_minutes: 5,
+  // Weekly qualifying-day target for the bundle as a whole — Build 2.7.
+  weekly_target: 4,
 } as const;
 
 // Default for bundle_mobility_youtube_links — empty JSON array. The links are

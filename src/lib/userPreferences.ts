@@ -24,6 +24,10 @@ export const TARGET_RANGES = {
   protein_grams: { min: 0, max: 400 },
   water_glasses: { min: 0, max: 20 },
   veg_servings: { min: 0, max: 12 },
+  // Thresholds section (Build 2.7).
+  cardio_min_minutes: { min: 1, max: 120 },
+  mobility_min_minutes: { min: 1, max: 60 },
+  weekly_days: { min: 1, max: 7 },
   // Daily bundle (Build 2.4). Targets floor at 1 — a 0-rep daily target
   // would make the intensity math (progress vs target) divide-by-zero and
   // the metric meaningless. Increments floor at 1 so a ± tap always moves.
@@ -53,6 +57,7 @@ function buildDefaultPreferences(): UserPreferences {
     bundle_mobility_target: DEFAULT_BUNDLE_CONFIG.mobility_target,
     bundle_mobility_min_minutes: DEFAULT_BUNDLE_CONFIG.mobility_min_minutes,
     bundle_mobility_youtube_links: DEFAULT_MOBILITY_LINKS_JSON,
+    bundle_target: DEFAULT_BUNDLE_CONFIG.weekly_target,
     dashboard_section_order: JSON.stringify(DASHBOARD_SECTION_KEYS),
     dashboard_section_config: JSON.stringify(DEFAULT_DASHBOARD_SECTION_CONFIG),
     created_at: now,

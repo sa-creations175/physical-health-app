@@ -170,6 +170,11 @@ export interface UserPreferences {
   bundle_mobility_target: number;
   bundle_mobility_min_minutes: number;
   bundle_mobility_youtube_links: string;
+  // Weekly qualifying-day target for the daily bundle — added v2.4 (Dexie v12).
+  // Was a hardcoded constant (4); promoted to a pref so it's editable in
+  // Settings ("Bundle weekly target"), which the spec asked for but had no
+  // backing field.
+  bundle_target: number;
   // Dashboard customization — added v2.2 (Dexie v10). Stored as JSON strings
   // because Dexie columns are scalar; parsed/serialized by useDashboardConfig.
   // order: string[] of section keys; config: Record<key, {label, visible}>.

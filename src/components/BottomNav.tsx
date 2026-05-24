@@ -1,11 +1,14 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, Dumbbell, BookOpen, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutGrid, Dumbbell, Leaf, Heart, PlusCircle } from 'lucide-react';
 
+// Five primary tabs. Settings moved off the nav → gear in the Home header.
+// Log routes to the existing strength type-select (unchanged).
 const tabs = [
-  { to: '/', label: 'Dashboard', icon: LayoutGrid, end: true },
-  { to: '/log/strength', label: 'Log', icon: Dumbbell, end: false },
-  { to: '/library', label: 'Library', icon: BookOpen, end: false },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon, end: false },
+  { to: '/', label: 'Home', icon: LayoutGrid, end: true },
+  { to: '/fitness', label: 'Fitness', icon: Dumbbell, end: false },
+  { to: '/nutrition', label: 'Nutrition', icon: Leaf, end: false },
+  { to: '/health', label: 'Health', icon: Heart, end: false },
+  { to: '/log/strength', label: 'Log', icon: PlusCircle, end: false },
 ];
 
 export default function BottomNav() {
@@ -14,7 +17,7 @@ export default function BottomNav() {
       className="fixed bottom-0 inset-x-0 bg-charcoal border-t border-divider"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {tabs.map(({ to, label, icon: Icon, end }) => (
           <li key={to}>
             <NavLink

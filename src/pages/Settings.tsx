@@ -65,16 +65,6 @@ export default function Settings() {
             updateUserPreferences({ cardio_target_weekly: v })
           }
         />
-        <NumberRow
-          label="Min cardio duration"
-          hint="Sessions below this minute count surface as 'short' on the dashboard and don't add to the qualifying weekly total."
-          value={prefs.cardio_threshold_minutes}
-          min={TARGET_RANGES.cardio_threshold.min}
-          max={TARGET_RANGES.cardio_threshold.max}
-          onCommit={(v) =>
-            updateUserPreferences({ cardio_threshold_minutes: v })
-          }
-        />
       </section>
 
       <section className="mt-7">
@@ -180,6 +170,52 @@ export default function Settings() {
           onCommit={(v) =>
             updateUserPreferences({ bundle_calfraise_increment: v })
           }
+        />
+      </section>
+
+      <section className="mt-7">
+        <SectionLabel>Thresholds</SectionLabel>
+        <p className="text-[11px] text-ink-soft mt-1">
+          What counts as a qualifying session, and weekly day targets.
+        </p>
+
+        <NumberRow
+          label="Cardio minimum duration"
+          hint="Sessions below this are marked short on the dashboard."
+          value={prefs.cardio_threshold_minutes}
+          min={TARGET_RANGES.cardio_min_minutes.min}
+          max={TARGET_RANGES.cardio_min_minutes.max}
+          onCommit={(v) =>
+            updateUserPreferences({ cardio_threshold_minutes: v })
+          }
+        />
+        <NumberRow
+          label="Mobility minimum duration"
+          hint="Minimum minutes for a mobility session to count as complete."
+          value={prefs.bundle_mobility_min_minutes}
+          min={TARGET_RANGES.mobility_min_minutes.min}
+          max={TARGET_RANGES.mobility_min_minutes.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_mobility_min_minutes: v })
+          }
+        />
+        <NumberRow
+          label="Mobility weekly target"
+          hint="Target days per week for mobility practice."
+          value={prefs.bundle_mobility_target}
+          min={TARGET_RANGES.weekly_days.min}
+          max={TARGET_RANGES.weekly_days.max}
+          onCommit={(v) =>
+            updateUserPreferences({ bundle_mobility_target: v })
+          }
+        />
+        <NumberRow
+          label="Bundle weekly target"
+          hint="Target days per week for daily bundle activity."
+          value={prefs.bundle_target}
+          min={TARGET_RANGES.weekly_days.min}
+          max={TARGET_RANGES.weekly_days.max}
+          onCommit={(v) => updateUserPreferences({ bundle_target: v })}
         />
       </section>
     </div>
