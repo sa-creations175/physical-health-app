@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 24, 2026 (v2.3)
+Last updated: May 24, 2026 (v2.4)
+
+**What changed in v2.4 (May 24, 2026):** Build 2.7 — navigation restructure + compact-card redesign. The app moves from a single scrolling dashboard to a **5-tab cockpit**: Home (`/`, summary), Fitness (`/fitness`), Nutrition (`/nutrition`), Health (`/health`, placeholder), and Log (existing type-select). Settings moves off the nav to a gear in the Home hero header. Every weekly activity now renders as a **compact card** (`SharedActivityCard`): section label + count badge + a 7-day intensity dot row (today ringed) + an expand chevron; tapping expands the full detail in-place, one card at a time. Per-section **dot intensity rules** (lifting binary; cardio/mobility none-light-full; bundle four-band; delivery clean/ordered/unmarked) live in `dotHelpers`. Fitness fits all six activity cards + Apple Watch on one 390px screen without scrolling. Home shows three tappable domain-summary cards. Settings gains a **Thresholds** section (cardio min duration, mobility min duration, mobility weekly target, bundle weekly target). The reorder/customization system (Build 2.5) is removed. Schema bumps to v12 (one new `user_preferences` field, `bundle_target`, backing the editable bundle weekly target — the only field the threshold settings lacked). Adds §Build 2.7 session log; reworks §Dashboard design into §Home / Fitness / Nutrition.
 
 **What changed in v2.3 (May 24, 2026):** Build 2.6 — mobility tracking, cardio routing, iOS safe-area, and a strength QoL touch. (1) **Mobility / flexibility** joins the daily bundle as a fourth component: a "Flex / Mobility" row with a ±5-minute stepper + tap-to-type, a green check once the day clears the threshold, a "Mobility: X / N days" weekly count, and a collapsible **Links** section for saved follow-along videos (open in a new tab, add, delete). Any mobility minutes make a day qualifying; mobility folds into the grid-intensity percentage. (2) The **cardio card taps straight to `/log/cardio`** (matching the lifting tiles); the expand-in-place list is gone. (3) **iOS safe-area** — content clears the notch/home indicator and the green header bleeds behind the status bar. (4) Adding **Calf Raises** to a session pre-fills its first set from the session's most-recent completed **Squats** set. Schema bumps to v11 (mobility_minutes on `bundle_logs`; three mobility fields on `user_preferences`). Service worker cache bumped v2 → v3. Adds §Build 2.6 session log and a "Mobility" note to §Nutrition / daily bundle.
 
@@ -1355,3 +1357,54 @@ Still fourteen tables; no new stores. Index lists unchanged.
 - **Schema**: Dexie v11. Fourteen tables, all `user_id`-keyed. Mobility fields added to `bundle_logs` + `user_preferences`.
 - **Dev experience**: `npm run dev` boots clean, every Build 2.6 commit type-checks, `npm run build` succeeds.
 - **Tree clean**, 6 new commits descriptive (including this docs commit), pushed to origin/main, Vercel-safe author email throughout.
+
+---
+
+## Build 2.7 session log — May 24, 2026
+
+A combined navigation restructure + compact-card redesign. The goal: a glanceable fitness cockpit where every activity is visible on one phone screen, detail tucked behind an expand. No data-model changes beyond one small field; the work is routing, layout, and visual.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | _(see git log)_ | feat(nav): 5-tab restructure + compact activity-card cockpit (Build 2.7) |
+| 2 | _(this commit)_ | docs: v2.4 Build 2.7 session log |
+
+(Shipped as a focused set — schema v12, the `activity/` component family, four new pages, the nav + settings changes, and the removal of the reorder system — committed together since they only function as a whole.)
+
+### Schema delta (Dexie v12)
+
+| Change | Detail |
+|---|---|
+| `user_preferences` +1 field | `bundle_target` (default 4) — the bundle's weekly qualifying-day target, promoted from a hardcoded constant so the new "Bundle weekly target" setting has a backing field. Backfilled on upgrade. |
+
+Note: the spec said "no schema changes needed" for the Thresholds settings, but three of the four mapped to existing fields (`cardio_threshold_minutes`, `bundle_mobility_min_minutes`, `bundle_mobility_target`) and the fourth ("Bundle weekly target") had no field — so it required this one additive column.
+
+### Decisions made (and why)
+
+- **5 tabs, Settings off-nav.** Home / Fitness / Nutrition / Health / Log. Settings is infrequent, so it moves to a gear in the Home hero header — keeping the nav for the daily-use destinations. Log routes to the existing strength type-select (unchanged).
+- **One compact card format everywhere (`SharedActivityCard`).** Label + count badge + 7-day dot row (today ringed in green-mid) + chevron, ~70px tall. Detail hidden behind expand; the same card grows rather than swapping to a new surface. This is what lets all six Fitness cards + Apple Watch fit on a 390px screen without scrolling.
+- **One card expanded at a time, controlled by the page.** Expanding a new card collapses the previous — the page owns the open key, the cards are controlled. Keeps the cockpit from turning into a long scroll.
+- **Dot intensity rules centralized in `dotHelpers`.** Lifting is binary (session/no session). Cardio + mobility are three-state (none / below-threshold / qualifying). Bundle maps its existing four intensity bands to the dot ramp. Delivery is clean (green) / ordered (red) / unmarked (grey). One module, one palette.
+- **Lifting tap-to-route preserved via an in-detail link.** Rather than make the whole card both expand AND route (a confusing dual-tap), each lifting card's expanded detail carries a "Log {Type} →" link to `/log/strength?type=…`. Logging otherwise happens via the Log tab. No CTA buttons on the Fitness page.
+- **Bundle logging extracted to `activity/bundleLogging`.** The rep steppers, mobility row, and links UI are shared between the standalone Mobility card and the full Bundle detail, so there's one implementation.
+- **Reorder system removed.** Home is three fixed summary cards; the Build 2.5 drag/arrow reorder, its hook, and `DashboardReorder` are deleted. The old per-section dashboard components and `DailyBundleCard` are replaced by the `activity/` card family.
+
+### What shipped
+
+- **Routing:** `App.tsx` 5 routes; `BottomNav` 5 tabs (grid / dumbbell / leaf / heart / plus-circle); gear in `DashboardHeader` → `/settings`.
+- **Components:** `activity/SharedActivityCard`, `LiftingActivityCard`, `CardioActivityCard`, `MobilityActivityCard`, `BundleActivityCard`, `DeliveryActivityCard`, `AppleWatchActivityCard`, `bundleLogging`; `lib/dotHelpers`.
+- **Pages:** `Home` (hero + 3 summary cards), `Fitness` (6 cards + Apple Watch), `Nutrition` (logger + delivery + bundle compact), `Health` (placeholder).
+- **Settings:** new Thresholds section (4 fields).
+- **Removed:** `Dashboard`, `DashboardReorder`, `useDashboardConfig`, `DailyBundleCard`, `DashboardCTAs`, and the old `LiftingSection` / `CardioSection` / `DeliveryStreakCard` / `AppleWatchSection`.
+
+### Verification
+
+`npm run build` clean. Driven headless at 390px: 5 nav tabs resolve; Home shows gear + 3 summary links; Fitness renders all 7 cards with the last card bottom at 665px (< 844px viewport — fits without scrolling); expand is one-at-a-time; Nutrition + Health + the Settings Thresholds section all render.
+
+### Current state
+
+- **Schema**: Dexie v12. Fourteen tables, all `user_id`-keyed. `user_preferences` gains `bundle_target`.
+- **Dev experience**: `npm run dev` boots clean, the Build 2.7 commits type-check, `npm run build` succeeds.
+- **Tree clean**, pushed to origin/main, no Co-Authored-By trailer (Vercel Hobby multi-author block).
