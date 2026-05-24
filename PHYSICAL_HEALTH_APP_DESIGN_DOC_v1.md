@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 24, 2026 (v2.1)
+Last updated: May 24, 2026 (v2.2)
+
+**What changed in v2.2 (May 24, 2026):** Build 2.5 — dashboard reorder + section customization. The dashboard sections (lifting / cardio / nutrition / no-delivery streak / daily bundle / Apple Watch) can now be reordered by drag-and-drop, renamed inline, and shown/hidden — all from a per-user reorder mode entered via a "Reorder" pill in the header or a full-width "Reorder sections" button at the bottom of the scroll. Order + per-section `{ label, visible }` config persist on `user_preferences` as JSON strings. Section header labels now render from that config (not hardcoded), so renames show immediately. At least one section must stay visible. Schema bumps to v10 (two new `user_preferences` columns, backfilled on upgrade). Adds §Build 2.5 session log and a "Dashboard customization" subsection to §Dashboard design. New `green-mid` (#1a6b4a) accent token + `shadow-card` elevation.
 
 **What changed in v2.1 (May 24, 2026):** Visual system overhaul. (1) Dashboard imagery — a deep-green hero band behind the header (day / date / streak) with decorative concentric arc rings (white, ~9% opacity, right-clipped), plus a 28px accent glyph at the top-right of every pillar (dumbbell / pulse / leaf / flame / bolt / heart-pulse; lotus reserved for the future mobility card). All inline SVG, no icon-library dependency. (2) **Light theme** — the app flips from the dark charcoal base to a near-white ground (matches Finance OS): background `#f5f7f5`, white cards (`#ffffff`), dark ink text (`#0d1f18`), readable green section labels (`#157A5C`). Green CTAs keep white text; the deep-green hero band remains a colored banner. (3) Type — display headings now use **Bricolage Grotesque**, body/UI uses **DM Sans** (loaded via Google Fonts). Updates §Visual identity (palette + typography). No schema or data-layer changes (still Dexie v9).
 
@@ -160,6 +162,17 @@ Three small stat cards side by side (pulled via HealthKit):
 ### CTA row
 - Primary: "Log session" (full green button)
 - Secondary: "Log nutrition" (grey card button)
+
+### Dashboard customization (added Build 2.5)
+
+The dashboard is no longer a fixed stack — the user controls the order, names, and visibility of each section. Entered via a "Reorder" pill at the top-right of the hero header, or a full-width "Reorder sections" button at the bottom of the scroll. Locked decisions:
+
+- **Reorder mode is local UI state, not a route.** Entering/leaving doesn't navigate — the dashboard swaps its normal content for a list of reorder cards in place. A mint banner ("Drag sections to reorder — tap ✓ to save") with a green Done (✓) button sits below the header.
+- **Three controls per section: drag, rename, show/hide.** Drag (HTML5 DnD, ☰ handle) reorders; a pencil opens an inline underline-only input to rename; an eye toggles visibility (green open-eye = visible, dim eye-off = hidden). Hidden sections render at 50% opacity with a struck-through label.
+- **Every change persists immediately — Done just exits.** Reorder writes the new order; eye/pencil write the section config. There is no separate save step; ✓ only leaves the mode. Rationale: the reorder view *is* the editor, and a phone user shouldn't lose edits by forgetting to "save."
+- **At least one section must stay visible.** Hiding the last visible section is refused with a brief inline message ("At least one section must be visible") — an empty dashboard is never a valid state.
+- **Labels render from config, not code.** Each section header reads its label from the stored config, so a rename appears instantly on the live dashboard. Defaults are Title Case; the on-card micro-label uppercases them, so the casing only shows on the reorder card (Bricolage Grotesque).
+- **Storage is JSON-on-prefs, not a new table.** `dashboard_section_order` (array of keys) and `dashboard_section_config` (`{ key: { label, visible } }`) live as JSON strings on the single `user_preferences` row — parsed/serialized by `useDashboardConfig`. Defensive parsing drops unknown keys and backfills missing ones, so a future section appears automatically and a malformed blob can't break render.
 
 ---
 
@@ -1227,3 +1240,56 @@ Fourteen tables now (`bundle_logs` is the new addition); all rows still carry `u
 - **Schema**: Dexie v9. Fourteen tables, all `user_id`-keyed. `bundle_logs` added; `user_preferences` gains six bundle fields.
 - **Dev experience**: `npm run dev` boots clean, every Build 2.4 commit type-checks, `npm run build` succeeds.
 - **Tree clean**, 6 new commits descriptive (including this docs commit), Vercel-safe author email throughout.
+
+---
+
+## Build 2.5 session log — May 24, 2026
+
+End-of-session checkpoint for dashboard reorder + section customization. The user can now drag dashboard sections into any order, rename them inline, and show/hide them — from a reorder mode entered via a header "Reorder" pill or a bottom "Reorder sections" button. Layout persists per-user on `user_preferences`.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `b0481b9` | feat(db): schema v10 — dashboard section order + config on user_preferences |
+| 2 | `8665ffd` | feat(hooks): useDashboardConfig — parse/serialize section order + config |
+| 3 | `3b0c994` | feat(dashboard): reorder mode — drag, rename, show/hide sections |
+| 4 | _(this commit)_ | docs: v2.2 Build 2.5 session log |
+
+### Schema delta (Dexie v10)
+
+| Change | Detail |
+|---|---|
+| `user_preferences` +2 columns | `dashboard_section_order` (JSON `string[]` of section keys) and `dashboard_section_config` (JSON `{ key: { label, visible } }`). Defaults: canonical order `['lifting','cardio','nutrition','delivery_streak','daily_bundle','apple_watch']`, all visible, Title-Case labels. Backfilled on the existing prefs row via the v10 upgrade hook; fresh installs seed them in `buildDefaultPreferences`. No index change. |
+
+Still fourteen tables; no new stores. JSON-on-prefs was chosen over a `dashboard_sections` table because the data is a single small per-user blob with no query needs — a table would be six rows of ceremony for something read all-at-once.
+
+### Decisions made (and why)
+
+- **JSON strings on the existing prefs row, not a new table.** The layout is one small per-user object read in full every render; there's nothing to index or join. Two scalar JSON columns keep the schema flat and the read a single `get`. `useDashboardConfig` owns parse/serialize so no other code touches the raw strings.
+- **Defensive parse — defaults merged in, unknown keys dropped.** The hook rebuilds config/order over the *known* key set each read: missing keys backfill from defaults (a future section appears automatically), unknown/stale keys are ignored, malformed JSON falls back. The persisted blob can never wedge the dashboard.
+- **Labels render from config, not hardcoded.** Each section component takes a `label` prop sourced from the stored config, so a rename shows on the live dashboard instantly. SectionLabel still uppercases, so default casing only matters on the reorder card.
+- **Reorder mode is local React state.** No route, no modal — the dashboard swaps content in place. Lower friction, and the back button doesn't become an accidental "cancel."
+- **Persist-on-action, not persist-on-Done.** Every drag/rename/toggle writes immediately via `updateOrder` / `updateSection`; Done (✓) only exits. A phone user can't lose edits by forgetting to save, and the reorder view doubles as the editor.
+- **At least one section must stay visible.** Hiding the final visible section is refused with an inline message — an empty dashboard is never valid. Enforced in the UI (the hook stays a pure writer).
+- **Drag reuses the active-session DnD pattern.** HTML5 drag-and-drop with an optimistic local order during the drag, persisted on drop, then cleared once the live query catches up. One proven pattern, two surfaces.
+
+### What shipped
+
+**Schema:** Dexie v10 adds `dashboard_section_order` + `dashboard_section_config` to `user_preferences` (JSON strings), backfilled on upgrade.
+
+**Hook (`src/hooks/useDashboardConfig.ts`):** `orderedSections` (visible, in order), `allSections` (incl. hidden), merged `config`, `updateOrder`, `updateSection`, `loading` — with defensive parsing and loading defaults.
+
+**UI:** `DashboardReorder` (banner + Done, draggable cards with ☰ / eye / pencil, min-visible guard); `DashboardHeader` gains a "Reorder" pill; each section component takes a `label`; `Dashboard` renders `orderedSections` via a key→component registry and hosts the reorder state + bottom "Reorder sections" button. New `green-mid` (#1a6b4a) token and `shadow-card` elevation.
+
+### Known follow-ups carried into next build
+
+- **Reorder affordance discoverability.** Two entry points today; if the header pill feels noisy, the bottom button alone may suffice — revisit after real use.
+- **Per-section settings depth.** Rename + show/hide is the current surface. If sections grow options (e.g. per-section targets inline), the pencil could open a small sheet rather than an inline input.
+- **Reset to defaults.** No one-tap "restore default layout" yet — easy to add to Settings if the user reorders into a corner.
+
+### Current state
+
+- **Schema**: Dexie v10. Fourteen tables, all `user_id`-keyed. `user_preferences` gains `dashboard_section_order` + `dashboard_section_config`.
+- **Dev experience**: `npm run dev` boots clean, every Build 2.5 commit type-checks, `npm run build` succeeds. Reorder verified end-to-end (drag cards, hide persists to normal view, min-visible guard fires).
+- **Tree clean**, 4 new commits descriptive (including this docs commit), pushed to origin/main, Vercel-safe author email throughout.
