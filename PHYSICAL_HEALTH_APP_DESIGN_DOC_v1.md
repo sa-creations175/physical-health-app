@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 19, 2026 (v1.9)
+Last updated: May 23, 2026 (v2.0)
+
+**What changed in v2.0 (May 23, 2026):** Build 2.4 — daily bundle (calisthenics) tracker shipped as a second Nutrition-pillar dashboard card, sibling to the no-delivery streak. New `bundle_logs` store (one row per user per day, created lazily the first time any exercise is logged that date) tracks three exercises independently — push-ups, ab rolls, calf raises. Card shows a "weeks on target" streak ("Best: Nwk"), a Sun→Sat intensity grid (none/low/medium/full color ramp by combined progress vs daily targets), three weekly progress bars (total vs daily target × 4), an "N of 4 days this week" tracker, and a today-only log section with superset-sized −/+ buttons and tap-to-type direct entry per exercise. Locked product decisions: per-exercise independent logging (not a bundle requirement), any reps of anything = a qualifying day, consecutive weeks with ≥ 4 qualifying days = the streak, increments + targets editable in Settings. Schema bumps to v9: new `bundle_logs` store, plus six `user_preferences` fields (three daily targets 100/60/120, three increments 25/15/30) backfilled on the existing row. Adds §Build 2.4 session log and a "Daily bundle tracker" subsection inside §Nutrition tracker design.
 
 **What changed in v1.9 (May 19, 2026):** Build 2.3 — no-delivery streak tracker shipped as a dedicated Nutrition-pillar card on the dashboard. New `delivery_days` store (one row per user per day, present only when the user actively marks the day). Card shows current streak ("X days"), all-time best ("Best: Y days"), and a Sun→Sat grid of 44px tappable squares; each square cycles unmarked → clean (green ✓) → ordered (red ✗) → unmarked on tap. Streak math walks backward from today with the same "today forgiveness" rule the workout streak uses. Slip definition is locked to delivery orders only — eating out socially doesn't count. Schema bumps to v8 (new store, no upgrade backfill). Adds §Build 2.3 session log and a "No-delivery streak" subsection inside §Nutrition tracker design.
 
@@ -266,6 +268,19 @@ A separate Nutrition-pillar card on the dashboard tracking the daily habit of sk
 - **Best (longest) streak surfaces alongside.** The card shows "X days" current and "Best: Y days" historical. The current run can also be the best — a live record stays visible without needing an "ordered" cap to count.
 - **Weekly grid is the primary interaction.** Sun–Sat, 44×44 tappable squares, day initials below. Today gets a 2px mint border on the grey fill when still unmarked — passive nudge, no animation.
 
+### Daily bundle tracker (added Build 2.4)
+
+A second Nutrition-pillar card on the dashboard tracking a daily calisthenics habit — the supersets the user runs most days (push-ups, ab rolls, calf raises, typically 25 / 15 / 30). It sits directly below the no-delivery streak card. Locked decisions:
+
+- **Per-exercise independent logging, not a bundle requirement.** The three exercises are tracked separately. A day with only push-ups still counts; the user isn't forced to do all three to "qualify." The name "bundle" describes the typical superset grouping, not a completion gate.
+- **Any reps = a qualifying day.** The bar for a day to count toward the streak is the lowest possible: any reps of anything (`pushups + ab_rolls + calf_raises > 0`). The habit being built is *showing up daily*, not hitting a number — consistent with the Personal-OS "attempts and time, not just outcomes" principle. Hitting the full targets is surfaced separately as grid intensity, not as the qualifying threshold.
+- **Streak = consecutive weeks with ≥ 4 qualifying days.** Unlike the delivery streak (consecutive *days*), the bundle streak is measured in *weeks*. A week needs 4+ qualifying days to count. This tolerates the user's real pattern (most days, not every day) without punishing a rest day. The headline reads "N weeks on target," with an all-time "Best: Nwk" alongside.
+- **Current week is open — never breaks, never counts until it closes.** The week containing today is in progress: it can't break the streak (a slow start to the week isn't a failure) and doesn't add to the count until it rolls into the past, even if it already has 4+ days. Both the current walk and the longest scan operate only on closed weeks. Mirrors the spirit of the delivery card's today-forgiveness, scaled up to the week unit.
+- **Four intensity bands drive the grid color.** `none` (nothing logged) → grey; `low` (1–49% of combined daily targets) → dark green; `medium` (50%+ combined) → mid green; `full` (all three individual targets met) → deep green. "Full" is reserved for hitting every target individually, because independent tracking means a day could overshoot the combined total while skipping an exercise — strong, but not complete, so it caps at medium.
+- **Weekly progress bars target daily × 4.** Each exercise's bar measures the week's running total against `daily_target × 4` (the four qualifying days the streak needs). The fill caps at 100% visually; the number shows the true total so an overflow week reads honestly.
+- **Superset-sized increments, editable in Settings.** The −/+ buttons on each today row step by the user's configured increment (default 25 / 15 / 30 — one superset), so a typical tap logs a real set, not +1. Both the increments and the daily targets live in a "Daily bundle" Settings section. Tapping the count opens a tap-to-type field for exact entry (same pattern as cardio duration).
+- **Today-only logging.** The log section edits today's row only; past days are read-only in the grid. Retroactive editing isn't a need yet (unlike cardio, which logs discrete past sessions) — the bundle is a same-day habit check.
+
 ---
 
 ## Health check-ins design
@@ -498,7 +513,14 @@ delivery_days                                -- added v1.9 (Dexie v8)
   id, user_id, date
   status: 'clean' | 'ordered'
   created_at, updated_at
+
+bundle_logs                                  -- added v2.0 (Dexie v9)
+  id, user_id, date                          -- one row per user per day
+  pushups, ab_rolls, calf_raises             -- independent rep counts, default 0
+  created_at, updated_at
 ```
+
+`user_preferences` also gains six bundle fields in v9 (Dexie upgrade hook backfills the existing row): `bundle_pushup_target` (100), `bundle_abroll_target` (60), `bundle_calfraise_target` (120), `bundle_pushup_increment` (25), `bundle_abroll_increment` (15), `bundle_calfraise_increment` (30).
 
 ---
 
@@ -1123,3 +1145,79 @@ Thirteen tables now (`delivery_days` is the new addition); all rows still carry 
 - **Schema**: Dexie v8. Thirteen tables, all `user_id`-keyed. `delivery_days` added.
 - **Dev experience**: `npm run dev` boots clean, every Build 2.3 commit type-checks, `npm run build` succeeds.
 - **Tree clean**, 5 new commits descriptive (including this docs commit), Vercel-safe author email throughout.
+
+---
+
+## Build 2.4 session log — May 23, 2026
+
+End-of-session checkpoint for the daily bundle (calisthenics) tracker. Six commits, single-feature: a second Nutrition-pillar dashboard card lets the user log push-ups, ab rolls, and calf raises each day and tracks a "weeks on target" streak. The three exercises are tracked independently — any reps of anything makes the day qualifying, and a week with ≥ 4 qualifying days advances the streak. The card sits directly below the no-delivery streak card; both are siblings under the Nutrition pillar.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | `e15d5b5` | feat(db): schema v9 — bundle_logs table + bundle prefs fields |
+| 2 | `bdfd13f` | feat(bundle): helpers for week query, upsert, intensity + streak math |
+| 3 | `86e12ae` | feat(bundle): DailyBundleCard — weekly grid, progress bars, today logger |
+| 4 | `9aa940f` | feat(settings): Daily Bundle targets + increments |
+| 5 | `bc2534a` | feat(dashboard): mount DailyBundleCard below delivery streak |
+| 6 | _(this commit)_ | docs: v2.0 Build 2.4 session log |
+
+### Schema delta (Dexie v9)
+
+| Change | Detail |
+|---|---|
+| New store: `bundle_logs` | `id, user_id, date, pushups, ab_rolls, calf_raises, created_at, updated_at`. Indexed on `user_id` and `date`. One row per user per day, created lazily the first time any exercise is logged that date; rep fields default 0. No upgrade backfill on the store (new, empty on upgrade). |
+| `user_preferences` +6 fields | `bundle_pushup_target` (100), `bundle_abroll_target` (60), `bundle_calfraise_target` (120), `bundle_pushup_increment` (25), `bundle_abroll_increment` (15), `bundle_calfraise_increment` (30). Backfilled on the existing single prefs row via the v9 upgrade hook; fresh installs seed them in `buildDefaultPreferences`. |
+
+Fourteen tables now (`bundle_logs` is the new addition); all rows still carry `user_id = LOCAL_USER_ID` for clean Phase 6 sync migration.
+
+### Decisions made (and why)
+
+- **Per-exercise independent logging, not a bundle requirement.** The three exercises live as three columns on one row and are summed/displayed independently. A day with only push-ups still qualifies. "Bundle" names the typical superset grouping, not a completion gate — forcing all three would punish the partial-effort days the user actually has.
+- **Any reps = a qualifying day.** The qualifying test is `pushups + ab_rolls + calf_raises > 0`. The habit is daily consistency, not a rep count — Personal-OS "attempts and time, not just outcomes." Hitting full targets is surfaced as grid *intensity*, deliberately decoupled from the *qualifying* threshold so the streak rewards showing up.
+- **Streak measured in weeks, not days.** Unlike the delivery streak (consecutive days), this counts consecutive weeks with ≥ 4 qualifying days. This matches the user's real cadence (most days, not every day) and lets a rest day pass without breaking the run. Four is the floor; the weekly progress bars target `daily × 4` to make the same number visible across both surfaces.
+- **Current week is open — never breaks, never counts until it closes.** The week containing today is in progress; it can't break the streak and doesn't add to the count until it rolls into the past. Both `computeBundleStreak`'s backward walk and its longest-run scan operate only on closed weeks, so a slow Monday never costs a streak and a strong-but-unfinished week never inflates it early.
+- **Four intensity bands, "full" reserved for all-three-hit.** `none / low (<50% combined) / medium (50%+ combined) / full (every individual target met)`. Independent tracking means a day could clear the combined total while skipping an exercise — that reads as medium, not full, because "full" should mean a complete day, not just a high-volume one. Guards against divide-by-zero if a target is ever set to 0.
+- **Absence of a row IS "nothing logged."** Same shape as the delivery card — the table holds only days the user touched, not 365 rows/year. A missing day contributes 0 to totals and is non-qualifying, which is the correct default.
+- **Superset-sized increments (default 25 / 15 / 30), editable.** A +1 button would be absurd for someone doing sets of 25 — each tap logs one superset. Increments and daily targets both live in a "Daily bundle" Settings section using the existing `NumberRow` (save-on-blur, inline ✓). Targets floor at 1 (a 0 target breaks the intensity math); increments floor at 1 (a 0 increment makes ± a no-op).
+- **Tap-to-type for exact entry.** Tapping the today count swaps the number for a dark-block numeric input (same pattern as the cardio duration field), so an odd count (e.g. 40 after a long set) is one tap away without spamming the + button.
+- **Today-only logging.** The log section edits today's row; the grid is a read-only week view. Unlike cardio (discrete past sessions worth backdating), the bundle is a same-day habit check — retroactive editing isn't a need yet.
+
+### What shipped
+
+**Schema:**
+- Dexie v9 adds `bundle_logs` (id, user_id, date, pushups, ab_rolls, calf_raises, created_at, updated_at), indexed on user_id + date. Six `user_preferences` bundle fields backfilled via the v9 upgrade hook.
+
+**Helpers (`src/lib/bundleHelpers.ts`):**
+- `getTodayBundleLog()` / `getBundleWeek(startOfWeek)` — today's row (or null) and the week's seven rows via indexed `.anyOf` lookups.
+- `upsertBundleLog(date, field, value)` — create-or-update one rep-field per write, floor 0, through the synced* wrappers.
+- `isDayQualifying(log)` — any reps at all.
+- `getDayIntensity(log, prefs)` — `none / low / medium / full` from combined progress vs daily targets, with `full` gated on all three individual targets.
+- `getWeeklyTotals(weekLogs)` — per-exercise sums across the week.
+- `computeBundleStreak(allLogs)` — `{ currentStreak, longestStreak }`; consecutive closed weeks with ≥ 4 qualifying days, current week excluded.
+
+**DailyBundleCard:**
+- Mounted at `<DailyBundleCard />` in `src/pages/Dashboard.tsx`, directly below `<DeliveryStreakCard />`, separated by the standard #3a3a3a divider.
+- Header: mint "DAILY BUNDLE" micro-label left; "N weeks on target" (14px #f0f0f0) + "Best: Nwk" (11px #777) right.
+- Sun→Sat intensity grid (44px squares, color ramp by intensity, day initial colored per band, 2px mint border nudge on an unlogged today) + 9px day-initial label row below.
+- Three weekly progress bars (deep-green fill on #3a3a3a track, total vs daily×4, number shows true total past the visual cap).
+- "N of 4 days this week" line, flipping to mint "✓ Week on track" at 4+.
+- Today-only log section: three rows, each with the exercise name, a tap-to-type count, and 44×44 −/+ buttons stepping by the configured increment.
+
+**Settings:**
+- New "Daily bundle" section with six `NumberRow` fields (three targets, three increments). Increment fields carry the "Amount added per tap on the bundle card." hint.
+
+### Known follow-ups carried into next build
+
+- **Bundle history surface.** Only the current week is visible. `getBundleWeek` is shaped so a `getBundleRange(start, end)` is a one-line swap when a month/year heatmap becomes interesting.
+- **Per-exercise streaks / PRs.** The data supports "longest push-up streak" or "most reps in a day" — not surfaced yet; revisit if the user asks for per-exercise depth.
+- **Custom bundle exercises.** Three exercises are hard-coded as columns. If the user adds a fourth movement, a child `bundle_exercises` table (like `cardio_types`) is the right reshape — flagged, not built.
+- **Configurable weekly day target.** The "≥ 4 days/week" threshold is a constant. If the user's cadence shifts, it moves to Settings; locked at 4 for now per the brief.
+- **Retroactive day editing.** Today-only for now. A long-press on a past grid square could open that day for editing if the need appears.
+
+### Current state
+
+- **Schema**: Dexie v9. Fourteen tables, all `user_id`-keyed. `bundle_logs` added; `user_preferences` gains six bundle fields.
+- **Dev experience**: `npm run dev` boots clean, every Build 2.4 commit type-checks, `npm run build` succeeds.
+- **Tree clean**, 6 new commits descriptive (including this docs commit), Vercel-safe author email throughout.
