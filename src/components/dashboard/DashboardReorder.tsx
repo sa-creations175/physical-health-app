@@ -3,11 +3,12 @@ import type { SectionConfigMap } from '../../hooks/useDashboardConfig';
 import type { DashboardSectionMeta } from '../../lib/defaults';
 
 // Reorder / customization view. Replaces the normal dashboard content while
-// active: a mint banner with a Done button, then one draggable card per
-// section (including hidden ones). Drag uses HTML5 DnD with an optimistic
-// local order (same pattern as the active-session exercise reorder); the
-// drop persists via updateOrder. Eye toggles visibility, pencil inline-renames
-// — both persist immediately, so Done is a pure exit with no separate save.
+// active: a mint banner with a Done button, then one card per section
+// (including hidden ones). Reordering is by ↑/↓ arrow buttons — tapped moves
+// swap a section with its neighbor and persist immediately via updateOrder.
+// (Was HTML5 drag-and-drop through Build 2.5; swapped to arrows because DnD is
+// unreliable on iOS Safari.) Eye toggles visibility, pencil inline-renames —
+// both persist immediately too, so Done is a pure exit with no save step.
 
 const MIN_VISIBLE_MESSAGE = 'At least one section must be visible';
 
@@ -27,22 +28,9 @@ export default function DashboardReorder({
   ) => Promise<void>;
   onDone: () => void;
 }) {
-  // Optimistic order while dragging; cleared once the live query catches up.
-  const [orderOverride, setOrderOverride] = useState<string[] | null>(null);
-  const [draggingKey, setDraggingKey] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const msgTimer = useRef<number | null>(null);
-
-  // Drop the override once the persisted order matches it — at that point the
-  // live data is the truth and the override would mask future changes.
-  useEffect(() => {
-    if (!orderOverride) return;
-    const matches =
-      allSections.length === orderOverride.length &&
-      allSections.every((k, i) => k === orderOverride[i]);
-    if (matches) setOrderOverride(null);
-  }, [allSections, orderOverride]);
 
   useEffect(
     () => () => {
@@ -51,8 +39,7 @@ export default function DashboardReorder({
     [],
   );
 
-  const order = orderOverride ?? allSections;
-  const visibleCount = order.filter((k) => config[k]?.visible).length;
+  const visibleCount = allSections.filter((k) => config[k]?.visible).length;
 
   function flashMessage(text: string) {
     if (msgTimer.current !== null) window.clearTimeout(msgTimer.current);
@@ -63,35 +50,14 @@ export default function DashboardReorder({
     }, 2500);
   }
 
-  function handleDragStart(e: React.DragEvent, key: string) {
-    setDraggingKey(key);
-    e.dataTransfer.setData('text/plain', key);
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
-  function handleDragOver(e: React.DragEvent, overKey: string) {
-    if (!draggingKey || draggingKey === overKey) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const current = order.slice();
-    const fromIdx = current.indexOf(draggingKey);
-    const toIdx = current.indexOf(overKey);
-    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-    current.splice(fromIdx, 1);
-    current.splice(toIdx, 0, draggingKey);
-    setOrderOverride(current);
-  }
-
-  async function handleDragEnd() {
-    const settled = orderOverride;
-    setDraggingKey(null);
-    if (!settled) return;
-    try {
-      await updateOrder(settled);
-    } catch (err) {
-      console.error('Failed to persist section order:', err);
-      setOrderOverride(null);
-    }
+  // Swap a section with its neighbor in `dir` (-1 up, +1 down) and persist.
+  function move(key: string, dir: -1 | 1) {
+    const idx = allSections.indexOf(key);
+    const target = idx + dir;
+    if (idx === -1 || target < 0 || target >= allSections.length) return;
+    const next = allSections.slice();
+    [next[idx], next[target]] = [next[target], next[idx]];
+    void updateOrder(next);
   }
 
   function handleToggleVisible(key: string) {
@@ -109,7 +75,7 @@ export default function DashboardReorder({
       {/* Banner */}
       <div className="flex items-center justify-between gap-3 rounded-2xl bg-[#e7f5ef] px-4 py-3">
         <p className="text-[13px] text-green-mid leading-snug">
-          Drag sections to reorder — tap ✓ to save
+          Use ↑ ↓ to reorder — tap ✓ to save
         </p>
         <button
           type="button"
@@ -127,19 +93,18 @@ export default function DashboardReorder({
 
       {/* Cards */}
       <div className="mt-3 space-y-2">
-        {order.map((key) => {
+        {allSections.map((key, i) => {
           const meta = config[key];
           if (!meta) return null;
           return (
             <ReorderCard
               key={key}
-              sectionKey={key}
               meta={meta}
-              dragging={draggingKey === key}
+              isFirst={i === 0}
+              isLast={i === allSections.length - 1}
               editing={editingKey === key}
-              onDragStart={(e) => handleDragStart(e, key)}
-              onDragOver={(e) => handleDragOver(e, key)}
-              onDragEnd={handleDragEnd}
+              onMoveUp={() => move(key, -1)}
+              onMoveDown={() => move(key, 1)}
               onToggleVisible={() => handleToggleVisible(key)}
               onStartEdit={() => setEditingKey(key)}
               onCommitEdit={(label) => {
@@ -158,24 +123,22 @@ export default function DashboardReorder({
 }
 
 function ReorderCard({
-  sectionKey,
   meta,
-  dragging,
+  isFirst,
+  isLast,
   editing,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
+  onMoveUp,
+  onMoveDown,
   onToggleVisible,
   onStartEdit,
   onCommitEdit,
 }: {
-  sectionKey: string;
   meta: DashboardSectionMeta;
-  dragging: boolean;
+  isFirst: boolean;
+  isLast: boolean;
   editing: boolean;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onToggleVisible: () => void;
   onStartEdit: () => void;
   onCommitEdit: (label: string) => void;
@@ -192,22 +155,35 @@ function ReorderCard({
 
   return (
     <div
-      // Disable dragging while inline-editing so the input stays selectable.
-      draggable={!editing}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDragEnd={onDragEnd}
-      onDrop={(e) => e.preventDefault()}
-      className={`bg-card shadow-card rounded-2xl px-4 py-3 flex items-center gap-3 transition-opacity ${
-        dragging ? 'opacity-60' : hidden ? 'opacity-50' : ''
+      className={`bg-card shadow-card rounded-2xl px-3 py-2 flex items-center gap-2 ${
+        hidden ? 'opacity-50' : ''
       }`}
     >
-      <span
-        aria-hidden="true"
-        className="text-green-mid text-[20px] leading-none cursor-grab select-none"
-      >
-        ☰
-      </span>
+      {/* Reorder arrows (replace the old drag handle). */}
+      <div className="flex flex-col shrink-0">
+        <button
+          type="button"
+          onClick={onMoveUp}
+          disabled={isFirst}
+          aria-label={`Move ${meta.label} up`}
+          className={`w-11 h-11 flex items-center justify-center text-[20px] leading-none ${
+            isFirst ? 'text-dim cursor-not-allowed' : 'text-green-mid'
+          }`}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          onClick={onMoveDown}
+          disabled={isLast}
+          aria-label={`Move ${meta.label} down`}
+          className={`w-11 h-11 flex items-center justify-center text-[20px] leading-none ${
+            isLast ? 'text-dim cursor-not-allowed' : 'text-green-mid'
+          }`}
+        >
+          ↓
+        </button>
+      </div>
 
       <div className="flex-1 min-w-0">
         {editing ? (
@@ -251,9 +227,6 @@ function ReorderCard({
       >
         <PencilIcon />
       </button>
-
-      {/* Stable key reference for a11y tooling; not rendered. */}
-      <span hidden data-section={sectionKey} />
     </div>
   );
 }

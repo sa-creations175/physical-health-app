@@ -17,6 +17,7 @@ export default {
         'ink-soft': '#717c76',       // header date + week number
         'ink-hint': '#707a73',       // hints on the app background
         'card-mute': '#5f6b65',      // floor for small hint/secondary text on white cards
+        dim: '#b8c2bc',              // disabled controls (e.g. reorder arrows at list ends)
         // Greens — single accent family. Deep green stays the primary accent
         // (CTAs, fills); mint is darkened so 9px section labels stay legible
         // on white. green-light remains for use ON green/colored surfaces.
