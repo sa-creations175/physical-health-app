@@ -8,9 +8,14 @@ import {
 } from './dateHelpers';
 import type { BundleLog, UserPreferences } from '../db/types';
 
-// Which BundleLog rep-fields a tap can write. Kept as a union (not just
+// Which BundleLog numeric fields a tap can write. Kept as a union (not just
 // `string`) so callers can't typo a field name into upsertBundleLog.
-export type BundleField = 'pushups' | 'ab_rolls' | 'calf_raises';
+// `mobility_minutes` is included (Build 2.6) and written the same way.
+export type BundleField =
+  | 'pushups'
+  | 'ab_rolls'
+  | 'calf_raises'
+  | 'mobility_minutes';
 
 export type DayIntensity = 'none' | 'low' | 'medium' | 'full';
 
@@ -23,6 +28,36 @@ export interface BundleTotals {
   pushups: number;
   ab_rolls: number;
   calf_raises: number;
+  // Days this week where mobility_minutes met the qualifying threshold —
+  // surfaced separately as "Mobility: X / N days".
+  mobilityQualifyingDays: number;
+}
+
+// A saved follow-along mobility link, stored as JSON in
+// user_preferences.bundle_mobility_youtube_links.
+export interface MobilityLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+// Defensive parse of the links JSON — bad/old data yields an empty list
+// rather than throwing on render.
+export function parseMobilityLinks(raw: string | undefined | null): MobilityLink[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (l): l is MobilityLink =>
+        l &&
+        typeof l.id === 'string' &&
+        typeof l.label === 'string' &&
+        typeof l.url === 'string',
+    );
+  } catch {
+    return [];
+  }
 }
 
 // One row per user per day; null when today hasn't been logged yet.
@@ -68,6 +103,7 @@ export async function upsertBundleLog(
     pushups: 0,
     ab_rolls: 0,
     calf_raises: 0,
+    mobility_minutes: null,
     [field]: clamped,
     created_at: now,
     updated_at: now,
@@ -75,11 +111,13 @@ export async function upsertBundleLog(
   await syncedAdd(db.bundle_logs, row);
 }
 
-// Any reps of anything make the day qualifying — the exercises are tracked
-// independently, not as a bundle requirement. A row that exists but reads
-// 0/0/0 (e.g. a tap up then back down to zero) is NOT qualifying.
+// Any reps of anything — or any mobility minutes — make the day qualifying.
+// The components are tracked independently, not as a bundle requirement. A
+// row that exists but reads 0/0/0/null is NOT qualifying.
 export function isDayQualifying(log: BundleLog): boolean {
-  return log.pushups + log.ab_rolls + log.calf_raises > 0;
+  return (
+    log.pushups + log.ab_rolls + log.calf_raises + (log.mobility_minutes ?? 0) > 0
+  );
 }
 
 // Visual intensity of a logged day, used to color the weekly grid:
@@ -95,9 +133,17 @@ export function getDayIntensity(
   log: BundleLog,
   prefs: UserPreferences,
 ): DayIntensity {
-  const done = log.pushups + log.ab_rolls + log.calf_raises;
+  const minMobility = prefs.bundle_mobility_min_minutes;
+  // Mobility credit is capped at its target: a qualifying session (>= the
+  // minute threshold) earns full credit for that component, and raw minutes
+  // (e.g. a 60-min session) can't blow up the percentage.
+  const mobilityCredit = Math.min(log.mobility_minutes ?? 0, minMobility);
+  const done =
+    log.pushups + log.ab_rolls + log.calf_raises + mobilityCredit;
   if (done <= 0) return 'none';
 
+  // "full" stays gated on the three rep targets (mobility feeds the
+  // percentage bands, not the all-targets-hit definition).
   const allThreeHit =
     log.pushups >= prefs.bundle_pushup_target &&
     log.ab_rolls >= prefs.bundle_abroll_target &&
@@ -107,24 +153,34 @@ export function getDayIntensity(
   const combinedTarget =
     prefs.bundle_pushup_target +
     prefs.bundle_abroll_target +
-    prefs.bundle_calfraise_target;
-  // Guard divide-by-zero if a target was somehow set to 0 — any reps at
-  // all then read as the lowest non-none band rather than NaN.
+    prefs.bundle_calfraise_target +
+    minMobility;
+  // Guard divide-by-zero if every target was somehow set to 0 — any work at
+  // all then reads as the lowest non-none band rather than NaN.
   if (combinedTarget <= 0) return 'low';
 
   const pct = (done / combinedTarget) * 100;
   return pct >= 50 ? 'medium' : 'low';
 }
 
-// Sum each exercise across the week's rows. Missing days contribute 0.
-export function getWeeklyTotals(weekLogs: BundleLog[]): BundleTotals {
+// Sum each exercise across the week's rows, plus a count of mobility-
+// qualifying days (mobility_minutes >= the threshold). Missing days
+// contribute 0. The mobility day-count is surfaced separately on the card
+// ("Mobility: X / N days") rather than as a progress bar.
+export function getWeeklyTotals(
+  weekLogs: BundleLog[],
+  mobilityMinMinutes: number,
+): BundleTotals {
   return weekLogs.reduce<BundleTotals>(
     (acc, log) => ({
       pushups: acc.pushups + log.pushups,
       ab_rolls: acc.ab_rolls + log.ab_rolls,
       calf_raises: acc.calf_raises + log.calf_raises,
+      mobilityQualifyingDays:
+        acc.mobilityQualifyingDays +
+        ((log.mobility_minutes ?? 0) >= mobilityMinMinutes ? 1 : 0),
     }),
-    { pushups: 0, ab_rolls: 0, calf_raises: 0 },
+    { pushups: 0, ab_rolls: 0, calf_raises: 0, mobilityQualifyingDays: 0 },
   );
 }
 
