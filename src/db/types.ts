@@ -164,6 +164,11 @@ export interface UserPreferences {
   bundle_pushup_increment: number;
   bundle_abroll_increment: number;
   bundle_calfraise_increment: number;
+  // Dashboard customization — added v2.2 (Dexie v10). Stored as JSON strings
+  // because Dexie columns are scalar; parsed/serialized by useDashboardConfig.
+  // order: string[] of section keys; config: Record<key, {label, visible}>.
+  dashboard_section_order: string;
+  dashboard_section_config: string;
   created_at: string;
   updated_at: string;
 }

@@ -2,6 +2,8 @@ import Dexie, { type Table } from 'dexie';
 import {
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_BUNDLE_CONFIG,
+  DASHBOARD_SECTION_KEYS,
+  DEFAULT_DASHBOARD_SECTION_CONFIG,
 } from '../lib/defaults';
 import type {
   Session,
@@ -324,6 +326,49 @@ export class PhysicalHealthDB extends Dexie {
               if (row.bundle_calfraise_increment === undefined) {
                 row.bundle_calfraise_increment =
                   DEFAULT_BUNDLE_CONFIG.calfraise_increment;
+              }
+            },
+          );
+      });
+
+    // v10 (Build 2.5): dashboard reorder + section customization. Two new
+    // user_preferences columns store the section display order and per-section
+    // { label, visible } config as JSON strings (Dexie columns are scalar).
+    // Index list unchanged; upgrade hook seeds the two strings on the existing
+    // single prefs row. Fresh installs get them via buildDefaultPreferences.
+    this.version(10)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify(
+            (row: {
+              dashboard_section_order?: string;
+              dashboard_section_config?: string;
+            }) => {
+              if (row.dashboard_section_order === undefined) {
+                row.dashboard_section_order = JSON.stringify(DASHBOARD_SECTION_KEYS);
+              }
+              if (row.dashboard_section_config === undefined) {
+                row.dashboard_section_config = JSON.stringify(
+                  DEFAULT_DASHBOARD_SECTION_CONFIG,
+                );
               }
             },
           );

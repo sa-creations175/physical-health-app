@@ -7,6 +7,8 @@ import {
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_DAILY_NUTRITION_TARGETS,
   DEFAULT_BUNDLE_CONFIG,
+  DASHBOARD_SECTION_KEYS,
+  DEFAULT_DASHBOARD_SECTION_CONFIG,
 } from './defaults';
 import type { UserPreferences } from '../db/types';
 
@@ -47,6 +49,8 @@ function buildDefaultPreferences(): UserPreferences {
     bundle_pushup_increment: DEFAULT_BUNDLE_CONFIG.pushup_increment,
     bundle_abroll_increment: DEFAULT_BUNDLE_CONFIG.abroll_increment,
     bundle_calfraise_increment: DEFAULT_BUNDLE_CONFIG.calfraise_increment,
+    dashboard_section_order: JSON.stringify(DASHBOARD_SECTION_KEYS),
+    dashboard_section_config: JSON.stringify(DEFAULT_DASHBOARD_SECTION_CONFIG),
     created_at: now,
     updated_at: now,
   };

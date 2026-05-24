@@ -31,6 +31,41 @@ export const DEFAULT_BUNDLE_CONFIG = {
   calfraise_increment: 30,
 } as const;
 
+// Dashboard customization (Build 2.5, Dexie v10). The canonical set of
+// dashboard section keys, in their default display order. Doubles as the
+// default value for `dashboard_section_order`. Stored on user_preferences as
+// a JSON string (Dexie columns are scalar) and parsed via useDashboardConfig.
+export const DASHBOARD_SECTION_KEYS = [
+  'lifting',
+  'cardio',
+  'nutrition',
+  'delivery_streak',
+  'daily_bundle',
+  'apple_watch',
+] as const;
+
+export type DashboardSectionKey = (typeof DASHBOARD_SECTION_KEYS)[number];
+
+export interface DashboardSectionMeta {
+  label: string;
+  visible: boolean;
+}
+
+// Default per-section label + visibility for `dashboard_section_config`.
+// Labels are Title Case here; the on-card SectionLabel uppercases them, so the
+// reorder card (Bricolage Grotesque, not uppercased) is where the casing shows.
+export const DEFAULT_DASHBOARD_SECTION_CONFIG: Record<
+  DashboardSectionKey,
+  DashboardSectionMeta
+> = {
+  lifting: { label: 'This Week — Lifting', visible: true },
+  cardio: { label: 'This Week — Cardio', visible: true },
+  nutrition: { label: 'Today — Nutrition', visible: true },
+  delivery_streak: { label: 'No-Delivery Streak', visible: true },
+  daily_bundle: { label: 'Daily Bundle', visible: true },
+  apple_watch: { label: 'Apple Watch', visible: true },
+};
+
 // Seeded on first launch in Build 2.1. Order matches the picker's
 // alphabetical view; "most-used chips" override this once history exists.
 export const STARTER_CARDIO_TYPES = [
