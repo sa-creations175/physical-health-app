@@ -8,7 +8,10 @@
 // Phase 6 cloud sync may want a smarter strategy (background sync of writes,
 // runtime cache of Supabase responses) — revisit then.
 
-const CACHE_NAME = 'physical-health-v1';
+// Bumped v1 → v2 with the v2.1 light-theme deploy: cache-first static assets
+// under a static cache name were serving returning visitors the old dark
+// shell. A new name makes the `activate` handler purge the stale cache.
+const CACHE_NAME = 'physical-health-v2';
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
