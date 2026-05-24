@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 24, 2026 (v2.4)
+Last updated: May 24, 2026 (v2.5)
+
+**What changed in v2.5 (May 24, 2026):** Build 2.8 — Fitness page polish. (1) The plain "Fitness" text header becomes a **deep-green hero band** matching the Home treatment: full-bleed with the status-bar bleed, white arc-ring decoration, a "FITNESS" micro-label + "This Week" title + the current Sun–Sat week range (computed via `startOfWeekISODate`), today's date and the "Library" pill (now white-outlined) on the right. (2) Each activity card gets a small **18px green-mid inline-SVG icon** left of its label (leg / flexed-arm / lightning / heart-pulse / lotus / flame / watch), the count badge + chevron move to the right, and card spacing tightens to `gap-1.5` — all seven cards still fit a 390px screen below the new band. Note: the band uses the spec's `#0f3d2e` (a touch darker than the Home band's `#0F6E56`). No schema or data changes. Adds §Build 2.8 session log.
 
 **What changed in v2.4 (May 24, 2026):** Build 2.7 — navigation restructure + compact-card redesign. The app moves from a single scrolling dashboard to a **5-tab cockpit**: Home (`/`, summary), Fitness (`/fitness`), Nutrition (`/nutrition`), Health (`/health`, placeholder), and Log (existing type-select). Settings moves off the nav to a gear in the Home hero header. Every weekly activity now renders as a **compact card** (`SharedActivityCard`): section label + count badge + a 7-day intensity dot row (today ringed) + an expand chevron; tapping expands the full detail in-place, one card at a time. Per-section **dot intensity rules** (lifting binary; cardio/mobility none-light-full; bundle four-band; delivery clean/ordered/unmarked) live in `dotHelpers`. Fitness fits all six activity cards + Apple Watch on one 390px screen without scrolling. Home shows three tappable domain-summary cards. Settings gains a **Thresholds** section (cardio min duration, mobility min duration, mobility weekly target, bundle weekly target). The reorder/customization system (Build 2.5) is removed. Schema bumps to v12 (one new `user_preferences` field, `bundle_target`, backing the editable bundle weekly target — the only field the threshold settings lacked). Adds §Build 2.7 session log; reworks §Dashboard design into §Home / Fitness / Nutrition.
 
@@ -1408,3 +1410,34 @@ Note: the spec said "no schema changes needed" for the Thresholds settings, but 
 - **Schema**: Dexie v12. Fourteen tables, all `user_id`-keyed. `user_preferences` gains `bundle_target`.
 - **Dev experience**: `npm run dev` boots clean, the Build 2.7 commits type-check, `npm run build` succeeds.
 - **Tree clean**, pushed to origin/main, no Co-Authored-By trailer (Vercel Hobby multi-author block).
+
+---
+
+## Build 2.8 session log — May 24, 2026
+
+A focused polish pass on the Fitness page: a hero band to match Home, and per-card icons.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | _(see git log)_ | feat(fitness): deep-green hero band + per-card icons + tighter spacing (Build 2.8) |
+| 2 | _(this commit)_ | docs: v2.5 Build 2.8 session log |
+
+### Decisions made (and why)
+
+- **Fitness hero band mirrors Home's structure.** Full-bleed, status-bar bleed via the negative-margin trick, white arc rings, white text. Left: "FITNESS" micro-label, "This Week", and the current Sun–Sat range from `startOfWeekISODate`. Right: today's date + the Library pill (restyled white-outlined to read on the dark band).
+- **Band color is the spec's `#0f3d2e`, not the `green-deep` token (`#0F6E56`).** The spec called `#0f3d2e` "green-deep" but the token (and the Home band) is `#0F6E56`. I used the literal `#0f3d2e` as written — so the Fitness band is slightly darker than Home's. Flagged for unification if pixel-matching headers is wanted (set both to one value, or change the token).
+- **Per-card icons are inline SVG, 18px, green-mid.** Leg / flexed-arm / lightning / heart-pulse / lotus / flame / watch — simple paths in `activity/activityIcons`, no icon library (consistent with the rest of the app's inline-SVG approach). Lifting picks its icon by type.
+- **Badge + chevron moved right; icon + label left.** Per the polish spec, the label row reads `[icon] LABEL ……… [badge] [chevron]`. (In Build 2.7 the badge sat inline after the label.)
+- **Spacing tightened to `gap-1.5`.** Reclaims the vertical room the new band costs so all six activity cards + Apple Watch still fit a 390px screen without scrolling.
+
+### Verification
+
+`npm run build` clean. Driven headless at 390px: header background resolves to `rgb(15,61,46)` (#0f3d2e); header shows "Fitness / This Week / May 24 – May 30, 2026" + the Library button; 7 cards each render an icon; last card bottom sits at 703px (< 844px viewport — still fits).
+
+### Current state
+
+- **Schema**: Dexie v12 (unchanged this build). Fourteen tables.
+- **Dev experience**: `npm run dev` boots clean, the Build 2.8 commits type-check, `npm run build` succeeds.
+- **Tree clean**, pushed to origin/main, no Co-Authored-By trailer.
