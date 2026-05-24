@@ -1,4 +1,5 @@
 import SharedActivityCard from './SharedActivityCard';
+import { WatchIcon } from './activityIcons';
 import { DOT_COLOR } from '../../lib/dotHelpers';
 import { currentWeekISODates } from '../../lib/dateHelpers';
 
@@ -28,6 +29,7 @@ export default function AppleWatchActivityCard({
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
+      icon={<WatchIcon />}
     >
       <div className="grid grid-cols-3 gap-2">
         {STATS.map(({ key, label }) => (

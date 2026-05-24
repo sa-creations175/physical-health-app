@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import SharedActivityCard from './SharedActivityCard';
+import { MobilityIcon } from './activityIcons';
 import { MobilityRow } from './bundleLogging';
 import {
   getUserPreferences,
@@ -61,6 +62,7 @@ export default function MobilityActivityCard({
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
+      icon={<MobilityIcon />}
     >
       <MobilityRow
         minutes={todayMinutes}

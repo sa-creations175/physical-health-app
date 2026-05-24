@@ -15,6 +15,7 @@ export default function SharedActivityCard({
   dots,
   expanded,
   onToggle,
+  icon,
   children,
 }: {
   label: string;
@@ -22,6 +23,7 @@ export default function SharedActivityCard({
   dots: ActivityDot[];
   expanded: boolean;
   onToggle: () => void;
+  icon?: ReactNode;
   children?: ReactNode;
 }) {
   const today = todayISODate();
@@ -35,20 +37,24 @@ export default function SharedActivityCard({
         className="w-full text-left"
       >
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-baseline gap-2 min-w-0">
+          {/* Icon + label left-aligned; badge + chevron right-aligned. */}
+          <div className="flex items-center gap-2 min-w-0">
+            {icon && <span className="shrink-0 flex items-center">{icon}</span>}
             <span className="text-[11px] font-display uppercase tracking-micro text-green-mid truncate">
               {label}
             </span>
-            <span className="text-[12px] text-ink whitespace-nowrap">{badge}</span>
           </div>
-          <span
-            aria-hidden="true"
-            className={`text-green-mid text-[16px] leading-none transition-transform ${
-              expanded ? 'rotate-180' : ''
-            }`}
-          >
-            ▾
-          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[12px] text-ink whitespace-nowrap">{badge}</span>
+            <span
+              aria-hidden="true"
+              className={`text-green-mid text-[16px] leading-none transition-transform ${
+                expanded ? 'rotate-180' : ''
+              }`}
+            >
+              ▾
+            </span>
+          </div>
         </div>
 
         {/* 7-day dot row, full card width. Today's dot gets a green-mid ring. */}

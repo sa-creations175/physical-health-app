@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import SharedActivityCard from './SharedActivityCard';
+import { BundleIcon } from './activityIcons';
 import { ProgressBar } from '../ui/primitives';
 import { ExerciseLogRow, MobilityRow } from './bundleLogging';
 import {
@@ -93,6 +94,7 @@ export default function BundleActivityCard({
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
+      icon={<BundleIcon />}
     >
       {/* Weekly intensity grid */}
       <div className="grid grid-cols-7 gap-1.5">

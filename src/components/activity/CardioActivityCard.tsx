@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import SharedActivityCard from './SharedActivityCard';
+import { CardioIcon } from './activityIcons';
 import { ProgressBar } from '../ui/primitives';
 import { getCardioSummary } from '../../lib/dashboardQueries';
 import { getUserPreferences } from '../../lib/userPreferences';
@@ -42,6 +43,7 @@ export default function CardioActivityCard({
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
+      icon={<CardioIcon />}
     >
       <div className="flex items-baseline justify-between">
         <span className="text-[12px] text-[#5f6b65]">

@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import SharedActivityCard from './SharedActivityCard';
+import { LowerBodyIcon, UpperBodyIcon, FullBodyIcon } from './activityIcons';
 import { getLiftingSummary, type LiftingType } from '../../lib/dashboardQueries';
 import { getUserPreferences } from '../../lib/userPreferences';
 import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
@@ -53,6 +54,15 @@ export default function LiftingActivityCard({
       </>
     );
 
+  const icon =
+    type === 'lower' ? (
+      <LowerBodyIcon />
+    ) : type === 'upper' ? (
+      <UpperBodyIcon />
+    ) : (
+      <FullBodyIcon />
+    );
+
   return (
     <SharedActivityCard
       label={label}
@@ -60,6 +70,7 @@ export default function LiftingActivityCard({
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
+      icon={icon}
     >
       <p className="text-[12px] text-[#5f6b65]">
         {summary?.lastSession
