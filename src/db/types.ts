@@ -164,6 +164,12 @@ export interface UserPreferences {
   bundle_pushup_increment: number;
   bundle_abroll_increment: number;
   bundle_calfraise_increment: number;
+  // Mobility / flexibility — added v2.3 (Dexie v11). Weekly day target,
+  // the minute threshold a session must clear to "qualify", and a JSON
+  // string array of saved follow-along links ({ id, label, url }).
+  bundle_mobility_target: number;
+  bundle_mobility_min_minutes: number;
+  bundle_mobility_youtube_links: string;
   // Dashboard customization — added v2.2 (Dexie v10). Stored as JSON strings
   // because Dexie columns are scalar; parsed/serialized by useDashboardConfig.
   // order: string[] of section keys; config: Record<key, {label, visible}>.
@@ -200,6 +206,9 @@ export interface BundleLog {
   pushups: number;
   ab_rolls: number;
   calf_raises: number;
+  // Mobility minutes for the day — added v2.3 (Dexie v11). null = not logged
+  // (back-compat with rows that predate the column); a number is the minutes.
+  mobility_minutes: number | null;
   created_at: string;
   updated_at: string;
 }

@@ -29,7 +29,15 @@ export const DEFAULT_BUNDLE_CONFIG = {
   pushup_increment: 25,
   abroll_increment: 15,
   calfraise_increment: 30,
+  // Mobility / flexibility — Build 2.6. Target 4 qualifying days/week; a
+  // session counts once it reaches 5 minutes.
+  mobility_target: 4,
+  mobility_min_minutes: 5,
 } as const;
+
+// Default for bundle_mobility_youtube_links — empty JSON array. The links are
+// { id, label, url } objects appended by the user from the bundle card.
+export const DEFAULT_MOBILITY_LINKS_JSON = '[]';
 
 // Dashboard customization (Build 2.5, Dexie v10). The canonical set of
 // dashboard section keys, in their default display order. Doubles as the

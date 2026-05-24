@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import {
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_BUNDLE_CONFIG,
+  DEFAULT_MOBILITY_LINKS_JSON,
   DASHBOARD_SECTION_KEYS,
   DEFAULT_DASHBOARD_SECTION_CONFIG,
 } from '../lib/defaults';
@@ -372,6 +373,59 @@ export class PhysicalHealthDB extends Dexie {
               }
             },
           );
+      });
+
+    // v11 (Build 2.6): mobility / flexibility tracking. user_preferences gains
+    // three fields (weekly day target, qualifying-minute threshold, saved
+    // links JSON); bundle_logs gains mobility_minutes (null = not logged).
+    // Index list unchanged; upgrade hook backfills both tables on their
+    // existing rows. Fresh installs seed prefs via buildDefaultPreferences and
+    // create bundle rows with mobility_minutes already present.
+    this.version(11)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify(
+            (row: {
+              bundle_mobility_target?: number;
+              bundle_mobility_min_minutes?: number;
+              bundle_mobility_youtube_links?: string;
+            }) => {
+              if (row.bundle_mobility_target === undefined) {
+                row.bundle_mobility_target = DEFAULT_BUNDLE_CONFIG.mobility_target;
+              }
+              if (row.bundle_mobility_min_minutes === undefined) {
+                row.bundle_mobility_min_minutes =
+                  DEFAULT_BUNDLE_CONFIG.mobility_min_minutes;
+              }
+              if (row.bundle_mobility_youtube_links === undefined) {
+                row.bundle_mobility_youtube_links = DEFAULT_MOBILITY_LINKS_JSON;
+              }
+            },
+          );
+        await tx
+          .table('bundle_logs')
+          .toCollection()
+          .modify((row: { mobility_minutes?: number | null }) => {
+            if (row.mobility_minutes === undefined) row.mobility_minutes = null;
+          });
       });
   }
 }
