@@ -154,6 +154,16 @@ export interface UserPreferences {
   protein_grams_daily: number;
   water_glasses_daily: number;
   veg_servings_daily: number;
+  // Daily bundle (calisthenics) — added v2.0 (Dexie v9). Per-exercise daily
+  // rep targets and the superset-sized increment each ± tap on the bundle
+  // card applies. Defaults mirror the user's typical 100 / 60 / 120 day and
+  // 25 / 15 / 30 supersets.
+  bundle_pushup_target: number;
+  bundle_abroll_target: number;
+  bundle_calfraise_target: number;
+  bundle_pushup_increment: number;
+  bundle_abroll_increment: number;
+  bundle_calfraise_increment: number;
   created_at: string;
   updated_at: string;
 }
@@ -169,6 +179,22 @@ export interface DeliveryDay {
   user_id: string;
   date: string; // YYYY-MM-DD (local)
   status: 'clean' | 'ordered';
+  created_at: string;
+  updated_at: string;
+}
+
+// One row per user per day — created the first time any exercise is logged
+// for that date, then updated in place. The three exercises are tracked
+// independently (not as a bundle requirement): any reps of anything makes
+// the day "qualifying." A week with ≥ 4 qualifying days counts toward the
+// streak. Absence of a row = nothing logged that day.
+export interface BundleLog {
+  id: string;
+  user_id: string;
+  date: string; // YYYY-MM-DD (local)
+  pushups: number;
+  ab_rolls: number;
+  calf_raises: number;
   created_at: string;
   updated_at: string;
 }

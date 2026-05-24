@@ -6,6 +6,7 @@ import {
   DEFAULT_CARDIO_WEEKLY_TARGET,
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_DAILY_NUTRITION_TARGETS,
+  DEFAULT_BUNDLE_CONFIG,
 } from './defaults';
 import type { UserPreferences } from '../db/types';
 
@@ -20,6 +21,11 @@ export const TARGET_RANGES = {
   protein_grams: { min: 0, max: 400 },
   water_glasses: { min: 0, max: 20 },
   veg_servings: { min: 0, max: 12 },
+  // Daily bundle (Build 2.4). Targets floor at 1 — a 0-rep daily target
+  // would make the intensity math (progress vs target) divide-by-zero and
+  // the metric meaningless. Increments floor at 1 so a ± tap always moves.
+  bundle_target: { min: 1, max: 500 },
+  bundle_increment: { min: 1, max: 100 },
 } as const;
 
 function buildDefaultPreferences(): UserPreferences {
@@ -35,6 +41,12 @@ function buildDefaultPreferences(): UserPreferences {
     protein_grams_daily: DEFAULT_DAILY_NUTRITION_TARGETS.protein_grams,
     water_glasses_daily: DEFAULT_DAILY_NUTRITION_TARGETS.water_glasses,
     veg_servings_daily: DEFAULT_DAILY_NUTRITION_TARGETS.veg_servings,
+    bundle_pushup_target: DEFAULT_BUNDLE_CONFIG.pushup_target,
+    bundle_abroll_target: DEFAULT_BUNDLE_CONFIG.abroll_target,
+    bundle_calfraise_target: DEFAULT_BUNDLE_CONFIG.calfraise_target,
+    bundle_pushup_increment: DEFAULT_BUNDLE_CONFIG.pushup_increment,
+    bundle_abroll_increment: DEFAULT_BUNDLE_CONFIG.abroll_increment,
+    bundle_calfraise_increment: DEFAULT_BUNDLE_CONFIG.calfraise_increment,
     created_at: now,
     updated_at: now,
   };

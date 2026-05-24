@@ -1,5 +1,8 @@
 import Dexie, { type Table } from 'dexie';
-import { DEFAULT_CARDIO_THRESHOLD_MINUTES } from '../lib/defaults';
+import {
+  DEFAULT_CARDIO_THRESHOLD_MINUTES,
+  DEFAULT_BUNDLE_CONFIG,
+} from '../lib/defaults';
 import type {
   Session,
   Exercise,
@@ -8,6 +11,7 @@ import type {
   CardioType,
   CardioLog,
   DeliveryDay,
+  BundleLog,
   NutritionLog,
   Supplement,
   HealthCheckin,
@@ -24,6 +28,7 @@ export class PhysicalHealthDB extends Dexie {
   cardio_types!: Table<CardioType, string>;
   cardio_logs!: Table<CardioLog, string>;
   delivery_days!: Table<DeliveryDay, string>;
+  bundle_logs!: Table<BundleLog, string>;
   nutrition_logs!: Table<NutritionLog, string>;
   supplements!: Table<Supplement, string>;
   health_checkins!: Table<HealthCheckin, string>;
@@ -260,6 +265,69 @@ export class PhysicalHealthDB extends Dexie {
       prompts: 'id, user_id, type, fired_at, dismissed_at',
       user_preferences: 'id, user_id',
     });
+
+    // v9 (Build 2.4): daily bundle (calisthenics) tracker.
+    // - bundle_logs: new store, one row per user per day, created lazily the
+    //   first time any of the three exercises is logged that date. Indexed on
+    //   user_id + date so the week query + streak scan don't table-scan. New
+    //   store has no rows on upgrade, so it needs no backfill — but the
+    //   user_preferences six new bundle_* fields DO, so this version carries
+    //   an upgrade hook that seeds them on the existing single prefs row.
+    this.version(9)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify(
+            (row: {
+              bundle_pushup_target?: number;
+              bundle_abroll_target?: number;
+              bundle_calfraise_target?: number;
+              bundle_pushup_increment?: number;
+              bundle_abroll_increment?: number;
+              bundle_calfraise_increment?: number;
+            }) => {
+              if (row.bundle_pushup_target === undefined) {
+                row.bundle_pushup_target = DEFAULT_BUNDLE_CONFIG.pushup_target;
+              }
+              if (row.bundle_abroll_target === undefined) {
+                row.bundle_abroll_target = DEFAULT_BUNDLE_CONFIG.abroll_target;
+              }
+              if (row.bundle_calfraise_target === undefined) {
+                row.bundle_calfraise_target =
+                  DEFAULT_BUNDLE_CONFIG.calfraise_target;
+              }
+              if (row.bundle_pushup_increment === undefined) {
+                row.bundle_pushup_increment =
+                  DEFAULT_BUNDLE_CONFIG.pushup_increment;
+              }
+              if (row.bundle_abroll_increment === undefined) {
+                row.bundle_abroll_increment =
+                  DEFAULT_BUNDLE_CONFIG.abroll_increment;
+              }
+              if (row.bundle_calfraise_increment === undefined) {
+                row.bundle_calfraise_increment =
+                  DEFAULT_BUNDLE_CONFIG.calfraise_increment;
+              }
+            },
+          );
+      });
   }
 }
 

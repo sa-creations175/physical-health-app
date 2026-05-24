@@ -18,6 +18,19 @@ export const DEFAULT_DAILY_NUTRITION_TARGETS = {
   veg_servings: 3,
 } as const;
 
+// Daily bundle (calisthenics) defaults — Build 2.4. Targets are the user's
+// typical full day (100 push-ups / 60 ab rolls / 120 calf raises); increments
+// are the superset size each ± tap on the bundle card applies (25 / 15 / 30).
+// All editable in Settings.
+export const DEFAULT_BUNDLE_CONFIG = {
+  pushup_target: 100,
+  abroll_target: 60,
+  calfraise_target: 120,
+  pushup_increment: 25,
+  abroll_increment: 15,
+  calfraise_increment: 30,
+} as const;
+
 // Seeded on first launch in Build 2.1. Order matches the picker's
 // alphabetical view; "most-used chips" override this once history exists.
 export const STARTER_CARDIO_TYPES = [
