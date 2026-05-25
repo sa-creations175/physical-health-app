@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 24, 2026 (v2.5)
+Last updated: May 25, 2026 (v2.6)
+
+**What changed in v2.6 (May 25, 2026):** Phase 6 — Supabase cloud sync (write-through). The app gains optional cloud replication on top of the local-first Dexie store. `@supabase/supabase-js` + a guarded `lib/supabase.ts` client (null when env vars are absent, so local/dev never break). A SQL migration (`supabase/migrations/001_physical_health.sql`) defines **14 `ph_`-prefixed tables** (purely additive alongside the music/finance tables in the shared project) mirroring the Dexie v12 schema, with RLS scoped to `LOCAL_USER_ID`. The `syncedAdd/Put/Update/Delete/BulkPut/BulkDelete` wrappers now **write through** to Supabase — fire-and-forget, try/catch, env-guarded — so the UI never waits on or breaks from the cloud. On startup (after seeding) a one-time **initial push** seeds an empty cloud from local, then a **pull** merges cloud → local by id (NON-destructive upsert — never deletes local rows). No Dexie schema change (still v12). Adds §Phase 6 session log. ⚠️ The migration must be applied manually (`supabase db push` / dashboard) — it was authored here but could not be run without project credentials.
 
 **What changed in v2.5 (May 24, 2026):** Build 2.8 — Fitness page polish. (1) The plain "Fitness" text header becomes a **deep-green hero band** matching the Home treatment: full-bleed with the status-bar bleed, white arc-ring decoration, a "FITNESS" micro-label + "This Week" title + the current Sun–Sat week range (computed via `startOfWeekISODate`), today's date and the "Library" pill (now white-outlined) on the right. (2) Each activity card gets a small **18px green-mid inline-SVG icon** left of its label (leg / flexed-arm / lightning / heart-pulse / lotus / flame / watch), the count badge + chevron move to the right, and card spacing tightens to `gap-1.5` — all seven cards still fit a 390px screen below the new band. Note: the band uses the spec's `#0f3d2e` (a touch darker than the Home band's `#0F6E56`). No schema or data changes. Adds §Build 2.8 session log.
 
@@ -1440,4 +1442,45 @@ A focused polish pass on the Fitness page: a hero band to match Home, and per-ca
 
 - **Schema**: Dexie v12 (unchanged this build). Fourteen tables.
 - **Dev experience**: `npm run dev` boots clean, the Build 2.8 commits type-check, `npm run build` succeeds.
+- **Tree clean**, pushed to origin/main, no Co-Authored-By trailer.
+
+---
+
+## Phase 6 session log — May 25, 2026
+
+Supabase cloud sync, layered on top of the local-first Dexie store without changing how the UI reads data. Write-through replication + a startup push/pull, all best-effort.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | _(see git log)_ | feat(sync): Phase 6 Supabase write-through + startup push/pull |
+| 2 | _(this commit)_ | docs: v2.6 Phase 6 session log |
+
+### What shipped
+
+- **Client (`lib/supabase.ts`).** `@supabase/supabase-js` client created only when `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` are both present (they are, in Vercel); otherwise `null`. Also exports `STORE_TO_PH` — the single Dexie-store → `ph_` table map.
+- **Schema (`supabase/migrations/001_physical_health.sql`).** 14 `ph_`-prefixed tables mirroring Dexie v12, RLS enabled, policies scoped to `user_id = 'local-user-001'` (permissive for the two child tables that have no `user_id`: `ph_session_exercises`, `ph_sets`). Additive only — existing music/finance tables untouched.
+- **Write-through (`db/syncedWrite.ts`).** Every wrapper writes Dexie first (awaited), then mirrors to Supabase fire-and-forget in try/catch, env-guarded. `insert` for add, `upsert` for put/bulkPut/update (update re-reads the full row so the cloud copy carries every column), `delete().eq/.in` for deletes.
+- **Startup sync (`lib/sync.ts`, run after seeders in `App.tsx`).** Initial push: if `ph_sessions` is empty, bulk-insert all local rows once (localStorage flag; skips without flagging on error so it retries after the migration lands). Pull: merge each `ph_` table into Dexie via a raw `bulkPut` (no write-back loop).
+
+### Decisions made (and why)
+
+- **Local-first is absolute.** The UI only ever reads Dexie; Supabase is write-through replication. No call path awaits the cloud, and every cloud call is wrapped so an error (offline, RLS, missing table) is invisible to the user.
+- **Guarded client, not the literal spec snippet.** `createClient(undefined, …)` throws at module load. Returning `null` when env is absent keeps local/dev (and any non-Vercel env) fully working.
+- **Pull is non-destructive upsert-merge, not "replace-mode".** A destructive per-table replace would wipe local data whenever the cloud read is empty or fails — exactly the failure that bit us last session. The pull only `bulkPut`s rows the cloud actually returns and never deletes local-only rows. (True last-write-wins replace is deferred to real auth + a sync cursor.)
+- **JSON-string fields → TEXT, real arrays → JSONB.** `dashboard_section_order/_config` and `bundle_mobility_youtube_links` are serialized strings in Dexie, so they're `TEXT` in Postgres and round-trip verbatim with no parse step. `supplements_taken` is a real array → `JSONB`.
+- **`WITH CHECK` added to every policy.** The spec's `USING`-only policy blocks INSERT under RLS; `WITH CHECK (user_id = 'local-user-001')` lets the anon key write.
+
+### Not done / follow-ups
+
+- **The migration was not applied** — `supabase db push` needs the project ref, an access token, and the DB password, none available here. The SQL is committed; apply it via the Supabase CLI or the dashboard SQL editor. Until then, write-through and pull silently no-op (errors swallowed) and the initial push retries each load — the app keeps working local-first.
+- **Could not verify against the real project** (no credentials). Verified locally: build clean, app boots and renders with `supabase = null`, and a local write still persists to Dexie with the cloud path no-opping.
+- **Real auth + multi-user.** Still single `LOCAL_USER_ID`; RLS scopes to it. Real Supabase auth (and user-scoped `session_exercises`/`sets`) comes later.
+- **Timestamp round-trip.** `created_at`/`started_at` are sorted as strings in the app; a pull rewrites them in Postgres' `+00:00` ISO form (vs Dexie's `Z`). Same instants, cosmetically different strings — flagged in case it ever affects string ordering after a cross-device pull.
+
+### Current state
+
+- **Schema**: Dexie v12 (unchanged) + 14 `ph_` Supabase tables (migration pending apply).
+- **Dev experience**: `npm run dev` boots clean; `npm run build` succeeds; app works local-first with or without Supabase configured.
 - **Tree clean**, pushed to origin/main, no Co-Authored-By trailer.
