@@ -8,11 +8,11 @@
 // Phase 6 cloud sync may want a smarter strategy (background sync of writes,
 // runtime cache of Supabase responses) — revisit then.
 
-// Bumped v1 → v2 (light-theme deploy) → v3 (Build 2.6): cache-first static
-// assets under a static cache name keep serving the installed iOS PWA a stale
-// shell across deploys. Bumping the name makes the `activate` handler purge
-// the old cache so the new shell lands on next launch.
-const CACHE_NAME = 'physical-health-v3';
+// Bumped v1 → v2 (light-theme deploy) → v3 (Build 2.6) → v4 (Phase 6 sync):
+// cache-first static assets under a static cache name keep serving the
+// installed iOS PWA a stale shell across deploys. Bumping the name makes the
+// `activate` handler purge the old cache so the new shell lands on next launch.
+const CACHE_NAME = 'physical-health-v4';
 const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
 
 self.addEventListener('install', (event) => {
