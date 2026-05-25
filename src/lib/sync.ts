@@ -35,12 +35,20 @@ const INITIAL_PUSH_FLAG = 'ph_cloud_initial_push_done';
 // done) on any error — e.g. the migration hasn't been applied yet — so it
 // retries on a later load once the tables exist.
 async function initialPushIfEmpty(): Promise<void> {
+  // Verbose console.error tracing (temporary debug) — iOS Safari surfaces
+  // errors more reliably than logs. Logged before the early returns so a
+  // null client / set flag is still visible.
+  console.error('SYNC: starting initial push check');
+  console.error('SYNC: supabase client =', supabase ? 'present' : 'NULL');
   if (!supabase) return;
+
+  console.error('SYNC: flag =', localStorage.getItem(INITIAL_PUSH_FLAG));
   if (localStorage.getItem(INITIAL_PUSH_FLAG)) return;
 
   const { count, error } = await supabase
     .from('ph_sessions')
     .select('*', { count: 'exact', head: true });
+  console.error('SYNC: ph_sessions count result =', { count, error });
   if (error) return; // tables missing / unreachable — retry next load
   if ((count ?? 0) > 0) {
     // Cloud already populated (another device/origin) — nothing to push.
@@ -48,12 +56,21 @@ async function initialPushIfEmpty(): Promise<void> {
     return;
   }
 
+  const localSessions = await db.sessions.toArray();
+  console.error('SYNC: local sessions count =', localSessions.length);
+
+  let insertError: unknown = null;
   for (const { table, ph } of TABLES) {
     const rows = await table.toArray();
     if (rows.length === 0) continue;
-    const { error: insertError } = await supabase.from(ph).insert(rows);
-    if (insertError) return; // bail without the flag so the push retries
+    const res = await supabase.from(ph).insert(rows);
+    if (res.error) {
+      insertError = res.error;
+      break;
+    }
   }
+  console.error('SYNC: push result =', { error: insertError });
+  if (insertError) return; // bail without the flag so the push retries
   localStorage.setItem(INITIAL_PUSH_FLAG, '1');
 }
 
