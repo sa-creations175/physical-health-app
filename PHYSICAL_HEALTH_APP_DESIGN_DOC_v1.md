@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 25, 2026 (v2.7)
+Last updated: May 25, 2026 (v2.8)
+
+**What changed in v2.8 (May 25, 2026):** Phase 2 — Capacitor iOS shell + HealthKit. The PWA gains a native iOS wrapper via **Capacitor 8** (`@capacitor/core` + `cli` + `ios`, app id `com.sacreations.bodyhealth`, name "Body Health", `webDir: dist`). Capacitor 8 uses **Swift Package Manager, not CocoaPods** — the generated `ios/App` project resolves plugins through `CapApp-SPM/Package.swift`, so there is no Podfile/`.xcworkspace` (open **`ios/App/App.xcodeproj`**). The originally-specified `@capacitor-community/health-kit` does not exist on npm; substituted **`capacitor-health@8.1.2`** (the maintained plugin with a clean `@capacitor/core >=8` peer). New **`src/lib/healthkit.ts`** wraps it: `isHealthKitAvailable` / `ensureHealthPermissions` / `getHealthSnapshot`, requesting READ_STEPS + READ_ACTIVE_CALORIES + READ_WORKOUTS, reading **steps (today)** and **active calories (today)** via `queryAggregated` and **workouts (last 7 days)** via `queryWorkouts`, and returning **null on web/non-iOS** so the PWA never breaks. The **Apple Watch** card (`AppleWatchActivityCard`) is now live: Steps / 10k, Active Cal / 600, and a **Workouts-this-week** count tile. ⚠️ `capacitor-health` has **no resting-heart-rate query**, so the spec's resting-HR tile was dropped in favor of the workouts count (product decision, this session). `Info.plist` gains `NSHealthShareUsageDescription` + `NSHealthUpdateUsageDescription`; `App.entitlements` adds the HealthKit entitlement and is wired via `CODE_SIGN_ENTITLEMENTS` in both build configs. Remaining manual steps (require an Apple ID / signing, done in Xcode): set the Development Team under Signing & Capabilities and confirm the **HealthKit** capability. No web schema change (Dexie v12). Adds §Capacitor + HealthKit session log.
 
 **What changed in v2.7 (May 25, 2026):** History view + polish. (1) New **`/history`** route (reached via a "History" pill next to "Library" in the Fitness hero). It merges completed strength sessions and cardio logs into one chronological feed, with All/Lower/Upper/Full/Cardio filter pills and a **List ↔ Calendar** view toggle. List rows are collapsible (icon + type + date + volume/duration + feel emoji → exercises/sets, intensity/distance, notes, and an editable date). Calendar shows the month as a 7-col grid with per-session colored dots (lower `#0f3d2e` / upper `#1a6b4a` / full `#22c37e` / cardio teal `#14b8a6`), today ringed; tapping a day expands that day's rows. Read-only (no delete). (2) **Home hero band** recolored to `#0f3d2e` to exactly match the Fitness band. (3) **Spacing pass** for a roomier feel: Home summary cards `space-y-4`, Settings sections standardized to `gap-6`. New `historyHelpers.ts` (`getHistoryItems`) + `updateCardioLogDate`. Adds §v2.7 session log. No schema change (Dexie v12).
 
@@ -1521,3 +1523,33 @@ History view, header-color alignment, and a spacing pass.
 - **Schema**: Dexie v12 (unchanged). Supabase 14 `ph_` tables.
 - **Dev experience**: `npm run dev` boots clean; `npm run build` succeeds. History verified (list rows, Cardio filter, calendar dots + day-detail expand).
 - **Tree clean**, pushed to origin/main, no Co-Authored-By trailer.
+
+---
+
+## Capacitor + HealthKit session log — May 25, 2026 (v2.8)
+
+First native step: wrap the existing PWA in a Capacitor iOS shell and surface live Apple Health data on the Fitness "Apple Watch" card.
+
+### What shipped
+
+- **Capacitor 8 iOS project.** `@capacitor/core@8.3.4` + `cli` + `ios`, `capacitor.config.ts` (appId `com.sacreations.bodyhealth`, appName "Body Health", `webDir: dist`). `npx cap add ios` scaffolded `ios/App`. `npm run build && npx cap sync ios` copies `dist` into the native shell and regenerates `Package.swift`.
+- **HealthKit plugin** `capacitor-health@8.1.2` (read steps / active-calories / workouts).
+- **`src/lib/healthkit.ts`** — typed wrapper: `isHealthKitAvailable()`, `ensureHealthPermissions()` (READ_STEPS / READ_ACTIVE_CALORIES / READ_WORKOUTS), `getHealthSnapshot()` → `{ steps, activeCalories, workoutsThisWeek, recentWorkouts }`, or `null` on web/non-iOS.
+- **`AppleWatchActivityCard`** — calls `getHealthSnapshot()` on mount; badge reads "checking… / connected / not connected"; three tiles (Steps / 10k, Active Cal / 600, Workouts this week) + a recent-workouts list when expanded; today's dot colors from step progress.
+- **Native config** — `Info.plist` health usage strings; `ios/App/App/App.entitlements` (HealthKit) wired via `CODE_SIGN_ENTITLEMENTS` in Debug + Release.
+
+### Decisions / notes
+
+- **Capacitor 8 = SPM, not CocoaPods.** No Podfile or `.xcworkspace`; open `ios/App/App.xcodeproj`. (System Ruby 2.6 here can't build CocoaPods anyway — SPM sidesteps it entirely.)
+- **Plugin substitution.** `@capacitor-community/health-kit` (per the brief) does not exist on npm. `@perfood/capacitor-healthkit` is stale (peer `@capacitor/core ^4`). Chose `capacitor-health@8.1.2` (peer `>=8`) for a clean build on Xcode 26.3.
+- **Resting HR dropped.** `capacitor-health` has no resting-HR query (only per-workout HR samples). Per product decision this session, the third tile became a **workouts-this-week count** instead of resting HR.
+- **Read-only.** No writes to Health yet (the `NSHealthUpdateUsageDescription` string is present for the future workout-write path).
+
+### Remaining manual steps (Xcode, need an Apple ID)
+
+1. Open `ios/App/App.xcodeproj`. 2. Signing & Capabilities → select a Development Team (Automatic signing). 3. Confirm the **HealthKit** capability is present (the entitlement is pre-wired; automatic signing registers it on the App ID). 4. Build + run to a connected iPhone; grant Health access at the prompt.
+
+### Current state
+
+- **Web schema**: Dexie v12 (unchanged). `npm run build` clean; `npx cap sync ios` clean (SPM).
+- The HealthKit card shows "not connected" on web (expected); live data appears only in the signed iOS app after granting access.
