@@ -1,6 +1,7 @@
 import type { Table } from 'dexie';
 import { db } from '../db/database';
 import { supabase } from './supabase';
+import { logSync } from './syncDebug';
 
 // Phase 6 startup sync. Two passes, both best-effort and guarded so they can
 // never break local boot or — critically — destroy local data:
@@ -38,17 +39,18 @@ async function initialPushIfEmpty(): Promise<void> {
   // Verbose console.error tracing (temporary debug) — iOS Safari surfaces
   // errors more reliably than logs. Logged before the early returns so a
   // null client / set flag is still visible.
-  console.error('SYNC: starting initial push check');
-  console.error('SYNC: supabase client =', supabase ? 'present' : 'NULL');
+  // Step tracing surfaced in the Settings "Sync debug output" panel.
+  logSync('SYNC: starting initial push check');
+  logSync('SYNC: supabase client =', supabase ? 'present' : 'NULL');
   if (!supabase) return;
 
-  console.error('SYNC: flag =', localStorage.getItem(INITIAL_PUSH_FLAG));
+  logSync('SYNC: flag =', localStorage.getItem(INITIAL_PUSH_FLAG));
   if (localStorage.getItem(INITIAL_PUSH_FLAG)) return;
 
   const { count, error } = await supabase
     .from('ph_sessions')
     .select('*', { count: 'exact', head: true });
-  console.error('SYNC: ph_sessions count result =', { count, error });
+  logSync('SYNC: ph_sessions count result =', { count, error });
   if (error) return; // tables missing / unreachable — retry next load
   if ((count ?? 0) > 0) {
     // Cloud already populated (another device/origin) — nothing to push.
@@ -57,7 +59,7 @@ async function initialPushIfEmpty(): Promise<void> {
   }
 
   const localSessions = await db.sessions.toArray();
-  console.error('SYNC: local sessions count =', localSessions.length);
+  logSync('SYNC: local sessions count =', localSessions.length);
 
   let insertError: unknown = null;
   for (const { table, ph } of TABLES) {
@@ -69,7 +71,7 @@ async function initialPushIfEmpty(): Promise<void> {
       break;
     }
   }
-  console.error('SYNC: push result =', { error: insertError });
+  logSync('SYNC: push result =', { error: insertError });
   if (insertError) return; // bail without the flag so the push retries
   localStorage.setItem(INITIAL_PUSH_FLAG, '1');
 }
