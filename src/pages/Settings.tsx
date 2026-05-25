@@ -6,15 +6,9 @@ import {
   updateUserPreferences,
   TARGET_RANGES,
 } from '../lib/userPreferences';
-import { getSyncMessages, subscribeSyncMessages } from '../lib/syncDebug';
 
 export default function Settings() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
-
-  // Live cloud-sync debug output. Seeded from the buffer (messages collected
-  // during startup sync, before this page mounted) and updated as more arrive.
-  const [syncLog, setSyncLog] = useState<string[]>(() => getSyncMessages());
-  useEffect(() => subscribeSyncMessages(setSyncLog), []);
 
   if (!prefs) {
     return (
@@ -225,38 +219,6 @@ export default function Settings() {
         />
       </section>
 
-      {/* TEMPORARY (debug): clears the one-time initial-push flag and reloads
-          so the cloud sync re-runs the initial push. Remove once sync is
-          confirmed working. */}
-      <section className="mt-8">
-        <button
-          type="button"
-          onClick={() => {
-            localStorage.removeItem('ph_cloud_initial_push_done');
-            const cleared =
-              localStorage.getItem('ph_cloud_initial_push_done') === null;
-            // The in-memory sync log resets on reload, so stash a one-shot
-            // marker the post-reload sync trace reads and surfaces in the panel.
-            localStorage.setItem('ph_force_sync_marker', String(cleared));
-            window.location.reload();
-          }}
-          className="border border-red-alert text-red-alert rounded-full px-3 py-1.5 text-[13px] font-medium"
-        >
-          Force cloud sync (debug)
-        </button>
-      </section>
-
-      {/* TEMPORARY (debug): live cloud-sync trace, mirrored from lib/sync.ts. */}
-      <section className="mt-6">
-        <SectionLabel>Sync debug output</SectionLabel>
-        <div className="mt-2 bg-[#eef1ef] border border-card-edge rounded-lg p-3 text-[11px] text-ink font-mono whitespace-pre-wrap break-words">
-          {syncLog.length === 0 ? (
-            <span className="text-card-mute">No sync output yet.</span>
-          ) : (
-            syncLog.map((line, i) => <div key={i}>{line}</div>)
-          )}
-        </div>
-      </section>
     </div>
   );
 }

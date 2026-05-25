@@ -1,7 +1,6 @@
 import type { Table } from 'dexie';
 import { db } from '../db/database';
 import { supabase } from './supabase';
-import { logSync } from './syncDebug';
 
 // Phase 6 startup sync. Two passes, both best-effort and guarded so they can
 // never break local boot or — critically — destroy local data:
@@ -36,31 +35,13 @@ const INITIAL_PUSH_FLAG = 'ph_cloud_initial_push_done';
 // done) on any error — e.g. the migration hasn't been applied yet — so it
 // retries on a later load once the tables exist.
 async function initialPushIfEmpty(): Promise<void> {
-  // Verbose console.error tracing (temporary debug) — iOS Safari surfaces
-  // errors more reliably than logs. Logged before the early returns so a
-  // null client / set flag is still visible.
-  // Surface a force-sync request from the Settings button. Its in-memory log
-  // line didn't survive the reload, but this one-shot localStorage marker does
-  // — it confirms whether the flag was actually cleared before the reload.
-  const forceMarker = localStorage.getItem('ph_force_sync_marker');
-  if (forceMarker !== null) {
-    localStorage.removeItem('ph_force_sync_marker');
-    logSync('SYNC: force-sync — flag cleared before reload =', forceMarker);
-  }
-
-  // Step tracing surfaced in the Settings "Sync debug output" panel.
-  logSync('SYNC: starting initial push check');
-  logSync('SYNC: supabase client =', supabase ? 'present' : 'NULL');
   if (!supabase) return;
-
-  logSync('SYNC: flag =', localStorage.getItem(INITIAL_PUSH_FLAG));
   if (localStorage.getItem(INITIAL_PUSH_FLAG)) return;
 
   const { count, error } = await supabase
     .from('ph_sessions')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', 'local-user-001');
-  logSync('SYNC: ph_sessions count result =', { count, error });
   if (error) return; // tables missing / unreachable — retry next load
   if ((count ?? 0) > 0) {
     // Cloud already populated (another device/origin) — nothing to push.
@@ -68,21 +49,12 @@ async function initialPushIfEmpty(): Promise<void> {
     return;
   }
 
-  const localSessions = await db.sessions.toArray();
-  logSync('SYNC: local sessions count =', localSessions.length);
-
-  let insertError: unknown = null;
   for (const { table, ph } of TABLES) {
     const rows = await table.toArray();
     if (rows.length === 0) continue;
-    const res = await supabase.from(ph).insert(rows);
-    if (res.error) {
-      insertError = res.error;
-      break;
-    }
+    const { error: insertError } = await supabase.from(ph).insert(rows);
+    if (insertError) return; // bail without the flag so the push retries
   }
-  logSync('SYNC: push result =', { error: insertError });
-  if (insertError) return; // bail without the flag so the push retries
   localStorage.setItem(INITIAL_PUSH_FLAG, '1');
 }
 
