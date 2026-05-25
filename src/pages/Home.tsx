@@ -20,7 +20,7 @@ export default function Home() {
   return (
     <>
       <DashboardHeader />
-      <div className="px-5 mt-5 space-y-3">
+      <div className="px-5 mt-5 space-y-4">
         <FitnessSummary />
         <NutritionSummary />
         <HealthSummary />

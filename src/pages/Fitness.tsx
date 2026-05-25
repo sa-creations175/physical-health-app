@@ -74,13 +74,22 @@ function FitnessHeader() {
         <span className="text-[12px] text-white/70 whitespace-nowrap">
           {todayStr}
         </span>
-        <button
-          type="button"
-          onClick={() => navigate('/library')}
-          className="border border-white text-white rounded-full px-3 py-1 text-[13px] font-medium"
-        >
-          Library
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate('/history')}
+            className="border border-white text-white rounded-full px-3 py-1 text-[13px] font-medium"
+          >
+            History
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/library')}
+            className="border border-white text-white rounded-full px-3 py-1 text-[13px] font-medium"
+          >
+            Library
+          </button>
+        </div>
       </div>
     </header>
   );

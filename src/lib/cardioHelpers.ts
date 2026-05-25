@@ -61,6 +61,31 @@ export async function createCardioLog(
   return row.id;
 }
 
+// Move a logged cardio session to a different date, preserving its time of
+// day. Used by the editable date field on the History expanded row.
+export async function updateCardioLogDate(
+  id: string,
+  newDate: string, // YYYY-MM-DD
+): Promise<void> {
+  const log = await db.cardio_logs.get(id);
+  if (!log) return;
+  const old = new Date(log.started_at);
+  const [y, m, d] = newDate.split('-').map(Number);
+  const next = new Date(
+    y,
+    m - 1,
+    d,
+    old.getHours(),
+    old.getMinutes(),
+    old.getSeconds(),
+    old.getMilliseconds(),
+  );
+  await syncedUpdate(db.cardio_logs, id, {
+    started_at: next.toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+}
+
 export async function createCardioType(name: string): Promise<string> {
   const trimmed = name.trim();
   const now = new Date().toISOString();

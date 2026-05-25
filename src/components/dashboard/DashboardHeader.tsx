@@ -21,8 +21,9 @@ export default function DashboardHeader() {
       style={{
         marginTop: 'calc(-1 * env(safe-area-inset-top))',
         paddingTop: 'calc(env(safe-area-inset-top) + 2rem)',
+        background: '#0f3d2e',
       }}
-      className="relative overflow-hidden bg-green-deep px-5 pb-5 flex items-start justify-between gap-3"
+      className="relative overflow-hidden px-5 pb-5 flex items-start justify-between gap-3"
     >
       <HeroArcs />
       <div className="relative min-w-0">

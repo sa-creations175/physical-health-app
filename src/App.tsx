@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Fitness from './pages/Fitness';
 import Nutrition from './pages/Nutrition';
 import Health from './pages/Health';
+import History from './pages/History';
 import LogStrength from './pages/LogStrength';
 import LogCardio from './pages/LogCardio';
 import ActiveSession from './pages/ActiveSession';
@@ -35,6 +36,7 @@ function App() {
           <Route path="/fitness" element={<Fitness />} />
           <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/health" element={<Health />} />
+          <Route path="/history" element={<History />} />
           <Route path="/log/strength" element={<LogStrength />} />
           <Route path="/log/strength/active/:sessionId" element={<ActiveSession />} />
           <Route path="/log/strength/complete/:sessionId" element={<SessionComplete />} />

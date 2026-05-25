@@ -67,7 +67,7 @@ export default function Settings() {
         />
       </section>
 
-      <section className="mt-7">
+      <section className="mt-6">
         <SectionLabel>Daily nutrition</SectionLabel>
         <p className="text-[11px] text-ink-soft mt-1">
           Saved now — Phase 3 lights up dashboard tracking.
@@ -105,7 +105,7 @@ export default function Settings() {
         />
       </section>
 
-      <section className="mt-7">
+      <section className="mt-6">
         <SectionLabel>Daily bundle</SectionLabel>
         <p className="text-[11px] text-ink-soft mt-1">
           Daily rep targets, and the amount each tap adds on the dashboard card.
@@ -173,7 +173,7 @@ export default function Settings() {
         />
       </section>
 
-      <section className="mt-7">
+      <section className="mt-6">
         <SectionLabel>Thresholds</SectionLabel>
         <p className="text-[11px] text-ink-soft mt-1">
           What counts as a qualifying session, and weekly day targets.

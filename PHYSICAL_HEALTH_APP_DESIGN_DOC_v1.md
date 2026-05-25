@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 25, 2026 (v2.6)
+Last updated: May 25, 2026 (v2.7)
+
+**What changed in v2.7 (May 25, 2026):** History view + polish. (1) New **`/history`** route (reached via a "History" pill next to "Library" in the Fitness hero). It merges completed strength sessions and cardio logs into one chronological feed, with All/Lower/Upper/Full/Cardio filter pills and a **List ↔ Calendar** view toggle. List rows are collapsible (icon + type + date + volume/duration + feel emoji → exercises/sets, intensity/distance, notes, and an editable date). Calendar shows the month as a 7-col grid with per-session colored dots (lower `#0f3d2e` / upper `#1a6b4a` / full `#22c37e` / cardio teal `#14b8a6`), today ringed; tapping a day expands that day's rows. Read-only (no delete). (2) **Home hero band** recolored to `#0f3d2e` to exactly match the Fitness band. (3) **Spacing pass** for a roomier feel: Home summary cards `space-y-4`, Settings sections standardized to `gap-6`. New `historyHelpers.ts` (`getHistoryItems`) + `updateCardioLogDate`. Adds §v2.7 session log. No schema change (Dexie v12).
 
 **What changed in v2.6 (May 25, 2026):** Phase 6 — Supabase cloud sync (write-through). The app gains optional cloud replication on top of the local-first Dexie store. `@supabase/supabase-js` + a guarded `lib/supabase.ts` client (null when env vars are absent, so local/dev never break). A SQL migration (`supabase/migrations/001_physical_health.sql`) defines **14 `ph_`-prefixed tables** (purely additive alongside the music/finance tables in the shared project) mirroring the Dexie v12 schema, with RLS scoped to `LOCAL_USER_ID`. The `syncedAdd/Put/Update/Delete/BulkPut/BulkDelete` wrappers now **write through** to Supabase — fire-and-forget, try/catch, env-guarded — so the UI never waits on or breaks from the cloud. On startup (after seeding) a one-time **initial push** seeds an empty cloud from local, then a **pull** merges cloud → local by id (NON-destructive upsert — never deletes local rows). No Dexie schema change (still v12). Adds §Phase 6 session log. ⚠️ The migration must be applied manually (`supabase db push` / dashboard) — it was authored here but could not be run without project credentials.
 
@@ -1483,4 +1485,39 @@ Supabase cloud sync, layered on top of the local-first Dexie store without chang
 
 - **Schema**: Dexie v12 (unchanged) + 14 `ph_` Supabase tables (migration pending apply).
 - **Dev experience**: `npm run dev` boots clean; `npm run build` succeeds; app works local-first with or without Supabase configured.
+- **Tree clean**, pushed to origin/main, no Co-Authored-By trailer.
+
+---
+
+## v2.7 session log — May 25, 2026
+
+History view, header-color alignment, and a spacing pass.
+
+### Commits (chronological)
+
+| # | Hash | Message |
+|---|---|---|
+| 1 | _(see git log)_ | feat(history): /history list + calendar view, filters, editable dates |
+| 2 | _(this commit)_ | docs: v2.7 session log |
+
+### What shipped
+
+- **History page (`/history`).** Reached via a "History" pill beside "Library" in the Fitness hero. `historyHelpers.getHistoryItems()` merges completed strength sessions (joined with exercises + sets) and cardio logs into one feed sorted most-recent-first.
+  - **Filters:** All / Lower / Upper / Full / Cardio (green-mid when active) — applied to both views.
+  - **List view (default):** collapsible cards. Collapsed = type icon + label + centered date ("Mon, May 24") + volume (`Σ weight×reps lb`, or set count for bodyweight) / duration, plus a feel emoji (🚀/✈️/🐌). Expanded = exercises with sets (strength) or type/duration/intensity/distance (cardio), notes, and an **editable date** (`DateBlock` → `updateSessionDate` / `updateCardioLogDate`).
+  - **Calendar view:** month grid (Sun→Sat) with prev/next nav; days with sessions show colored dots (lower `#0f3d2e`, upper `#1a6b4a`, full `#22c37e`, cardio teal `#14b8a6`), today gets a green-mid ring; tapping a day expands that day's rows (same row component as the list). No-session days are inert grey numbers.
+  - Empty state "No sessions logged yet"; read-only (no delete).
+- **Home hero band** background set to `#0f3d2e` (was the `green-deep` token `#0F6E56`) so it matches the Fitness band exactly.
+- **Spacing:** Home summary cards `space-y-3 → space-y-4`; Settings section gaps standardized to `gap-6`. New `updateCardioLogDate` helper.
+
+### Decisions / notes
+
+- **Strength + cardio in one feed.** Cardio has no Session row (Build 2.1), so the helper merges `sessions` (completed) and `cardio_logs`, tagging each item `kind: 'strength' | 'cardio'` and sorting by date then `created_at`/`started_at`.
+- **One row component, two surfaces.** The same self-collapsing `HistoryRow` renders in the list and in the calendar's day-detail panel, so the formats stay identical.
+- **px stayed at `px-5`.** The spacing brief said "ensure px-4 (not px-3)", but the pages were already `px-5` (20px) — more generous than px-4 and aligned with the "more breathing room" goal — so I kept px-5 rather than reducing horizontal padding. Bottom nav already carries `env(safe-area-inset-bottom)`. Fitness/Nutrition first-element spacing was already ≥ 16px (pt-4-equivalent).
+
+### Current state
+
+- **Schema**: Dexie v12 (unchanged). Supabase 14 `ph_` tables.
+- **Dev experience**: `npm run dev` boots clean; `npm run build` succeeds. History verified (list rows, Cardio filter, calendar dots + day-detail expand).
 - **Tree clean**, pushed to origin/main, no Co-Authored-By trailer.
