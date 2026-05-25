@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { runSeedersIfNeeded } from './db';
+import { runCloudSync } from './lib/sync';
 import AppLayout from './components/AppLayout';
 import { ToastProvider } from './components/ui/Toast';
 import Home from './pages/Home';
@@ -17,9 +18,13 @@ import Settings from './pages/Settings';
 
 function App() {
   useEffect(() => {
-    runSeedersIfNeeded().catch((err) => {
-      console.error('Seeder failed:', err);
-    });
+    // Seed/heal local data first, then run cloud sync (initial push + pull).
+    // Cloud sync is best-effort and never blocks local boot.
+    runSeedersIfNeeded()
+      .then(() => runCloudSync())
+      .catch((err) => {
+        console.error('Startup (seed/sync) failed:', err);
+      });
   }, []);
 
   return (
