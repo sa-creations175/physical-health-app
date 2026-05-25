@@ -39,6 +39,15 @@ async function initialPushIfEmpty(): Promise<void> {
   // Verbose console.error tracing (temporary debug) — iOS Safari surfaces
   // errors more reliably than logs. Logged before the early returns so a
   // null client / set flag is still visible.
+  // Surface a force-sync request from the Settings button. Its in-memory log
+  // line didn't survive the reload, but this one-shot localStorage marker does
+  // — it confirms whether the flag was actually cleared before the reload.
+  const forceMarker = localStorage.getItem('ph_force_sync_marker');
+  if (forceMarker !== null) {
+    localStorage.removeItem('ph_force_sync_marker');
+    logSync('SYNC: force-sync — flag cleared before reload =', forceMarker);
+  }
+
   // Step tracing surfaced in the Settings "Sync debug output" panel.
   logSync('SYNC: starting initial push check');
   logSync('SYNC: supabase client =', supabase ? 'present' : 'NULL');

@@ -233,6 +233,11 @@ export default function Settings() {
           type="button"
           onClick={() => {
             localStorage.removeItem('ph_cloud_initial_push_done');
+            const cleared =
+              localStorage.getItem('ph_cloud_initial_push_done') === null;
+            // The in-memory sync log resets on reload, so stash a one-shot
+            // marker the post-reload sync trace reads and surfaces in the panel.
+            localStorage.setItem('ph_force_sync_marker', String(cleared));
             window.location.reload();
           }}
           className="border border-red-alert text-red-alert rounded-full px-3 py-1.5 text-[13px] font-medium"
