@@ -27,6 +27,10 @@ export interface Session {
   duration_minutes: number | null;
   notes: string;
   feel_rating: FeelRating | null;
+  // Provenance — added Dexie v13. 'watch' for sessions auto-created from an
+  // Apple Watch strength workout, 'manual' for logger entries. null on rows
+  // that predate the column. Non-indexed.
+  source: 'manual' | 'watch' | null;
   created_at: string; // ISO datetime
   updated_at: string;
 }
@@ -92,6 +96,10 @@ export interface CardioLog {
   // still runs off duration_minutes alone.
   distance_miles: number | null;
   notes: string | null;
+  // Provenance — added Dexie v13. 'watch' for auto-imported Apple Watch
+  // workouts, 'manual' for logger entries. null on rows that predate the
+  // column. Non-indexed.
+  source: 'manual' | 'watch' | null;
   created_at: string;
   updated_at: string;
 }
@@ -214,6 +222,13 @@ export interface BundleLog {
   // Mobility minutes for the day — added v2.3 (Dexie v11). null = not logged
   // (back-compat with rows that predate the column); a number is the minutes.
   mobility_minutes: number | null;
+  // Apple Watch strength-bundle import — added Dexie v13. Duration (minutes) of
+  // a Watch strength/functional workout that mapped to the bundle when reps
+  // aren't logged manually. null = no Watch contribution that day. Non-indexed.
+  watch_duration_minutes: number | null;
+  // Provenance — added Dexie v13. 'watch' if any field on this row came from
+  // Apple Watch, 'manual' otherwise. null on rows that predate the column.
+  source: 'manual' | 'watch' | null;
   created_at: string;
   updated_at: string;
 }

@@ -13,6 +13,8 @@ export interface CreateCardioLogInput {
   started_at: string; // ISO datetime — precise local intent serialized
   distance_miles: number | null;
   notes: string | null;
+  // Provenance — defaults to 'manual'. The Apple Watch importer passes 'watch'.
+  source?: 'manual' | 'watch';
 }
 
 // Distance is opt-in per type because measuring distance only makes
@@ -49,6 +51,7 @@ export async function createCardioLog(
     started_at: input.started_at,
     distance_miles: input.distance_miles,
     notes: input.notes,
+    source: input.source ?? 'manual',
     created_at: now,
     updated_at: now,
   };

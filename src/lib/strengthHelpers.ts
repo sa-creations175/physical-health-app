@@ -31,6 +31,7 @@ export async function createSession(
     duration_minutes: null,
     notes: '',
     feel_rating: null,
+    source: 'manual',
     created_at: now,
     updated_at: now,
   };
@@ -371,6 +372,7 @@ export async function repeatLastSession(
     duration_minutes: null,
     notes: '',
     feel_rating: null,
+    source: 'manual',
     created_at: now,
     updated_at: now,
   };

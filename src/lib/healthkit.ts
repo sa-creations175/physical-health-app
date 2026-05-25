@@ -48,7 +48,8 @@ export async function isHealthKitAvailable(): Promise<boolean> {
   try {
     const { available } = await Health.isHealthAvailable();
     return available;
-  } catch {
+  } catch (e) {
+    console.error('HK error at isHealthKitAvailable:', e);
     return false;
   }
 }
@@ -60,7 +61,8 @@ export async function ensureHealthPermissions(): Promise<boolean> {
   try {
     await Health.requestHealthPermissions({ permissions: READ_PERMISSIONS });
     return true;
-  } catch {
+  } catch (e) {
+    console.error('HK error at ensureHealthPermissions:', e);
     return false;
   }
 }
@@ -88,12 +90,16 @@ async function sumAggregated(
     return Math.round(
       aggregatedData.reduce((total, sample) => total + (sample.value || 0), 0),
     );
-  } catch {
+  } catch (e) {
+    console.error(`HK error at sumAggregated(${dataType}):`, e);
     return 0;
   }
 }
 
-async function getRecentWorkouts(): Promise<HealthWorkout[]> {
+// Last 7 days of completed workouts (newest first). Exported for the Apple
+// Watch auto-importer (watchImport.ts). Assumes permissions were already
+// ensured by the caller (getHealthSnapshot / importWatchWorkouts both do).
+export async function getRecentWorkouts(): Promise<HealthWorkout[]> {
   const start = new Date();
   start.setDate(start.getDate() - 7);
   start.setHours(0, 0, 0, 0);
@@ -115,7 +121,8 @@ async function getRecentWorkouts(): Promise<HealthWorkout[]> {
         sourceName: w.sourceName,
       }))
       .sort((a, b) => b.startDate.localeCompare(a.startDate));
-  } catch {
+  } catch (e) {
+    console.error('HK error at getRecentWorkouts:', e);
     return [];
   }
 }

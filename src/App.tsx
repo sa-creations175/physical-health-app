@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { runSeedersIfNeeded } from './db';
 import { runCloudSync } from './lib/sync';
+import { Capacitor } from '@capacitor/core';
+import { isHealthKitAvailable } from './lib/healthkit';
+import { importWatchWorkouts } from './lib/watchImport';
 import AppLayout from './components/AppLayout';
 import { ToastProvider } from './components/ui/Toast';
 import Home from './pages/Home';
@@ -17,14 +20,29 @@ import Library from './pages/Library';
 import ExerciseDetail from './pages/ExerciseDetail';
 import Settings from './pages/Settings';
 
+// iOS-only Apple Watch auto-import, gated on HealthKit availability. Fully
+// guarded so it can never block or crash startup.
+async function importWatchWorkoutsIfAvailable(): Promise<void> {
+  if (Capacitor.getPlatform() !== 'ios') return;
+  try {
+    if (await isHealthKitAvailable()) {
+      await importWatchWorkouts();
+    }
+  } catch (e) {
+    console.error('Watch import failed:', e);
+  }
+}
+
 function App() {
   useEffect(() => {
-    // Seed/heal local data first, then run cloud sync (initial push + pull).
-    // Cloud sync is best-effort and never blocks local boot.
+    // Seed/heal local data first, then run cloud sync (initial push + pull),
+    // then auto-import Apple Watch workouts (iOS only). Each phase is
+    // best-effort and never blocks local boot.
     runSeedersIfNeeded()
       .then(() => runCloudSync())
+      .then(() => importWatchWorkoutsIfAvailable())
       .catch((err) => {
-        console.error('Startup (seed/sync) failed:', err);
+        console.error('Startup (seed/sync/import) failed:', err);
       });
   }, []);
 

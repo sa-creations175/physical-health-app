@@ -104,6 +104,8 @@ export async function upsertBundleLog(
     ab_rolls: 0,
     calf_raises: 0,
     mobility_minutes: null,
+    watch_duration_minutes: null,
+    source: 'manual',
     [field]: clamped,
     created_at: now,
     updated_at: now,

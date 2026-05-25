@@ -459,6 +459,59 @@ export class PhysicalHealthDB extends Dexie {
             }
           });
       });
+
+    // v13 (Build 2.9): Apple Watch workout auto-import. Adds a `source`
+    // ('manual' | 'watch' | null) provenance column to cardio_logs, sessions,
+    // and bundle_logs, plus `watch_duration_minutes` on bundle_logs for Watch
+    // strength workouts that map to the bundle without manual reps. All new
+    // columns are non-indexed, so the index lists are byte-identical to v12;
+    // the upgrade hook backfills existing rows to null so consumer code can
+    // treat the fields as always-present.
+    this.version(13)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('sessions')
+          .toCollection()
+          .modify((row: { source?: 'manual' | 'watch' | null }) => {
+            if (row.source === undefined) row.source = null;
+          });
+        await tx
+          .table('cardio_logs')
+          .toCollection()
+          .modify((row: { source?: 'manual' | 'watch' | null }) => {
+            if (row.source === undefined) row.source = null;
+          });
+        await tx
+          .table('bundle_logs')
+          .toCollection()
+          .modify(
+            (row: {
+              source?: 'manual' | 'watch' | null;
+              watch_duration_minutes?: number | null;
+            }) => {
+              if (row.source === undefined) row.source = null;
+              if (row.watch_duration_minutes === undefined) {
+                row.watch_duration_minutes = null;
+              }
+            },
+          );
+      });
   }
 }
 

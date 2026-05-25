@@ -168,7 +168,10 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       : item.totalVolume > 0
         ? `${item.totalVolume.toLocaleString()} lb`
         : `${item.totalSets} set${item.totalSets === 1 ? '' : 's'}`;
-  const feel = item.kind === 'strength' ? FEEL_EMOJI[item.feel_rating] : '';
+  const feel =
+    item.kind === 'strength' && item.feel_rating
+      ? FEEL_EMOJI[item.feel_rating]
+      : '';
 
   return (
     <div className="bg-card shadow-card rounded-2xl px-4 py-3">
@@ -184,6 +187,15 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         <span className="text-[11px] font-display uppercase tracking-micro text-green-mid shrink-0">
           {label}
         </span>
+        {item.source === 'watch' && (
+          <span
+            className="text-[11px] shrink-0"
+            title="Imported from Apple Watch"
+            aria-label="Imported from Apple Watch"
+          >
+            ⌚
+          </span>
+        )}
         <span className="flex-1 text-center text-[12px] text-ink-mute truncate">
           {dayLabel(item.date)}
         </span>
@@ -245,11 +257,13 @@ function StrengthDetail({
         </p>
       )}
 
-      <div className="flex items-center justify-between pt-1">
-        <span className="text-[20px] leading-none" aria-label={item.feel_rating}>
-          {FEEL_EMOJI[item.feel_rating]}
-        </span>
-      </div>
+      {item.feel_rating && (
+        <div className="flex items-center justify-between pt-1">
+          <span className="text-[20px] leading-none" aria-label={item.feel_rating}>
+            {FEEL_EMOJI[item.feel_rating]}
+          </span>
+        </div>
+      )}
 
       <div className="pt-1">
         <DateBlock

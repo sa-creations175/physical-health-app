@@ -9,6 +9,9 @@ import {
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
 } from '../../lib/defaults';
 import { cardioDots } from '../../lib/dotHelpers';
+import { db } from '../../db/database';
+import { LOCAL_USER_ID } from '../../lib/constants';
+import { startOfWeekISODate } from '../../lib/dateHelpers';
 
 export default function CardioActivityCard({
   expanded,
@@ -30,6 +33,22 @@ export default function CardioActivityCard({
   const remaining = Math.max(0, target - qualifying);
 
   const dots = cardioDots(summary?.sessions ?? []);
+
+  // How many of this week's cardio logs were auto-imported from Apple Watch —
+  // a subtle provenance hint in the expanded panel.
+  const watchCount =
+    useLiveQuery(async () => {
+      const weekStart = startOfWeekISODate();
+      const logs = await db.cardio_logs
+        .where('user_id')
+        .equals(LOCAL_USER_ID)
+        .toArray();
+      return logs.filter(
+        (l) =>
+          l.source === 'watch' &&
+          new Date(l.started_at).toLocaleDateString('en-CA') >= weekStart,
+      ).length;
+    }, [], 0) ?? 0;
 
   return (
     <SharedActivityCard
@@ -66,6 +85,11 @@ export default function CardioActivityCard({
           <span className="text-[#5f6b65]">{remaining} more to hit your week</span>
         )}
       </p>
+      {watchCount > 0 && (
+        <p className="text-[11px] text-dim mt-2">
+          ⌚ {watchCount} from Apple Watch this week
+        </p>
+      )}
     </SharedActivityCard>
   );
 }

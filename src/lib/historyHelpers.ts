@@ -16,8 +16,9 @@ export interface HistoryStrengthItem {
   type: LiftingType;
   date: string; // YYYY-MM-DD
   sortAt: string; // created_at — secondary sort within a day
-  feel_rating: FeelRating;
+  feel_rating: FeelRating | null; // null for Watch-imported incomplete sessions
   notes: string;
+  source: 'manual' | 'watch' | null;
   exercises: HistoryExercise[];
   totalVolume: number; // Σ weight × reps over rep-sets
   totalSets: number;
@@ -33,6 +34,7 @@ export interface HistoryCardioItem {
   intensity: Intensity;
   distance_miles: number | null;
   notes: string | null;
+  source: 'manual' | 'watch' | null;
 }
 
 export type HistoryItem = HistoryStrengthItem | HistoryCardioItem;
@@ -40,7 +42,9 @@ export type HistoryItem = HistoryStrengthItem | HistoryCardioItem;
 export async function getHistoryItems(): Promise<HistoryItem[]> {
   const [sessions, links, sets, exercises, cardioLogs, cardioTypes] =
     await Promise.all([
-      db.sessions.filter((s) => s.feel_rating !== null).toArray(),
+      db.sessions
+        .filter((s) => s.feel_rating !== null || s.source === 'watch')
+        .toArray(),
       db.session_exercises.toArray(),
       db.sets.toArray(),
       db.exercises.toArray(),
@@ -64,7 +68,9 @@ export async function getHistoryItems(): Promise<HistoryItem[]> {
 
   const strength: HistoryStrengthItem[] = [];
   for (const s of sessions) {
-    if (s.feel_rating === null) continue;
+    // Completed sessions, plus Watch-imported incomplete ones (feel_rating
+    // null) so auto-imported strength still surfaces in History.
+    if (s.feel_rating === null && s.source !== 'watch') continue;
     if (s.type !== 'lower' && s.type !== 'upper' && s.type !== 'full_body') {
       continue;
     }
@@ -93,6 +99,7 @@ export async function getHistoryItems(): Promise<HistoryItem[]> {
       sortAt: s.created_at,
       feel_rating: s.feel_rating,
       notes: s.notes,
+      source: s.source ?? null,
       exercises: exs,
       totalVolume,
       totalSets,
@@ -112,6 +119,7 @@ export async function getHistoryItems(): Promise<HistoryItem[]> {
       intensity: l.intensity,
       distance_miles: l.distance_miles ?? null,
       notes: l.notes ?? null,
+      source: l.source ?? null,
     }));
 
   const all: HistoryItem[] = [...strength, ...cardio];

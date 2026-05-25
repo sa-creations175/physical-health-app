@@ -3,10 +3,29 @@ import SharedActivityCard from './SharedActivityCard';
 import { WatchIcon } from './activityIcons';
 import { DOT_COLOR } from '../../lib/dotHelpers';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
+import { App } from '@capacitor/app';
 import { getHealthSnapshot, type HealthSnapshot } from '../../lib/healthkit';
+import { LAST_IMPORT_KEY } from '../../lib/watchImport';
 
 const STEPS_TARGET = 10000;
 const CALORIE_TARGET = 600;
+
+// HealthKit returns workout types as raw HKWorkoutActivityType identifiers
+// ("stairClimbing", "traditionalStrengthTraining", "running", …). Map the
+// awkward ones explicitly; split the rest from camelCase into Title Case.
+const WORKOUT_TYPE_LABELS: Record<string, string> = {
+  traditionalStrengthTraining: 'Strength Training',
+  functionalStrengthTraining: 'Functional Training',
+  highIntensityIntervalTraining: 'HIIT',
+  other: 'Workout',
+};
+
+function formatWorkoutType(type: string): string {
+  if (WORKOUT_TYPE_LABELS[type]) return WORKOUT_TYPE_LABELS[type];
+  return type
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase boundaries
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case each word
+}
 
 export default function AppleWatchActivityCard({
   expanded,
@@ -20,18 +39,39 @@ export default function AppleWatchActivityCard({
   const [snapshot, setSnapshot] = useState<HealthSnapshot | null | undefined>(
     undefined,
   );
+  // Last Watch auto-import time (written by importWatchWorkouts on startup).
+  const [lastSync, setLastSync] = useState<string | null>(() =>
+    localStorage.getItem(LAST_IMPORT_KEY),
+  );
 
   useEffect(() => {
     let cancelled = false;
-    getHealthSnapshot()
-      .then((s) => {
-        if (!cancelled) setSnapshot(s);
-      })
-      .catch(() => {
-        if (!cancelled) setSnapshot(null);
-      });
+
+    const load = () => {
+      if (!cancelled) setLastSync(localStorage.getItem(LAST_IMPORT_KEY));
+      getHealthSnapshot()
+        .then((s) => {
+          if (!cancelled) setSnapshot(s);
+        })
+        .catch((e) => {
+          console.error('HK error at AppleWatchActivityCard load:', e);
+          if (!cancelled) setSnapshot(null);
+        });
+    };
+
+    load();
+
+    // Refetch when the app returns to the foreground. Fixes the one-shot
+    // problem permanently: e.g. the user grants Health access in Settings
+    // while the app is backgrounded, then returns — we re-read instead of
+    // staying stale. addListener resolves to a handle we remove on unmount.
+    const handle = App.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) load();
+    });
+
     return () => {
       cancelled = true;
+      handle.then((h) => h.remove());
     };
   }, []);
 
@@ -105,7 +145,7 @@ export default function AppleWatchActivityCard({
                 key={`${w.startDate}-${i}`}
                 className="flex items-center justify-between text-[12px] text-ink"
               >
-                <span className="truncate">{w.workoutType}</span>
+                <span className="truncate">{formatWorkoutType(w.workoutType)}</span>
                 <span className="text-card-mute whitespace-nowrap ml-2">
                   {w.durationMinutes} min · {w.calories} cal
                 </span>
@@ -113,6 +153,18 @@ export default function AppleWatchActivityCard({
             ))}
           </ul>
         </div>
+      )}
+
+      {lastSync && (
+        <p className="mt-3 text-[11px] text-dim">
+          Last synced:{' '}
+          {new Date(lastSync).toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          })}
+        </p>
       )}
     </SharedActivityCard>
   );

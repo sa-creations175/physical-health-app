@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 25, 2026 (v2.8)
+Last updated: May 25, 2026 (v2.9)
+
+**What changed in v2.9 (May 25, 2026):** Build 2.9 — Apple Watch workout **auto-import**. On every app open (iOS only, after cloud sync) the new **`src/lib/watchImport.ts`** pulls the last 7 days of HealthKit workouts and files each into the right section with duplicate prevention. **`classifyWatchWorkout(type, durationMinutes)`** → `strength` (`traditionalStrengthTraining` > 30 min), `bundle` (`traditionalStrengthTraining` ≤ 30 min, or any `functionalStrengthTraining`), `mobility` (`yoga`/`stretchingCooldown`/`mindAndBody`/`pilates`), else `cardio`. Dedup: cardio = no existing log within ±30 min; bundle = no row that day with any field > 0; mobility = no `mobility_minutes` that day; strength = merge into a same-day completed session (inheriting its type) or create an incomplete one (`feel_rating` null, type inferred → `full_body` default). Cardio maps Watch types to readable cardio-type names (Run/Bike/Walk/…), stores calories in notes, intensity `moderate`. A `localStorage` high-water mark (`ph_last_watch_import`) means only workouts started since the last run are processed; the whole thing is fire-and-forget and never blocks/crashes startup. **Schema → Dexie v13**: `source` ('manual' | 'watch' | null) on `cardio_logs`, `sessions`, `bundle_logs`, plus `watch_duration_minutes` on `bundle_logs` (all non-indexed, backfilled null). New **`supabase/migrations/003_add_source_columns.sql`** mirrors these on the cloud tables (incl. `watch_duration_minutes`, so write-through doesn't break on the unknown column). **Visual:** a ⌚ marker on Watch-sourced rows in History (Watch strength sessions now appear there despite null `feel_rating`), a "⌚ N from Apple Watch this week" line on the Fitness cardio card, and a "Last synced: …" line on the Apple Watch card; the temporary platform/HK debug line was removed. Adds §Build 2.9 session log.
 
 **What changed in v2.8 (May 25, 2026):** Phase 2 — Capacitor iOS shell + HealthKit. The PWA gains a native iOS wrapper via **Capacitor 8** (`@capacitor/core` + `cli` + `ios`, app id `com.sacreations.bodyhealth`, name "Body Health", `webDir: dist`). Capacitor 8 uses **Swift Package Manager, not CocoaPods** — the generated `ios/App` project resolves plugins through `CapApp-SPM/Package.swift`, so there is no Podfile/`.xcworkspace` (open **`ios/App/App.xcodeproj`**). The originally-specified `@capacitor-community/health-kit` does not exist on npm; substituted **`capacitor-health@8.1.2`** (the maintained plugin with a clean `@capacitor/core >=8` peer). New **`src/lib/healthkit.ts`** wraps it: `isHealthKitAvailable` / `ensureHealthPermissions` / `getHealthSnapshot`, requesting READ_STEPS + READ_ACTIVE_CALORIES + READ_WORKOUTS, reading **steps (today)** and **active calories (today)** via `queryAggregated` and **workouts (last 7 days)** via `queryWorkouts`, and returning **null on web/non-iOS** so the PWA never breaks. The **Apple Watch** card (`AppleWatchActivityCard`) is now live: Steps / 10k, Active Cal / 600, and a **Workouts-this-week** count tile. ⚠️ `capacitor-health` has **no resting-heart-rate query**, so the spec's resting-HR tile was dropped in favor of the workouts count (product decision, this session). `Info.plist` gains `NSHealthShareUsageDescription` + `NSHealthUpdateUsageDescription`; `App.entitlements` adds the HealthKit entitlement and is wired via `CODE_SIGN_ENTITLEMENTS` in both build configs. Remaining manual steps (require an Apple ID / signing, done in Xcode): set the Development Team under Signing & Capabilities and confirm the **HealthKit** capability. No web schema change (Dexie v12). Adds §Capacitor + HealthKit session log.
 
@@ -1553,3 +1555,32 @@ First native step: wrap the existing PWA in a Capacitor iOS shell and surface li
 
 - **Web schema**: Dexie v12 (unchanged). `npm run build` clean; `npx cap sync ios` clean (SPM).
 - The HealthKit card shows "not connected" on web (expected); live data appears only in the signed iOS app after granting access.
+
+---
+
+## Build 2.9 session log — May 25, 2026 (v2.9)
+
+Apple Watch workouts now flow into the app automatically on open, classified to the right section with duplicate prevention.
+
+### What shipped
+
+- **`src/lib/watchImport.ts`** — the import engine:
+  - `classifyWatchWorkout(type, durationMinutes)` → `{ category, inferredStrengthType? }`.
+  - Dedup guards: `isDuplicateCardio(startDate)` (±30 min), `isDuplicateBundle(date)` (any field > 0), `isDuplicateMobility(date)` (`mobility_minutes` > 0), `findMatchingStrengthSession(date)` (same-day completed session, for type inheritance + merge).
+  - `importWatchWorkouts()` orchestrator: reads `getRecentWorkouts()` (7 days), processes only workouts started after `localStorage['ph_last_watch_import']`, files each, then bumps the marker. Per-workout try/catch; iOS + permission guarded.
+- **Filing rules** — cardio → `createCardioLog` (readable type name, calories in notes, intensity `moderate`, `source: 'watch'`); bundle → upsert `watch_duration_minutes`; mobility → upsert `mobility_minutes`; strength → merge Watch duration into a matching session or create an incomplete one (`feel_rating` null, inferred type).
+- **Schema v13** — `source` on `cardio_logs` / `sessions` / `bundle_logs`; `watch_duration_minutes` on `bundle_logs`. All non-indexed; v13 upgrade backfills null. Manual-write paths (`createCardioLog`, `createSession`, `upsertBundleLog`) set `source: 'manual'`.
+- **`supabase/migrations/003_add_source_columns.sql`** — `ALTER TABLE … ADD COLUMN IF NOT EXISTS` for `source` (3 tables) + `watch_duration_minutes` (bundle).
+- **Startup wiring** — `App.tsx` runs `importWatchWorkoutsIfAvailable()` after `runCloudSync()`, gated on iOS + HealthKit, fully guarded.
+- **Visual** — ⌚ on Watch rows in History (Watch strength sessions now surface there despite null `feel_rating`); "⌚ N from Apple Watch this week" on the cardio card; "Last synced: …" on the Apple Watch card. Removed the temporary platform/Supabase/HK debug line.
+
+### Decisions / notes
+
+- **`watch_duration_minutes` added to the cloud migration too** (beyond the literal spec). Every `BundleLog` now carries the field, and PostgREST rejects an upsert with any unknown column — without the cloud column, *all* bundle_logs write-through would fail silently.
+- **Incomplete Watch strength sessions show in History but not dashboard counts** — History now includes `feel_rating === null` rows when `source === 'watch'`; dashboard/streak queries still filter on `feel_rating !== null`, so they're excluded there as intended.
+- **Re-import safety** rests on the `ph_last_watch_import` high-water mark (only newer workouts are processed) plus the per-category dedup checks.
+
+### Current state
+
+- **Schema**: Dexie **v13**. ⚠️ Run `003_add_source_columns.sql` in Supabase before relying on cloud sync of the new columns.
+- `npm run build` clean; `npx cap sync ios` clean. Pushed to origin/main, no Co-Authored-By trailer.
