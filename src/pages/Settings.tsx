@@ -218,6 +218,22 @@ export default function Settings() {
           onCommit={(v) => updateUserPreferences({ bundle_target: v })}
         />
       </section>
+
+      {/* TEMPORARY (debug): clears the one-time initial-push flag and reloads
+          so the cloud sync re-runs the initial push. Remove once sync is
+          confirmed working. */}
+      <section className="mt-8">
+        <button
+          type="button"
+          onClick={() => {
+            localStorage.removeItem('ph_cloud_initial_push_done');
+            window.location.reload();
+          }}
+          className="border border-red-alert text-red-alert rounded-full px-3 py-1.5 text-[13px] font-medium"
+        >
+          Force cloud sync (debug)
+        </button>
+      </section>
     </div>
   );
 }
