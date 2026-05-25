@@ -49,7 +49,8 @@ async function initialPushIfEmpty(): Promise<void> {
 
   const { count, error } = await supabase
     .from('ph_sessions')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', 'local-user-001');
   logSync('SYNC: ph_sessions count result =', { count, error });
   if (error) return; // tables missing / unreachable — retry next load
   if ((count ?? 0) > 0) {
@@ -81,11 +82,19 @@ async function initialPushIfEmpty(): Promise<void> {
 // non-destructive: a table is only touched when the cloud returns rows for it,
 // and local-only rows are never deleted. (A failed/empty pull can therefore
 // never wipe local data.)
+// ph_ tables that have no user_id column (children of user-owned rows) — they
+// can't be filtered by user_id and rely on their permissive RLS policy.
+const PH_NO_USER_ID = new Set(['ph_session_exercises', 'ph_sets']);
+
 async function pullFromCloud(): Promise<void> {
   if (!supabase) return;
   for (const { table, ph } of TABLES) {
     try {
-      const { data, error } = await supabase.from(ph).select('*');
+      let query = supabase.from(ph).select('*');
+      if (!PH_NO_USER_ID.has(ph)) {
+        query = query.eq('user_id', 'local-user-001');
+      }
+      const { data, error } = await query;
       if (error || !data || data.length === 0) continue;
       await table.bulkPut(data as unknown[]);
     } catch {
