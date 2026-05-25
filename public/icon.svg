@@ -3,10 +3,10 @@
   <text x="512" y="720" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="560" fill="#ffffff" fill-opacity="0.05">SA</text>
   <path transform="translate(-128,-180) scale(2.5)" fill="#ffffff" d="M256,448 C256,448 416,320 416,208 C416,144 368,112 320,112 C288,112 264,128 256,160 C248,128 224,112 192,112 C144,112 96,144 96,208 C96,320 256,448 256,448 Z"/>
   <rect x="230" y="380" width="564" height="240" rx="30" fill="#0f3d2e"/>
-  <rect x="246" y="465" width="28" height="70" rx="10" fill="#ffffff"/>
-  <rect x="750" y="465" width="28" height="70" rx="10" fill="#ffffff"/>
-  <rect x="270" y="405" width="44" height="190" rx="14" fill="#ffffff"/>
-  <rect x="710" y="405" width="44" height="190" rx="14" fill="#ffffff"/>
-  <rect x="300" y="435" width="424" height="130" rx="28" fill="#ffffff"/>
-  <path d="M325,500 H430 L452,500 L472,460 L500,548 L528,442 L556,560 L580,500 H700" fill="none" stroke="#0f3d2e" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="246" y="465" width="28" height="70" rx="10" fill="#22c37e"/>
+  <rect x="750" y="465" width="28" height="70" rx="10" fill="#22c37e"/>
+  <rect x="270" y="405" width="44" height="190" rx="14" fill="#22c37e"/>
+  <rect x="710" y="405" width="44" height="190" rx="14" fill="#22c37e"/>
+  <rect x="300" y="435" width="424" height="130" rx="28" fill="#22c37e"/>
+  <path d="M325,500 H430 L452,500 L472,460 L500,548 L528,442 L556,560 L580,500 H700" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
