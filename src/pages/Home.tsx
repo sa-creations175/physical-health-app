@@ -8,7 +8,8 @@ import {
   computeStreak,
 } from '../lib/dashboardQueries';
 import { getUserPreferences } from '../lib/userPreferences';
-import { computeDeliveryStreak } from '../lib/deliveryHelpers';
+import { computeDeliveryStreak, getDeliveryWeek } from '../lib/deliveryHelpers';
+import { startOfWeekISODate, currentWeekISODates } from '../lib/dateHelpers';
 import {
   DEFAULT_WEEKLY_LIFTING_TARGETS,
   DEFAULT_CARDIO_WEEKLY_TARGET,
@@ -51,7 +52,7 @@ function ProgressRing({
   color: string;
   label: string;
 }) {
-  const dash = (count / target) * 150.8;
+  const dash = Math.min(count / target, 1) * 150.8;
   return (
     <div className="flex flex-col items-center">
       <svg width="60" height="60" viewBox="0 0 60 60">
@@ -65,7 +66,7 @@ function ProgressRing({
           strokeWidth="6"
           strokeLinecap="round"
           strokeDasharray={`${dash} 150.8`}
-          strokeDashoffset="37.7"
+          transform="rotate(-90 30 30)"
         />
         <text
           x="30"
@@ -149,6 +150,12 @@ function NutritionSummary() {
   const water =
     prefs?.water_glasses_daily ?? DEFAULT_DAILY_NUTRITION_TARGETS.water_glasses;
 
+  // This week's delivery status, Sun→Sat — clean/ordered/unmarked dots that
+  // mirror the delivery card's colors (#0F6E56 clean, #E24B4A ordered).
+  const weekStart = startOfWeekISODate();
+  const deliveryWeek = useLiveQuery(() => getDeliveryWeek(weekStart), [weekStart]);
+  const weekDates = currentWeekISODates();
+
   return (
     <Link to="/nutrition" className="block bg-card shadow-card rounded-2xl p-4">
       <div className="flex items-center justify-between">
@@ -158,6 +165,25 @@ function NutritionSummary() {
       <p className="mt-2 text-[13px] text-ink">
         Protein {protein}g · Water {water} glasses · {delivery.currentStreak} day delivery streak
       </p>
+      <div className="mt-3 grid grid-cols-7">
+        {weekDates.map((date) => {
+          const status = deliveryWeek?.get(date)?.status ?? null;
+          const bg =
+            status === 'clean'
+              ? '#0F6E56'
+              : status === 'ordered'
+                ? '#E24B4A'
+                : '#e0e4e0';
+          return (
+            <div key={date} className="flex justify-center">
+              <span
+                className="rounded-full block"
+                style={{ width: 10, height: 10, background: bg }}
+              />
+            </div>
+          );
+        })}
+      </div>
     </Link>
   );
 }
