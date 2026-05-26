@@ -187,11 +187,19 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         <span className="text-[11px] font-display uppercase tracking-micro text-green-mid shrink-0">
           {label}
         </span>
-        {item.source === 'watch' && (
+        {(item.source === 'watch' || item.source === 'merged') && (
           <span
             className="text-[11px] shrink-0"
-            title="Imported from Apple Watch"
-            aria-label="Imported from Apple Watch"
+            title={
+              item.source === 'merged'
+                ? 'Apple Watch duration merged'
+                : 'Imported from Apple Watch'
+            }
+            aria-label={
+              item.source === 'merged'
+                ? 'Apple Watch duration merged'
+                : 'Imported from Apple Watch'
+            }
           >
             ⌚
           </span>

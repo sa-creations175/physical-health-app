@@ -15,6 +15,7 @@ import {
   type HealthWorkout,
 } from './healthkit';
 import { createCardioLog, createCardioType } from './cardioHelpers';
+import { logWatch } from './watchDebug';
 import type { BundleLog, Session } from '../db/types';
 
 // localStorage marker for the high-water mark of imported workouts. Read on
@@ -179,7 +180,15 @@ async function upsertWatchBundle(
 
 // ---- Per-workout filing ---------------------------------------------------
 
-async function importOne(w: HealthWorkout): Promise<void> {
+// Result of filing one workout — surfaced by the debug log so we can see
+// what each workout classified as and whether it landed or was skipped.
+interface ImportResult {
+  category: WatchCategory;
+  action: 'imported' | 'skipped';
+  detail: string;
+}
+
+async function importOne(w: HealthWorkout): Promise<ImportResult> {
   const start = new Date(w.startDate);
   const date = start.toLocaleDateString('en-CA'); // local YYYY-MM-DD
   const { category, inferredStrengthType } = classifyWatchWorkout(
@@ -188,8 +197,11 @@ async function importOne(w: HealthWorkout): Promise<void> {
   );
 
   if (category === 'cardio') {
-    if (await isDuplicateCardio(start)) return;
-    const typeId = await getOrCreateCardioTypeId(cardioTypeNameFor(w.workoutType));
+    if (await isDuplicateCardio(start)) {
+      return { category, action: 'skipped', detail: 'duplicate cardio within 30 min' };
+    }
+    const typeName = cardioTypeNameFor(w.workoutType);
+    const typeId = await getOrCreateCardioTypeId(typeName);
     await createCardioLog({
       cardio_type_id: typeId,
       duration_minutes: w.durationMinutes,
@@ -199,19 +211,27 @@ async function importOne(w: HealthWorkout): Promise<void> {
       notes: `Auto-imported from Apple Watch · ${w.calories}cal`,
       source: 'watch',
     });
-    return;
+    return { category, action: 'imported', detail: `cardio_log "${typeName}"` };
   }
 
   if (category === 'mobility') {
-    if (await isDuplicateMobility(date)) return;
+    if (await isDuplicateMobility(date)) {
+      return { category, action: 'skipped', detail: 'mobility already logged that day' };
+    }
     await upsertWatchBundle(date, { mobility_minutes: w.durationMinutes });
-    return;
+    return { category, action: 'imported', detail: `mobility_minutes=${w.durationMinutes}` };
   }
 
   if (category === 'bundle') {
-    if (await isDuplicateBundle(date)) return;
+    if (await isDuplicateBundle(date)) {
+      return { category, action: 'skipped', detail: 'bundle already has data that day' };
+    }
     await upsertWatchBundle(date, { watch_duration_minutes: w.durationMinutes });
-    return;
+    return {
+      category,
+      action: 'imported',
+      detail: `watch_duration_minutes=${w.durationMinutes}`,
+    };
   }
 
   // strength (traditionalStrengthTraining > 30 min): merge into a manual
@@ -220,13 +240,17 @@ async function importOne(w: HealthWorkout): Promise<void> {
   if (match) {
     const changes: Partial<Session> = {
       duration_minutes: w.durationMinutes,
+      // 'merged' (not 'watch') — the exercises/sets are the user's manual work;
+      // only the duration came from the Watch. Preserves the distinction while
+      // still flagging the row as Watch-augmented in History.
+      source: 'merged',
       updated_at: new Date().toISOString(),
     };
     if (!match.notes || match.notes.trim() === '') {
       changes.notes = 'Duration from Apple Watch';
     }
     await syncedUpdate(db.sessions, match.id, changes);
-    return;
+    return { category, action: 'imported', detail: `merged into ${match.type} session` };
   }
 
   const now = new Date().toISOString();
@@ -243,6 +267,11 @@ async function importOne(w: HealthWorkout): Promise<void> {
     updated_at: now,
   };
   await syncedAdd(db.sessions, session);
+  return {
+    category,
+    action: 'imported',
+    detail: `created ${session.type} session (incomplete)`,
+  };
 }
 
 // ---- Orchestrator ---------------------------------------------------------
@@ -250,26 +279,55 @@ async function importOne(w: HealthWorkout): Promise<void> {
 // Called once at startup (after cloud sync) on iOS. Reads the last 7 days of
 // Watch workouts, processes only those started after the last import, and bumps
 // the high-water mark. Safe to call anywhere — no-ops off iOS / without HealthKit.
-export async function importWatchWorkouts(): Promise<void> {
-  if (Capacitor.getPlatform() !== 'ios') return;
-  if (!(await ensureHealthPermissions())) return;
+export async function importWatchWorkouts(daysBack = 7): Promise<number> {
+  logWatch(`=== import run start (lookback ${daysBack}d) ===`);
+  if (Capacitor.getPlatform() !== 'ios') {
+    logWatch(`skipped: platform is "${Capacitor.getPlatform()}", not ios`);
+    return 0;
+  }
+  if (!(await ensureHealthPermissions())) {
+    logWatch('skipped: HealthKit unavailable or permission not granted');
+    return 0;
+  }
 
-  const workouts = await getRecentWorkouts();
+  const workouts = await getRecentWorkouts(daysBack);
+  logWatch(`getRecentWorkouts returned ${workouts.length} workout(s)`);
 
   const lastRaw = localStorage.getItem(LAST_IMPORT_KEY);
+  logWatch(`ph_last_watch_import = ${lastRaw ?? '(none — first run)'}`);
   const last = lastRaw ? new Date(lastRaw) : null;
-  const fresh =
-    last && !Number.isNaN(last.getTime())
-      ? workouts.filter((w) => new Date(w.startDate) > last)
-      : workouts; // first run: process the whole window
+  const hadValidMarker = last !== null && !Number.isNaN(last.getTime());
+  const fresh = hadValidMarker
+    ? workouts.filter((w) => new Date(w.startDate) > (last as Date))
+    : workouts; // first run: process the whole window
+  logWatch(`${fresh.length} of ${workouts.length} are newer than the marker`);
 
+  let importedCount = 0;
   for (const w of fresh) {
+    logWatch(`workout: ${w.workoutType} · ${w.durationMinutes}min · ${w.startDate}`);
     try {
-      await importOne(w);
+      const { category, action, detail } = await importOne(w);
+      if (action === 'imported') importedCount += 1;
+      logWatch(`  → ${category} · ${action} (${detail})`);
     } catch (e) {
+      logWatch(`  → ERROR: ${e instanceof Error ? e.message : String(e)}`);
       console.error('Watch import error for workout', w.workoutType, e);
     }
   }
 
-  localStorage.setItem(LAST_IMPORT_KEY, new Date().toISOString());
+  // Advance the high-water mark to "now" once we've actually imported something.
+  // But on a *first* run that imported nothing (HealthKit returned no workouts
+  // yet, or everything was a duplicate), back-date the marker 7 days instead —
+  // otherwise a "now" marker would permanently lock out workouts a later run
+  // would have picked up.
+  const importedNothing = workouts.length === 0 || importedCount === 0;
+  const marker =
+    !hadValidMarker && importedNothing
+      ? new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
+      : new Date().toISOString();
+  localStorage.setItem(LAST_IMPORT_KEY, marker);
+  logWatch(
+    `=== import run done; imported ${importedCount}; marker set to ${marker} ===`,
+  );
+  return importedCount;
 }

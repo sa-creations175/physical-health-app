@@ -6,6 +6,10 @@ import {
   updateUserPreferences,
   TARGET_RANGES,
 } from '../lib/userPreferences';
+import { getWatchLog, clearWatchLog } from '../lib/watchDebug';
+import { importWatchWorkouts, LAST_IMPORT_KEY } from '../lib/watchImport';
+import { db } from '../db/database';
+import { syncedBulkDelete } from '../db/syncedWrite';
 
 export default function Settings() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
@@ -219,7 +223,288 @@ export default function Settings() {
         />
       </section>
 
+      <WatchImportLogPanel />
+
+      <CleanupManualCardioPanel />
+
+      <CardioLogsDebugPanel />
+
     </div>
+  );
+}
+
+// TEMPORARY — diagnostics for the Apple Watch auto-import. Reads the
+// localStorage ring buffer written by importWatchWorkouts(), with buttons to
+// re-run the import on demand, refresh, and clear. Remove with the rest of the
+// watch-import debug tooling once confirmed working.
+function WatchImportLogPanel() {
+  const [lines, setLines] = useState<string[]>(() => getWatchLog());
+  const [running, setRunning] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const refresh = () => setLines(getWatchLog());
+
+  async function runNow() {
+    setRunning(true);
+    try {
+      // Clear the high-water mark first so every manual run reprocesses the
+      // full last-7-days window rather than skipping "already processed" ones.
+      localStorage.removeItem(LAST_IMPORT_KEY);
+      await importWatchWorkouts();
+    } catch (e) {
+      console.error('Manual watch import failed:', e);
+    } finally {
+      setRunning(false);
+      refresh();
+    }
+  }
+
+  // One-time backfill: clear the marker and import a 90-day window instead of
+  // the usual 7. The startup auto-import is unaffected (still defaults to 7).
+  async function run90() {
+    setRunning(true);
+    setMessage('Importing 90 days of Watch data…');
+    try {
+      localStorage.removeItem(LAST_IMPORT_KEY);
+      const n = await importWatchWorkouts(90);
+      setMessage(`Imported ${n} workout${n === 1 ? '' : 's'} from Apple Watch`);
+    } catch (e) {
+      console.error('90-day watch import failed:', e);
+      setMessage(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setRunning(false);
+      refresh();
+    }
+  }
+
+  return (
+    <section className="mt-6">
+      <SectionLabel>Watch import log (debug)</SectionLabel>
+      <p className="text-[11px] text-ink-soft mt-1">
+        Temporary diagnostics for the Apple Watch auto-import.
+      </p>
+
+      <div className="flex gap-2 mt-2">
+        <button
+          type="button"
+          onClick={runNow}
+          disabled={running}
+          className="bg-green-mid text-white rounded-lg px-3 h-9 text-[13px] font-medium disabled:opacity-50"
+        >
+          {running ? 'Running…' : 'Run import now'}
+        </button>
+        <button
+          type="button"
+          onClick={refresh}
+          className="bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px]"
+        >
+          Refresh
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            clearWatchLog();
+            refresh();
+          }}
+          className="bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px]"
+        >
+          Clear
+        </button>
+      </div>
+
+      <button
+        type="button"
+        onClick={run90}
+        disabled={running}
+        className="mt-2 w-full bg-green-mid text-white rounded-lg px-3 h-10 text-[13px] font-medium disabled:opacity-50"
+      >
+        Import last 90 days from Apple Watch
+      </button>
+      {message && <p className="mt-2 text-[12px] text-green-mid">{message}</p>}
+
+      <div className="mt-3 bg-charcoal border border-card-edge rounded-xl p-3 max-h-72 overflow-auto">
+        {lines.length === 0 ? (
+          <p className="text-[12px] text-card-mute">
+            No log yet — tap “Run import now”.
+          </p>
+        ) : (
+          <pre className="text-[10px] leading-[1.5] text-ink whitespace-pre-wrap break-words font-mono">
+            {lines.join('\n')}
+          </pre>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// TEMPORARY — one-off cleanup: delete manually-logged cardio so the Apple
+// Watch imports replace them. Guarded: counts first, requires an explicit
+// confirm tap, then deletes (syncing to Supabase) and re-runs the import.
+// ⚠ Destructive and synced to the cloud — there is no backup once confirmed.
+function CleanupManualCardioPanel() {
+  const [phase, setPhase] = useState<'idle' | 'confirm' | 'working' | 'done'>(
+    'idle',
+  );
+  const [ids, setIds] = useState<string[]>([]);
+  const [result, setResult] = useState('');
+
+  async function start() {
+    const all = await db.cardio_logs.toArray();
+    // `== null` catches both null and (legacy/pulled) undefined source values.
+    const targetIds = all
+      .filter((l) => l.source == null || l.source === 'manual')
+      .map((l) => l.id);
+    if (targetIds.length === 0) {
+      setResult('No manual cardio logs to delete.');
+      setPhase('done');
+      return;
+    }
+    setIds(targetIds);
+    setPhase('confirm');
+  }
+
+  async function confirmDelete() {
+    const n = ids.length;
+    setPhase('working');
+    try {
+      await syncedBulkDelete(db.cardio_logs, ids);
+      // Clear the high-water mark so the reimport reprocesses the full window
+      // and re-files the Watch versions (no longer blocked by the now-deleted
+      // manual duplicates).
+      localStorage.removeItem(LAST_IMPORT_KEY);
+      await importWatchWorkouts();
+      setResult(`Deleted ${n} logs. Watch workouts reimported.`);
+    } catch (e) {
+      console.error('Manual cardio cleanup failed:', e);
+      setResult(`Cleanup failed: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setPhase('done');
+    }
+  }
+
+  return (
+    <section className="mt-6">
+      <SectionLabel>Clean up manual cardio (debug)</SectionLabel>
+      <p className="text-[11px] text-ink-soft mt-1">
+        Delete manually-logged cardio and let Apple Watch imports replace them.
+      </p>
+
+      {phase === 'idle' && (
+        <button
+          type="button"
+          onClick={start}
+          className="mt-2 bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px]"
+        >
+          Clean up manual cardio logs
+        </button>
+      )}
+
+      {phase === 'confirm' && (
+        <div className="mt-2">
+          <p className="text-[13px] text-ink">
+            Delete {ids.length} manual cardio log{ids.length === 1 ? '' : 's'}?
+            Watch imports will replace them.
+          </p>
+          <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={confirmDelete}
+              className="text-white rounded-lg px-3 h-9 text-[13px] font-medium"
+              style={{ backgroundColor: '#e03b5a' }}
+            >
+              Delete {ids.length}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhase('idle')}
+              className="bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px]"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'working' && (
+        <p className="mt-2 text-[13px] text-ink-soft">Deleting &amp; reimporting…</p>
+      )}
+
+      {phase === 'done' && (
+        <div className="mt-2">
+          <p className="text-[13px] text-green-mid">{result}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setPhase('idle');
+              setResult('');
+              setIds([]);
+            }}
+            className="mt-2 bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px]"
+          >
+            Done
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// TEMPORARY — read-only inspector for cardio_logs, to debug Watch-import
+// duplicate detection. Reports total count, a breakdown by source, and a
+// per-row dump (started_at · source · resolved type · duration). Rows whose
+// cardio_type_id doesn't resolve are flagged "(type missing)" — those exist in
+// the store (so they trip dedup) but are filtered out of History.
+function CardioLogsDebugPanel() {
+  const [report, setReport] = useState<string | null>(null);
+
+  async function inspect() {
+    const [logs, types] = await Promise.all([
+      db.cardio_logs.toArray(),
+      db.cardio_types.toArray(),
+    ]);
+    const typeName = new Map(types.map((t) => [t.id, t.name]));
+    let watch = 0;
+    let manual = 0;
+    let none = 0;
+    for (const l of logs) {
+      if (l.source === 'watch') watch += 1;
+      else if (l.source === 'manual') manual += 1;
+      else none += 1;
+    }
+    const rows = logs
+      .slice()
+      .sort((a, b) => b.started_at.localeCompare(a.started_at))
+      .map((l) => {
+        const t = l.cardio_type_id
+          ? (typeName.get(l.cardio_type_id) ?? '(type missing)')
+          : '(no type)';
+        return `${l.started_at}  [${l.source ?? 'null'}]  ${t}  ${l.duration_minutes}min`;
+      });
+    const summary = `Total: ${logs.length}  —  watch: ${watch}, manual: ${manual}, null/none: ${none}`;
+    setReport([summary, '', ...rows].join('\n'));
+  }
+
+  return (
+    <section className="mt-6">
+      <SectionLabel>Cardio logs (debug)</SectionLabel>
+      <p className="text-[11px] text-ink-soft mt-1">
+        Inspect cardio_logs + source — for Watch-import duplicate debugging.
+      </p>
+      <button
+        type="button"
+        onClick={inspect}
+        className="mt-2 bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px]"
+      >
+        Inspect cardio logs
+      </button>
+      {report !== null && (
+        <div className="mt-3 bg-charcoal border border-card-edge rounded-xl p-3 max-h-72 overflow-auto">
+          <pre className="text-[10px] leading-[1.5] text-ink whitespace-pre-wrap break-words font-mono">
+            {report}
+          </pre>
+        </div>
+      )}
+    </section>
   );
 }
 

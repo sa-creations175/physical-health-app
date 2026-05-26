@@ -18,7 +18,7 @@ export interface HistoryStrengthItem {
   sortAt: string; // created_at — secondary sort within a day
   feel_rating: FeelRating | null; // null for Watch-imported incomplete sessions
   notes: string;
-  source: 'manual' | 'watch' | null;
+  source: 'manual' | 'watch' | 'merged' | null;
   exercises: HistoryExercise[];
   totalVolume: number; // Σ weight × reps over rep-sets
   totalSets: number;

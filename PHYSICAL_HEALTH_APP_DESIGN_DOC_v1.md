@@ -2,7 +2,9 @@
 
 A living document capturing the design philosophy, architecture, and feature decisions for the Physical Health app — part of Silas's Personal OS suite.
 
-Last updated: May 25, 2026 (v2.9)
+Last updated: May 25, 2026 (v2.10)
+
+**What changed in v2.10 (May 25, 2026):** Build 2.10 — Watch-import debugging, cleanup tooling, `merged` provenance, 90-day backfill, and the native app icon. Hardening + diagnostics on top of the v2.9 auto-import: (1) **`source: 'merged'`** added to the `Session` type — the strength **merge** branch now stamps a manual session as `merged` (your exercises, the Watch's duration) instead of leaving it `manual`, and History shows the ⌚ for **both** `watch` and `merged` (distinct tooltips). (2) **Marker fix** — `importWatchWorkouts` only advances `ph_last_watch_import` to "now" once it actually imports something; a first run that imports nothing back-dates the marker by the lookback window so a later run isn't locked out. (3) **`importWatchWorkouts(daysBack = 7)`** is now parameterized and returns the imported count; `getRecentWorkouts(daysBack = 7)` likewise. (4) **Settings debug tooling** (temporary, `src/lib/watchDebug.ts` localStorage ring buffer): a **Watch import log** panel (Run import now / Refresh / Clear, plus **Import last 90 days** one-time backfill), a guarded **Clean up manual cardio logs** button (count → confirm → `syncedBulkDelete` → reimport), and a read-only **Cardio logs inspector** (counts by source, flags `(type missing)` rows). (5) **Native app icon** — generated the full classic `AppIcon.appiconset` (13 sizes, flattened opaque, no alpha) from `public/icon.svg`/`icon-1024.png`, replacing Capacitor's single-1024 template. No web schema change (still Dexie v13). Adds §Build 2.10 session log.
 
 **What changed in v2.9 (May 25, 2026):** Build 2.9 — Apple Watch workout **auto-import**. On every app open (iOS only, after cloud sync) the new **`src/lib/watchImport.ts`** pulls the last 7 days of HealthKit workouts and files each into the right section with duplicate prevention. **`classifyWatchWorkout(type, durationMinutes)`** → `strength` (`traditionalStrengthTraining` > 30 min), `bundle` (`traditionalStrengthTraining` ≤ 30 min, or any `functionalStrengthTraining`), `mobility` (`yoga`/`stretchingCooldown`/`mindAndBody`/`pilates`), else `cardio`. Dedup: cardio = no existing log within ±30 min; bundle = no row that day with any field > 0; mobility = no `mobility_minutes` that day; strength = merge into a same-day completed session (inheriting its type) or create an incomplete one (`feel_rating` null, type inferred → `full_body` default). Cardio maps Watch types to readable cardio-type names (Run/Bike/Walk/…), stores calories in notes, intensity `moderate`. A `localStorage` high-water mark (`ph_last_watch_import`) means only workouts started since the last run are processed; the whole thing is fire-and-forget and never blocks/crashes startup. **Schema → Dexie v13**: `source` ('manual' | 'watch' | null) on `cardio_logs`, `sessions`, `bundle_logs`, plus `watch_duration_minutes` on `bundle_logs` (all non-indexed, backfilled null). New **`supabase/migrations/003_add_source_columns.sql`** mirrors these on the cloud tables (incl. `watch_duration_minutes`, so write-through doesn't break on the unknown column). **Visual:** a ⌚ marker on Watch-sourced rows in History (Watch strength sessions now appear there despite null `feel_rating`), a "⌚ N from Apple Watch this week" line on the Fitness cardio card, and a "Last synced: …" line on the Apple Watch card; the temporary platform/HK debug line was removed. Adds §Build 2.9 session log.
 
@@ -1584,3 +1586,33 @@ Apple Watch workouts now flow into the app automatically on open, classified to 
 
 - **Schema**: Dexie **v13**. ⚠️ Run `003_add_source_columns.sql` in Supabase before relying on cloud sync of the new columns.
 - `npm run build` clean; `npx cap sync ios` clean. Pushed to origin/main, no Co-Authored-By trailer.
+
+---
+
+## Build 2.10 session log — May 25, 2026 (v2.10)
+
+A debugging + hardening pass on the v2.9 Watch auto-import (workouts initially weren't landing in History), plus the native app icon. No web schema change (Dexie v13).
+
+### What shipped
+
+- **`merged` provenance.** `Session.source` widened to `'manual' | 'watch' | 'merged' | null`. The strength **merge** branch in `watchImport.ts` now sets `source: 'merged'` (the prior version left it `manual`, so Watch-augmented sessions never got the ⌚). The pure Watch-create branch still uses `'watch'`, preserving the distinction. `HistoryStrengthItem.source` widened to match; `HistoryRow` renders ⌚ for `watch` **or** `merged` with tooltips "Imported from Apple Watch" / "Apple Watch duration merged".
+- **Marker logic fix.** `importWatchWorkouts` tracks `importedCount` and only advances `ph_last_watch_import` to "now" when something imported; a first run that imports nothing back-dates the marker by the lookback window so future runs aren't locked out. (The original bug: a premature "now" marker skipped every workout as "already processed".)
+- **Parameterized lookback.** `importWatchWorkouts(daysBack = 7): Promise<number>` and `getRecentWorkouts(daysBack = 7)`; returns the imported count. Startup still calls with the 7-day default.
+- **Debug tooling (temporary).** `src/lib/watchDebug.ts` — a localStorage ring buffer (`logWatch` / `getWatchLog` / `clearWatchLog`) since the startup import runs before Settings is open. `importWatchWorkouts` is instrumented (workout count, marker value, per-workout type/duration/category/imported-or-skipped, errors). New Settings sections:
+  - **Watch import log** — Run import now (clears marker first), Refresh, Clear, and **Import last 90 days from Apple Watch** (one-time backfill via `importWatchWorkouts(90)`, shows "Imported X workouts").
+  - **Clean up manual cardio (debug)** — guarded: counts `source` null/`manual` cardio rows, requires a confirm tap, `syncedBulkDelete`s them, then clears the marker and reimports.
+  - **Cardio logs (debug)** — read-only inspector: total + breakdown by source, per-row dump, flags rows whose `cardio_type_id` doesn't resolve as `(type missing)`.
+- **Supabase hardening (carried in).** `lib/supabase.ts` wraps `createClient` in a try/catch so a malformed/placeholder `VITE_SUPABASE_URL` falls back to `null` instead of throwing at module load (which had white-screened the app).
+- **Native app icon.** Generated the full classic `AppIcon.appiconset` — 13 sizes (20…1024), flattened to opaque (no alpha; iOS masks corners) from `public/icon.svg` via headless Chrome + `sips`, with an 18-entry `Contents.json`. Removed Capacitor's single-1024 template icon.
+
+### Decisions / notes
+
+- **`merged` vs `watch`.** A merged session is partly manual (exercises/sets) and partly Watch (duration); `merged` keeps that legible rather than overstating it as a pure Watch import. Both get the ⌚.
+- **Duplicate detection stays source-agnostic.** `isDuplicateCardio` matches any cardio log within ±30 min regardless of source — correct, so re-imports don't double-file already-imported workouts. The earlier "still skipped" reports were this working as intended against prior `watch` rows.
+- **Debug panels + `watchDebug.ts` are temporary** — to be removed once the import is confirmed working end-to-end, same as the earlier syncDebug cleanup.
+- **App icon flattened.** `icon-1024.png` had transparent rounded corners; iOS icons must be opaque squares, so the catalog icons are re-rendered over the icon's own green with the alpha channel stripped.
+
+### Current state
+
+- **Schema**: Dexie v13 (unchanged this build). `npm run build` clean; `npx cap sync ios` clean.
+- Pushed to origin/main, no Co-Authored-By trailer.

@@ -96,12 +96,13 @@ async function sumAggregated(
   }
 }
 
-// Last 7 days of completed workouts (newest first). Exported for the Apple
-// Watch auto-importer (watchImport.ts). Assumes permissions were already
-// ensured by the caller (getHealthSnapshot / importWatchWorkouts both do).
-export async function getRecentWorkouts(): Promise<HealthWorkout[]> {
+// Completed workouts from the last `daysBack` days (default 7), newest first.
+// Exported for the Apple Watch auto-importer (watchImport.ts). Assumes
+// permissions were already ensured by the caller (getHealthSnapshot /
+// importWatchWorkouts both do).
+export async function getRecentWorkouts(daysBack = 7): Promise<HealthWorkout[]> {
   const start = new Date();
-  start.setDate(start.getDate() - 7);
+  start.setDate(start.getDate() - daysBack);
   start.setHours(0, 0, 0, 0);
   try {
     const { workouts } = await Health.queryWorkouts({

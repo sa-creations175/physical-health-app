@@ -27,10 +27,11 @@ export interface Session {
   duration_minutes: number | null;
   notes: string;
   feel_rating: FeelRating | null;
-  // Provenance — added Dexie v13. 'watch' for sessions auto-created from an
-  // Apple Watch strength workout, 'manual' for logger entries. null on rows
-  // that predate the column. Non-indexed.
-  source: 'manual' | 'watch' | null;
+  // Provenance — added Dexie v13. 'watch' = auto-created from an Apple Watch
+  // strength workout; 'merged' = a manual session the Watch duration was merged
+  // into (exercises are yours, duration is the Watch's); 'manual' = logger
+  // entry. null on rows that predate the column. Non-indexed.
+  source: 'manual' | 'watch' | 'merged' | null;
   created_at: string; // ISO datetime
   updated_at: string;
 }
