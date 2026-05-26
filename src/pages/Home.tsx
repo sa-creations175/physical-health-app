@@ -37,6 +37,55 @@ function SummaryLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Weekly progress ring for the Home Fitness card. r=24 → circumference ≈ 150.8;
+// the progress arc length scales with count/target. Rendered only when
+// target > 0 (the caller guards). Geometry per the dashboard spec.
+function ProgressRing({
+  count,
+  target,
+  color,
+  label,
+}: {
+  count: number;
+  target: number;
+  color: string;
+  label: string;
+}) {
+  const dash = (count / target) * 150.8;
+  return (
+    <div className="flex flex-col items-center">
+      <svg width="60" height="60" viewBox="0 0 60 60">
+        <circle cx="30" cy="30" r="24" fill="none" stroke="#e8ebe8" strokeWidth="6" />
+        <circle
+          cx="30"
+          cy="30"
+          r="24"
+          fill="none"
+          stroke={color}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={`${dash} 150.8`}
+          strokeDashoffset="37.7"
+        />
+        <text
+          x="30"
+          y="30"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="13"
+          fontWeight="500"
+          fill="#0d1f18"
+        >
+          {count}/{target}
+        </text>
+      </svg>
+      <span className="text-[11px]" style={{ color: '#5a7a6e' }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
 function FitnessSummary() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
   const lower = useLiveQuery(() => getLiftingSummary('lower'), []);
@@ -56,10 +105,33 @@ function FitnessSummary() {
         <SummaryLabel>Fitness</SummaryLabel>
         <DumbbellIcon />
       </div>
-      <p className="mt-2 text-[13px] text-ink">
-        Lower {lower?.thisWeekCount ?? 0}/{lowerT} · Upper {upper?.thisWeekCount ?? 0}/{upperT} · Cardio {cardio?.qualifyingCount ?? 0}/{cardioT}
-      </p>
-      <span className="mt-2 inline-block bg-[#edf7f2] text-green-mid text-[11px] font-medium rounded-full px-2.5 py-1">
+      <div className="mt-3 flex justify-around">
+        {lowerT > 0 && (
+          <ProgressRing
+            count={lower?.thisWeekCount ?? 0}
+            target={lowerT}
+            color="#0f3d2e"
+            label="Lower"
+          />
+        )}
+        {upperT > 0 && (
+          <ProgressRing
+            count={upper?.thisWeekCount ?? 0}
+            target={upperT}
+            color="#1a6b4a"
+            label="Upper"
+          />
+        )}
+        {cardioT > 0 && (
+          <ProgressRing
+            count={cardio?.qualifyingCount ?? 0}
+            target={cardioT}
+            color="#22c37e"
+            label="Cardio"
+          />
+        )}
+      </div>
+      <span className="mt-3 inline-block bg-[#edf7f2] text-green-mid text-[11px] font-medium rounded-full px-2.5 py-1">
         {streak} day{streak === 1 ? '' : 's'} streak
       </span>
     </Link>
