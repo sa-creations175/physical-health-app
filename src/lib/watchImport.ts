@@ -15,7 +15,6 @@ import {
   type HealthWorkout,
 } from './healthkit';
 import { createCardioLog, createCardioType } from './cardioHelpers';
-import { logWatch } from './watchDebug';
 import type { BundleLog, Session } from '../db/types';
 
 // localStorage marker for the high-water mark of imported workouts. Read on
@@ -280,37 +279,28 @@ async function importOne(w: HealthWorkout): Promise<ImportResult> {
 // Watch workouts, processes only those started after the last import, and bumps
 // the high-water mark. Safe to call anywhere — no-ops off iOS / without HealthKit.
 export async function importWatchWorkouts(daysBack = 7): Promise<number> {
-  logWatch(`=== import run start (lookback ${daysBack}d) ===`);
   if (Capacitor.getPlatform() !== 'ios') {
-    logWatch(`skipped: platform is "${Capacitor.getPlatform()}", not ios`);
     return 0;
   }
   if (!(await ensureHealthPermissions())) {
-    logWatch('skipped: HealthKit unavailable or permission not granted');
     return 0;
   }
 
   const workouts = await getRecentWorkouts(daysBack);
-  logWatch(`getRecentWorkouts returned ${workouts.length} workout(s)`);
 
   const lastRaw = localStorage.getItem(LAST_IMPORT_KEY);
-  logWatch(`ph_last_watch_import = ${lastRaw ?? '(none — first run)'}`);
   const last = lastRaw ? new Date(lastRaw) : null;
   const hadValidMarker = last !== null && !Number.isNaN(last.getTime());
   const fresh = hadValidMarker
     ? workouts.filter((w) => new Date(w.startDate) > (last as Date))
     : workouts; // first run: process the whole window
-  logWatch(`${fresh.length} of ${workouts.length} are newer than the marker`);
 
   let importedCount = 0;
   for (const w of fresh) {
-    logWatch(`workout: ${w.workoutType} · ${w.durationMinutes}min · ${w.startDate}`);
     try {
-      const { category, action, detail } = await importOne(w);
+      const { action } = await importOne(w);
       if (action === 'imported') importedCount += 1;
-      logWatch(`  → ${category} · ${action} (${detail})`);
     } catch (e) {
-      logWatch(`  → ERROR: ${e instanceof Error ? e.message : String(e)}`);
       console.error('Watch import error for workout', w.workoutType, e);
     }
   }
@@ -326,8 +316,5 @@ export async function importWatchWorkouts(daysBack = 7): Promise<number> {
       ? new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
       : new Date().toISOString();
   localStorage.setItem(LAST_IMPORT_KEY, marker);
-  logWatch(
-    `=== import run done; imported ${importedCount}; marker set to ${marker} ===`,
-  );
   return importedCount;
 }
