@@ -6,6 +6,8 @@ import {
   updateUserPreferences,
   TARGET_RANGES,
 } from '../lib/userPreferences';
+import { getRecentWorkouts } from '../lib/healthkit';
+import { classifyWatchWorkout } from '../lib/watchImport';
 
 export default function Settings() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
@@ -219,7 +221,74 @@ export default function Settings() {
         />
       </section>
 
+      <WatchTypeDiagnosticPanel />
+
     </div>
+  );
+}
+
+// TEMPORARY (STEP 1 diagnostic) — read-only. Lists the last 30 days of Apple
+// Watch workouts with the RAW workoutType string HealthKit sends, the duration,
+// and how classifyWatchWorkout() currently routes each one. No writes, no
+// import side effects — this is purely to see what short strength sessions are
+// actually tagged as. Remove once the misclassification fix is confirmed.
+function WatchTypeDiagnosticPanel() {
+  const [report, setReport] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  async function inspect() {
+    setRunning(true);
+    try {
+      const workouts = await getRecentWorkouts(30);
+      if (workouts.length === 0) {
+        setReport('No Watch workouts in the last 30 days (or not on iOS).');
+        return;
+      }
+      const lines = workouts.map((w) => {
+        const { category } = classifyWatchWorkout(w.workoutType, w.durationMinutes);
+        const day = w.startDate.slice(0, 10);
+        return `${day}  ${w.workoutType}  ${w.durationMinutes}min  ${w.calories}cal  → ${category}  [${w.sourceName}]`;
+      });
+      // Tally raw types so a misrouting type stands out at a glance.
+      const counts = new Map<string, number>();
+      for (const w of workouts) {
+        counts.set(w.workoutType, (counts.get(w.workoutType) ?? 0) + 1);
+      }
+      const tally = [...counts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([t, n]) => `${t}: ${n}`)
+        .join('   ');
+      setReport([`Types: ${tally}`, '', ...lines].join('\n'));
+    } catch (e) {
+      setReport(`Error: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <section className="mt-6">
+      <SectionLabel>Watch workout types (diagnostic)</SectionLabel>
+      <p className="text-[11px] text-ink-soft mt-1">
+        Read-only — shows the raw HealthKit workoutType and how it currently
+        classifies. Run on the iOS device.
+      </p>
+      <button
+        type="button"
+        onClick={inspect}
+        disabled={running}
+        className="mt-2 bg-card border border-card-edge text-ink rounded-lg px-3 h-9 text-[13px] disabled:opacity-50"
+      >
+        {running ? 'Reading…' : 'Inspect Watch workout types'}
+      </button>
+      {report !== null && (
+        <div className="mt-3 bg-charcoal border border-card-edge rounded-xl p-3 max-h-72 overflow-auto">
+          <pre className="text-[10px] leading-[1.5] text-ink whitespace-pre-wrap break-words font-mono">
+            {report}
+          </pre>
+        </div>
+      )}
+    </section>
   );
 }
 
