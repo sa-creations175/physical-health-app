@@ -16,13 +16,17 @@ export default function Fitness() {
     <div className="pb-4">
       <FitnessHeader />
 
+      {/* Default order is the June 5 warm→cool thermal gradient:
+          Bundle → Cardio → Lower → Upper → (Full Body) → Mobility. Full Body
+          rides with the lifting cards; the Apple Watch row is a data source,
+          not a pillar, so it sits last with no color fill. */}
       <div className="px-5 mt-4 space-y-1.5">
+        <BundleActivityCard expanded={open === 'bundle'} onToggle={() => toggle('bundle')} />
+        <CardioActivityCard expanded={open === 'cardio'} onToggle={() => toggle('cardio')} />
         <LiftingActivityCard type="lower" label="Lower Body" expanded={open === 'lower'} onToggle={() => toggle('lower')} />
         <LiftingActivityCard type="upper" label="Upper Body" expanded={open === 'upper'} onToggle={() => toggle('upper')} />
         <LiftingActivityCard type="full_body" label="Full Body" expanded={open === 'full_body'} onToggle={() => toggle('full_body')} />
-        <CardioActivityCard expanded={open === 'cardio'} onToggle={() => toggle('cardio')} />
         <MobilityActivityCard expanded={open === 'mobility'} onToggle={() => toggle('mobility')} />
-        <BundleActivityCard expanded={open === 'bundle'} onToggle={() => toggle('bundle')} />
         <AppleWatchActivityCard expanded={open === 'watch'} onToggle={() => toggle('watch')} />
       </div>
     </div>

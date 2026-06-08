@@ -7,6 +7,7 @@ import { getUserPreferences } from '../../lib/userPreferences';
 import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
 import { liftingDots } from '../../lib/dotHelpers';
 import { currentWeekISODates } from '../../lib/dateHelpers';
+import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
 
 const TARGET_FIELD: Record<LiftingType, 'lifting_target_lower' | 'lifting_target_upper' | 'lifting_target_full_body'> = {
   lower: 'lifting_target_lower',
@@ -42,6 +43,7 @@ export default function LiftingActivityCard({
     currentWeekISODates().map((date) => ({ date, hadSession: false }));
   const dots = liftingDots(weekDots);
 
+  const pillar = PILLAR_COLORS[type];
   const badge =
     target === 0 ? (
       <>
@@ -50,7 +52,7 @@ export default function LiftingActivityCard({
     ) : (
       <>
         {count} / {target}
-        {complete && <span className="text-green-mid"> ✓</span>}
+        {complete && <span style={{ color: pillar.text }}> ✓</span>}
       </>
     );
 
@@ -71,6 +73,12 @@ export default function LiftingActivityCard({
       expanded={expanded}
       onToggle={onToggle}
       icon={icon}
+      fill={{
+        color: pillar.fill,
+        fraction: fillFraction(count, target),
+        complete,
+        accent: pillar.text,
+      }}
     >
       <p className="text-[12px] text-[#5f6b65]">
         {summary?.lastSession

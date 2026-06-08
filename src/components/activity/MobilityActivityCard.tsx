@@ -16,6 +16,7 @@ import {
   type MobilityLink,
 } from '../../lib/bundleHelpers';
 import { mobilityDots } from '../../lib/dotHelpers';
+import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
 import {
   startOfWeekISODate,
   addDaysISO,
@@ -50,7 +51,8 @@ export default function MobilityActivityCard({
   const dots = mobilityDots(byDate, minMinutes);
   const links = parseMobilityLinks(prefs?.bundle_mobility_youtube_links);
   const todayMinutes = byDate.get(today)?.mobility_minutes ?? 0;
-  const met = totals.mobilityQualifyingDays >= target;
+  const met = target > 0 && totals.mobilityQualifyingDays >= target;
+  const pillar = PILLAR_COLORS.mobility;
 
   return (
     <SharedActivityCard
@@ -58,13 +60,19 @@ export default function MobilityActivityCard({
       badge={
         <>
           {totals.mobilityQualifyingDays} / {target}
-          {met && <span className="text-green-mid"> ✓</span>}
+          {met && <span style={{ color: pillar.text }}> ✓</span>}
         </>
       }
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
       icon={<MobilityIcon />}
+      fill={{
+        color: pillar.fill,
+        fraction: fillFraction(totals.mobilityQualifyingDays, target),
+        complete: met,
+        accent: pillar.text,
+      }}
     >
       <MobilityRow
         minutes={todayMinutes}

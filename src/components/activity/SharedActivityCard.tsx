@@ -1,9 +1,26 @@
 import type { ReactNode } from 'react';
 import { todayISODate } from '../../lib/dateHelpers';
 import type { ActivityDot } from '../../lib/dotHelpers';
+import {
+  hexToRgba,
+  PILLAR_FILL_ALPHA,
+  PILLAR_FILL_ALPHA_COMPLETE,
+} from '../../lib/pillarColors';
 
 // Single-letter weekday initials, Sunday-first to match the app's week math.
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+// Per-pillar fill treatment (June 5 design): the card fills left-to-right with
+// a soft tint of `color`, width = `fraction` (0..1, already clamped). When
+// `complete`, the tint reaches full width at a slightly richer alpha and a
+// colored border is added. `accent` colors the pillar label. Omit `color`
+// entirely (e.g. the Apple Watch row) for a plain, fill-less card.
+export interface CardFill {
+  color: string;
+  fraction: number;
+  complete: boolean;
+  accent: string;
+}
 
 // The compact, glanceable activity card used across Fitness + Nutrition.
 // Collapsed: label + count badge + a 7-day intensity dot row + a chevron.
@@ -17,6 +34,7 @@ export default function SharedActivityCard({
   onToggle,
   icon,
   children,
+  fill,
 }: {
   label: string;
   badge: ReactNode;
@@ -25,22 +43,51 @@ export default function SharedActivityCard({
   onToggle: () => void;
   icon?: ReactNode;
   children?: ReactNode;
+  fill?: CardFill;
 }) {
   const today = todayISODate();
 
+  const fillWidth = fill ? Math.round(fill.fraction * 100) : 0;
+  const fillAlpha = fill?.complete
+    ? PILLAR_FILL_ALPHA_COMPLETE
+    : PILLAR_FILL_ALPHA;
+
   return (
-    <div className="bg-card shadow-card rounded-2xl px-4 py-2.5">
+    <div
+      className="relative bg-card shadow-card rounded-2xl px-4 py-2.5 overflow-hidden"
+      // Transparent border by default so the box size matches whether or not
+      // the card is complete (only the color changes on completion).
+      style={{
+        border: `1.5px solid ${
+          fill?.complete ? fill.color : 'transparent'
+        }`,
+      }}
+    >
+      {/* Progress fill — a soft left-to-right tint behind the content. */}
+      {fill && fillWidth > 0 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-0"
+          style={{
+            width: `${fillWidth}%`,
+            background: hexToRgba(fill.color, fillAlpha),
+          }}
+        />
+      )}
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={expanded}
-        className="w-full text-left"
+        className="relative w-full text-left"
       >
         <div className="flex items-center justify-between gap-2">
           {/* Icon + label left-aligned; badge + chevron right-aligned. */}
           <div className="flex items-center gap-2 min-w-0">
             {icon && <span className="shrink-0 flex items-center">{icon}</span>}
-            <span className="text-[11px] font-display uppercase tracking-micro text-green-mid truncate">
+            <span
+              className="text-[11px] font-display uppercase tracking-micro truncate"
+              style={{ color: fill?.accent ?? '#1a6b4a' }}
+            >
               {label}
             </span>
           </div>
@@ -83,7 +130,10 @@ export default function SharedActivityCard({
       </button>
 
       {expanded && children && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: '#f0f2f0' }}>
+        <div
+          className="relative mt-3 pt-3 border-t"
+          style={{ borderColor: '#f0f2f0' }}
+        >
           {children}
         </div>
       )}

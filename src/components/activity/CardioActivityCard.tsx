@@ -12,6 +12,7 @@ import { cardioDots } from '../../lib/dotHelpers';
 import { db } from '../../db/database';
 import { LOCAL_USER_ID } from '../../lib/constants';
 import { startOfWeekISODate } from '../../lib/dateHelpers';
+import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
 
 export default function CardioActivityCard({
   expanded,
@@ -50,19 +51,27 @@ export default function CardioActivityCard({
       ).length;
     }, [], 0) ?? 0;
 
+  const pillar = PILLAR_COLORS.cardio;
+
   return (
     <SharedActivityCard
       label="Cardio"
       badge={
         <>
           {qualifying} / {target}
-          {complete && <span className="text-green-mid"> ✓</span>}
+          {complete && <span style={{ color: pillar.text }}> ✓</span>}
         </>
       }
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
       icon={<CardioIcon />}
+      fill={{
+        color: pillar.fill,
+        fraction: fillFraction(qualifying, target),
+        complete,
+        accent: pillar.text,
+      }}
     >
       <div className="flex items-baseline justify-between">
         <span className="text-[12px] text-[#5f6b65]">

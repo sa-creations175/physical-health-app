@@ -20,6 +20,7 @@ import {
   type MobilityLink,
 } from '../../lib/bundleHelpers';
 import { bundleDots } from '../../lib/dotHelpers';
+import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
 import {
   startOfWeekISODate,
   addDaysISO,
@@ -87,7 +88,8 @@ export default function BundleActivityCard({
 
   const totals = getWeeklyTotals(weekLogs, mobilityMin);
   const qualifyingDays = weekLogs.filter(isDayQualifying).length;
-  const weekOnTrack = qualifyingDays >= bundleTarget;
+  const weekOnTrack = bundleTarget > 0 && qualifyingDays >= bundleTarget;
+  const pillar = PILLAR_COLORS.bundle;
   const dots = bundleDots(byDate, prefs);
   const links = parseMobilityLinks(prefs?.bundle_mobility_youtube_links);
   const todayLog = byDate.get(today) ?? null;
@@ -98,13 +100,19 @@ export default function BundleActivityCard({
       badge={
         <>
           {qualifyingDays} / {bundleTarget}
-          {weekOnTrack && <span className="text-green-mid"> ✓</span>}
+          {weekOnTrack && <span style={{ color: pillar.text }}> ✓</span>}
         </>
       }
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
       icon={<BundleIcon />}
+      fill={{
+        color: pillar.fill,
+        fraction: fillFraction(qualifyingDays, bundleTarget),
+        complete: weekOnTrack,
+        accent: pillar.text,
+      }}
     >
       {/* Weekly intensity grid */}
       <div className="grid grid-cols-7 gap-1.5">
