@@ -5,6 +5,7 @@ import CardioActivityCard from '../components/activity/CardioActivityCard';
 import MobilityActivityCard from '../components/activity/MobilityActivityCard';
 import BundleActivityCard from '../components/activity/BundleActivityCard';
 import AppleWatchActivityCard from '../components/activity/AppleWatchActivityCard';
+import CaloriesBreakdownCard from '../components/activity/CaloriesBreakdownCard';
 import { startOfWeekISODate, addDaysISO } from '../lib/dateHelpers';
 
 export default function Fitness() {
@@ -16,11 +17,15 @@ export default function Fitness() {
     <div className="pb-4">
       <FitnessHeader />
 
+      <div className="px-5 mt-4">
+        <CaloriesBreakdownCard />
+      </div>
+
       {/* Default order is the June 5 warm→cool thermal gradient:
           Bundle → Cardio → Lower → Upper → (Full Body) → Mobility. Full Body
           rides with the lifting cards; the Apple Watch row is a data source,
           not a pillar, so it sits last with no color fill. */}
-      <div className="px-5 mt-4 space-y-1.5">
+      <div className="px-5 mt-3 space-y-1.5">
         <BundleActivityCard expanded={open === 'bundle'} onToggle={() => toggle('bundle')} />
         <CardioActivityCard expanded={open === 'cardio'} onToggle={() => toggle('cardio')} />
         <LiftingActivityCard type="lower" label="Lower Body" expanded={open === 'lower'} onToggle={() => toggle('lower')} />

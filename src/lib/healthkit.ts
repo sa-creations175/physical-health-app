@@ -12,7 +12,34 @@
 // third tile is a "workouts this week" count instead of resting HR.
 import { Capacitor } from '@capacitor/core';
 import { Health, type HealthPermission } from 'capacitor-health';
-import { startOfWeekISODate } from './dateHelpers';
+import { startOfWeekISODate, currentWeekISODates } from './dateHelpers';
+
+// Active calories burned per day for the current week (Sun..Sat, 7 values),
+// for the Fitness page's calorie-breakdown bars. Same HealthKit source as the
+// Fitness Score's weekly average, just bucketed by day instead of summed.
+// Returns null off iOS / without HealthKit; days with no sample read 0.
+export async function getCaloriesByDay(): Promise<number[] | null> {
+  if (!(await ensureHealthPermissions())) return null;
+  const weekDates = currentWeekISODates();
+  const startISO = new Date(weekDates[0] + 'T00:00:00').toISOString();
+  try {
+    const { aggregatedData } = await Health.queryAggregated({
+      startDate: startISO,
+      endDate: new Date().toISOString(),
+      dataType: 'active-calories',
+      bucket: 'day',
+    });
+    const byDate = new Map<string, number>();
+    for (const sample of aggregatedData) {
+      const key = new Date(sample.startDate).toLocaleDateString('en-CA');
+      byDate.set(key, (byDate.get(key) ?? 0) + (sample.value || 0));
+    }
+    return weekDates.map((d) => Math.round(byDate.get(d) ?? 0));
+  } catch (e) {
+    console.error('HK error at getCaloriesByDay:', e);
+    return null;
+  }
+}
 
 // Per-day averages for steps + active calories over the current week so far,
 // for the Home Fitness Score. Returns null off iOS / without HealthKit so the
