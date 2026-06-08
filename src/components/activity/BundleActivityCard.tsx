@@ -103,10 +103,11 @@ export default function BundleActivityCard({
           const intensity: DayIntensity =
             log && prefs ? getDayIntensity(log, prefs) : 'none';
           const showNudge = intensity === 'none' && date === today;
+          const hasWatch = (log?.watch_duration_minutes ?? 0) > 0;
           return (
             <div
               key={date}
-              className="w-full h-9 rounded-md flex items-center justify-center"
+              className="relative w-full h-9 rounded-md flex items-center justify-center"
               style={{
                 background: INTENSITY_FILL[intensity],
                 border: showNudge ? '2px solid #0F6E56' : undefined,
@@ -118,6 +119,15 @@ export default function BundleActivityCard({
               >
                 {DAY_INITIALS[i]}
               </span>
+              {hasWatch && (
+                <span
+                  className="absolute top-0.5 right-0.5 text-[8px] leading-none"
+                  style={{ color: INTENSITY_INITIAL[intensity] }}
+                  title={`Apple Watch · ${log?.watch_duration_minutes} min`}
+                >
+                  ⌚
+                </span>
+              )}
             </div>
           );
         })}
@@ -143,6 +153,11 @@ export default function BundleActivityCard({
         <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
           Log today
         </p>
+        {(todayLog?.watch_duration_minutes ?? 0) > 0 && (
+          <p className="mt-1 text-[12px] text-[#0F6E56]">
+            ⌚ Apple Watch · {todayLog?.watch_duration_minutes} min strength
+          </p>
+        )}
         <div className="mt-1 space-y-1">
           <ExerciseLogRow
             label="Push-ups"

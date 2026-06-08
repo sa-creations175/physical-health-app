@@ -113,12 +113,18 @@ export async function upsertBundleLog(
   await syncedAdd(db.bundle_logs, row);
 }
 
-// Any reps of anything — or any mobility minutes — make the day qualifying.
-// The components are tracked independently, not as a bundle requirement. A
-// row that exists but reads 0/0/0/null is NOT qualifying.
+// Any reps of anything — or any mobility minutes, or a Watch strength session
+// imported for the day — make the day qualifying. The components are tracked
+// independently, not as a bundle requirement. A row that exists but reads
+// 0/0/0/null/null is NOT qualifying.
 export function isDayQualifying(log: BundleLog): boolean {
   return (
-    log.pushups + log.ab_rolls + log.calf_raises + (log.mobility_minutes ?? 0) > 0
+    log.pushups +
+      log.ab_rolls +
+      log.calf_raises +
+      (log.mobility_minutes ?? 0) +
+      (log.watch_duration_minutes ?? 0) >
+    0
   );
 }
 
@@ -142,10 +148,11 @@ export function getDayIntensity(
   const mobilityCredit = Math.min(log.mobility_minutes ?? 0, minMobility);
   const done =
     log.pushups + log.ab_rolls + log.calf_raises + mobilityCredit;
-  if (done <= 0) return 'none';
+  const hasWatch = (log.watch_duration_minutes ?? 0) > 0;
+  if (done <= 0 && !hasWatch) return 'none';
 
-  // "full" stays gated on the three rep targets (mobility feeds the
-  // percentage bands, not the all-targets-hit definition).
+  // "full" stays gated on the three rep targets (mobility/Watch feed the
+  // bands, not the all-targets-hit definition).
   const allThreeHit =
     log.pushups >= prefs.bundle_pushup_target &&
     log.ab_rolls >= prefs.bundle_abroll_target &&
@@ -159,10 +166,20 @@ export function getDayIntensity(
     minMobility;
   // Guard divide-by-zero if every target was somehow set to 0 — any work at
   // all then reads as the lowest non-none band rather than NaN.
-  if (combinedTarget <= 0) return 'low';
+  const band: DayIntensity =
+    done <= 0
+      ? 'none'
+      : combinedTarget <= 0
+        ? 'low'
+        : (done / combinedTarget) * 100 >= 50
+          ? 'medium'
+          : 'low';
 
-  const pct = (done / combinedTarget) * 100;
-  return pct >= 50 ? 'medium' : 'low';
+  // A Watch strength session is a real logged workout for the day — floor the
+  // day at 'medium' so a Watch-only (or Watch + light manual) day reads as a
+  // solid day rather than grey/low. 'full' still requires all three rep targets.
+  if (hasWatch && band !== 'medium') return 'medium';
+  return band;
 }
 
 // Sum each exercise across the week's rows, plus a count of mobility-

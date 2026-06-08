@@ -228,8 +228,9 @@ export interface BundleLog {
   // aren't logged manually. null = no Watch contribution that day. Non-indexed.
   watch_duration_minutes: number | null;
   // Provenance — added Dexie v13. 'watch' if any field on this row came from
-  // Apple Watch, 'manual' otherwise. null on rows that predate the column.
-  source: 'manual' | 'watch' | null;
+  // Apple Watch, 'manual' otherwise, 'merged' when a manual row was augmented
+  // with a Watch strength duration. null on rows that predate the column.
+  source: 'manual' | 'watch' | 'merged' | null;
   created_at: string;
   updated_at: string;
 }

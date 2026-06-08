@@ -73,18 +73,14 @@ export async function isDuplicateCardio(startDate: Date): Promise<boolean> {
   );
 }
 
-// A bundle row already exists for the day with any logged work.
+// A Watch strength *duration* has already been imported for this day. Only the
+// Watch-sourced field counts — manual pushups/ab-rolls/calf-raises/mobility are
+// independent things the user logs by hand, and must NOT block the Watch
+// session's duration from landing (that was the silent-drop bug: a manually
+// logged bundle made every short Watch strength session look like a duplicate).
 export async function isDuplicateBundle(date: string): Promise<boolean> {
   const row = await db.bundle_logs.where('date').equals(date).first();
-  if (!row) return false;
-  return (
-    row.pushups +
-      row.ab_rolls +
-      row.calf_raises +
-      (row.mobility_minutes ?? 0) +
-      (row.watch_duration_minutes ?? 0) >
-    0
-  );
+  return !!row && (row.watch_duration_minutes ?? 0) > 0;
 }
 
 // Mobility minutes already logged for the day.
@@ -102,6 +98,18 @@ export async function findMatchingStrengthSession(
   const match = sessions.find(
     (s) =>
       s.feel_rating !== null &&
+      (s.type === 'upper' || s.type === 'lower' || s.type === 'full_body'),
+  );
+  return match ?? null;
+}
+
+// An already-imported incomplete Watch strength session for the day, if any.
+// Used to keep a re-scan from creating duplicate auto-sessions.
+async function findWatchStrengthSession(date: string): Promise<Session | null> {
+  const sessions = await db.sessions.where('date').equals(date).toArray();
+  const match = sessions.find(
+    (s) =>
+      s.source === 'watch' &&
       (s.type === 'upper' || s.type === 'lower' || s.type === 'full_body'),
   );
   return match ?? null;
@@ -153,9 +161,18 @@ async function upsertWatchBundle(
   const now = new Date().toISOString();
   const existing = await db.bundle_logs.where('date').equals(date).first();
   if (existing) {
+    // Don't clobber a manually-logged row's provenance: if the user already
+    // tapped reps/mobility that day, mark the merged row 'merged' (manual work
+    // + Watch duration) rather than overwriting it to 'watch'.
+    const hasManual =
+      existing.pushups +
+        existing.ab_rolls +
+        existing.calf_raises +
+        (existing.mobility_minutes ?? 0) >
+      0;
     await syncedUpdate(db.bundle_logs, existing.id, {
       ...changes,
-      source: 'watch',
+      source: hasManual ? 'merged' : 'watch',
       updated_at: now,
     });
     return;
@@ -235,6 +252,18 @@ async function importOne(w: HealthWorkout): Promise<ImportResult> {
 
   // strength (traditionalStrengthTraining > 30 min): merge into a manual
   // session if one exists that day, else create an incomplete Watch session.
+  // Re-scan safety: if a previous import already created an incomplete Watch
+  // session for this day, don't create a second one (the matching-session path
+  // below only finds *completed* manual sessions, so it wouldn't catch this).
+  const existingWatch = await findWatchStrengthSession(date);
+  if (existingWatch) {
+    return {
+      category,
+      action: 'skipped',
+      detail: 'Watch strength session already imported that day',
+    };
+  }
+
   const match = await findMatchingStrengthSession(date);
   if (match) {
     const changes: Partial<Session> = {
