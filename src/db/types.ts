@@ -184,6 +184,12 @@ export interface UserPreferences {
   // Settings ("Bundle weekly target"), which the spec asked for but had no
   // backing field.
   bundle_target: number;
+  // Daily activity targets for the Fitness Score — added v2.11 (Dexie v14).
+  // Steps + calories were hardcoded in the Apple Watch card; exercise minutes
+  // is new. The score reads all three live (a target of 0 drops that mark).
+  daily_steps_target: number;
+  daily_calories_target: number;
+  daily_exercise_minutes_target: number;
   // Dashboard customization — added v2.2 (Dexie v10). Stored as JSON strings
   // because Dexie columns are scalar; parsed/serialized by useDashboardConfig.
   // order: string[] of section keys; config: Record<key, {label, visible}>.

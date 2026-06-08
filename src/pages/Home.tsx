@@ -2,20 +2,12 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import { DumbbellIcon, LeafIcon, HeartPulseIcon } from '../components/dashboard/PillarIcons';
-import {
-  getLiftingSummary,
-  getCardioSummary,
-  computeStreak,
-} from '../lib/dashboardQueries';
+import { computeStreak } from '../lib/dashboardQueries';
 import { getUserPreferences } from '../lib/userPreferences';
+import { getFitnessScore, type ScoreMark } from '../lib/fitnessScore';
 import { computeDeliveryStreak, getDeliveryWeek } from '../lib/deliveryHelpers';
 import { startOfWeekISODate, currentWeekISODates } from '../lib/dateHelpers';
-import {
-  DEFAULT_WEEKLY_LIFTING_TARGETS,
-  DEFAULT_CARDIO_WEEKLY_TARGET,
-  DEFAULT_CARDIO_THRESHOLD_MINUTES,
-  DEFAULT_DAILY_NUTRITION_TARGETS,
-} from '../lib/defaults';
+import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../lib/defaults';
 
 export default function Home() {
   return (
@@ -38,100 +30,121 @@ function SummaryLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Weekly progress ring for the Home Fitness card. r=24 → circumference ≈ 150.8;
-// the progress arc length scales with count/target. Rendered only when
-// target > 0 (the caller guards). Geometry per the dashboard spec.
-function ProgressRing({
-  count,
-  target,
-  color,
-  label,
-}: {
-  count: number;
-  target: number;
-  color: string;
-  label: string;
-}) {
-  const dash = Math.min(count / target, 1) * 150.8;
+// Big dial — the week's overall fullness as one %. SVG ring, r=28 →
+// circumference ≈ 175.9; the arc scales with pct/100.
+function ScoreDial({ pct }: { pct: number }) {
+  const dash = (Math.max(0, Math.min(pct, 100)) / 100) * 175.9;
   return (
-    <div className="flex flex-col items-center">
-      <svg width="60" height="60" viewBox="0 0 60 60">
-        <circle cx="30" cy="30" r="24" fill="none" stroke="#e8ebe8" strokeWidth="6" />
-        <circle
-          cx="30"
-          cy="30"
-          r="24"
-          fill="none"
-          stroke={color}
-          strokeWidth="6"
-          strokeLinecap="round"
-          strokeDasharray={`${dash} 150.8`}
-          transform="rotate(-90 30 30)"
+    <svg width="72" height="72" viewBox="0 0 72 72" className="shrink-0">
+      <circle cx="36" cy="36" r="28" fill="none" stroke="#e8ebe8" strokeWidth="7" />
+      <circle
+        cx="36"
+        cy="36"
+        r="28"
+        fill="none"
+        stroke="#0f3d2e"
+        strokeWidth="7"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} 175.9`}
+        transform="rotate(-90 36 36)"
+      />
+      <text
+        x="36"
+        y="36"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize="18"
+        fontWeight="600"
+        fill="#0d1f18"
+      >
+        {pct}%
+      </text>
+    </svg>
+  );
+}
+
+// One mark's honest breakdown: a fill bar in the mark's color + actual/target.
+function ScoreBar({ mark }: { mark: ScoreMark }) {
+  const width = Math.round(mark.fraction * 100);
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[10px] text-[#5a7a6e]">{mark.label}</span>
+        <span className="text-[10px] text-ink tabular-nums">
+          {mark.actual}/{mark.target}
+          {mark.perDay ? '/day' : ''}
+        </span>
+      </div>
+      <div className="mt-0.5 h-1.5 rounded-full" style={{ background: '#e8ebe8' }}>
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${width}%`, background: mark.color }}
         />
-        <text
-          x="30"
-          y="30"
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize="13"
-          fontWeight="500"
-          fill="#0d1f18"
-        >
-          {count}/{target}
-        </text>
-      </svg>
-      <span className="text-[11px]" style={{ color: '#5a7a6e' }}>
-        {label}
-      </span>
+      </div>
+    </div>
+  );
+}
+
+function StripStat({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex-1 text-center">
+      <p className="text-[14px] font-medium text-ink">{value}</p>
+      <p className="text-[10px] text-[#5a7a6e] mt-0.5">{label}</p>
     </div>
   );
 }
 
 function FitnessSummary() {
-  const prefs = useLiveQuery(() => getUserPreferences(), []);
-  const lower = useLiveQuery(() => getLiftingSummary('lower'), []);
-  const upper = useLiveQuery(() => getLiftingSummary('upper'), []);
-  const threshold =
-    prefs?.cardio_threshold_minutes ?? DEFAULT_CARDIO_THRESHOLD_MINUTES;
-  const cardio = useLiveQuery(() => getCardioSummary(threshold), [threshold]);
+  const score = useLiveQuery(() => getFitnessScore(), []);
   const streak = useLiveQuery(() => computeStreak(), [], 0) ?? 0;
 
-  const lowerT = prefs?.lifting_target_lower ?? DEFAULT_WEEKLY_LIFTING_TARGETS.lower;
-  const upperT = prefs?.lifting_target_upper ?? DEFAULT_WEEKLY_LIFTING_TARGETS.upper;
-  const cardioT = prefs?.cardio_target_weekly ?? DEFAULT_CARDIO_WEEKLY_TARGET;
+  // Bars for participating marks only (target 0 / no data drop out).
+  const bars = score?.marks.filter((m) => m.participates) ?? [];
+  const strip = score?.strip;
 
   return (
     <Link to="/fitness" className="block bg-card shadow-card rounded-2xl p-4">
       <div className="flex items-center justify-between">
-        <SummaryLabel>Fitness</SummaryLabel>
+        <SummaryLabel>Fitness Score</SummaryLabel>
         <DumbbellIcon />
       </div>
-      <div className="mt-3 flex justify-around">
-        {lowerT > 0 && (
-          <ProgressRing
-            count={lower?.thisWeekCount ?? 0}
-            target={lowerT}
-            color="#0f3d2e"
-            label="Lower"
-          />
-        )}
-        {upperT > 0 && (
-          <ProgressRing
-            count={upper?.thisWeekCount ?? 0}
-            target={upperT}
-            color="#1a6b4a"
-            label="Upper"
-          />
-        )}
-        {cardioT > 0 && (
-          <ProgressRing
-            count={cardio?.qualifyingCount ?? 0}
-            target={cardioT}
-            color="#22c37e"
-            label="Cardio"
-          />
-        )}
+
+      <div className="mt-3 flex items-center gap-4">
+        <ScoreDial pct={score?.dialPct ?? 0} />
+        <div className="flex-1 space-y-1.5">
+          {bars.length === 0 ? (
+            <p className="text-[12px] text-card-mute">
+              Set weekly targets in Settings to see your score.
+            </p>
+          ) : (
+            bars.map((m) => <ScoreBar key={m.key} mark={m} />)
+          )}
+        </div>
       </div>
+
+      {strip && (
+        <div
+          className="mt-3 pt-3 border-t flex"
+          style={{ borderColor: '#f0f2f0' }}
+        >
+          <StripStat
+            label="Cal/day"
+            value={strip.calories === null ? '—' : String(strip.calories)}
+          />
+          <StripStat label="Exercise min/day" value={String(strip.exerciseMinutes)} />
+          <StripStat
+            label="Steps/day"
+            value={strip.steps === null ? '—' : strip.steps.toLocaleString()}
+          />
+        </div>
+      )}
+
       <span className="mt-3 inline-block bg-[#edf7f2] text-green-mid text-[11px] font-medium rounded-full px-2.5 py-1">
         {streak} day{streak === 1 ? '' : 's'} streak
       </span>

@@ -6,6 +6,7 @@ import {
   DEFAULT_CARDIO_WEEKLY_TARGET,
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_DAILY_NUTRITION_TARGETS,
+  DEFAULT_DAILY_ACTIVITY_TARGETS,
   DEFAULT_BUNDLE_CONFIG,
   DEFAULT_MOBILITY_LINKS_JSON,
   DASHBOARD_SECTION_KEYS,
@@ -33,6 +34,11 @@ export const TARGET_RANGES = {
   // the metric meaningless. Increments floor at 1 so a ± tap always moves.
   bundle_target: { min: 1, max: 500 },
   bundle_increment: { min: 1, max: 100 },
+  // Daily activity targets for the Fitness Score (Build 2.11). 0 = stop
+  // tracking that mark (it drops out of the dial).
+  daily_steps: { min: 0, max: 50000 },
+  daily_calories: { min: 0, max: 5000 },
+  daily_exercise_minutes: { min: 0, max: 300 },
 } as const;
 
 function buildDefaultPreferences(): UserPreferences {
@@ -58,6 +64,9 @@ function buildDefaultPreferences(): UserPreferences {
     bundle_mobility_min_minutes: DEFAULT_BUNDLE_CONFIG.mobility_min_minutes,
     bundle_mobility_youtube_links: DEFAULT_MOBILITY_LINKS_JSON,
     bundle_target: DEFAULT_BUNDLE_CONFIG.weekly_target,
+    daily_steps_target: DEFAULT_DAILY_ACTIVITY_TARGETS.steps,
+    daily_calories_target: DEFAULT_DAILY_ACTIVITY_TARGETS.calories,
+    daily_exercise_minutes_target: DEFAULT_DAILY_ACTIVITY_TARGETS.exercise_minutes,
     dashboard_section_order: JSON.stringify(DASHBOARD_SECTION_KEYS),
     dashboard_section_config: JSON.stringify(DEFAULT_DASHBOARD_SECTION_CONFIG),
     created_at: now,

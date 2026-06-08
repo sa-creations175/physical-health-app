@@ -18,6 +18,15 @@ export const DEFAULT_DAILY_NUTRITION_TARGETS = {
   veg_servings: 3,
 } as const;
 
+// Daily activity targets for the Fitness Score (Build 2.11). Steps + calories
+// were previously hardcoded in the Apple Watch card (10000 / 600); promoted to
+// user_preferences so the score reads them live. Exercise minutes is new.
+export const DEFAULT_DAILY_ACTIVITY_TARGETS = {
+  steps: 10000,
+  calories: 600,
+  exercise_minutes: 30,
+} as const;
+
 // Daily bundle (calisthenics) defaults — Build 2.4. Targets are the user's
 // typical full day (100 push-ups / 60 ab rolls / 120 calf raises); increments
 // are the superset size each ± tap on the bundle card applies (25 / 15 / 30).

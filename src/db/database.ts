@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import {
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
   DEFAULT_BUNDLE_CONFIG,
+  DEFAULT_DAILY_ACTIVITY_TARGETS,
   DEFAULT_MOBILITY_LINKS_JSON,
   DASHBOARD_SECTION_KEYS,
   DEFAULT_DASHBOARD_SECTION_CONFIG,
@@ -508,6 +509,54 @@ export class PhysicalHealthDB extends Dexie {
               if (row.source === undefined) row.source = null;
               if (row.watch_duration_minutes === undefined) {
                 row.watch_duration_minutes = null;
+              }
+            },
+          );
+      });
+
+    // v14 (Build 2.11): Fitness Score on Home. Adds three daily activity
+    // targets to user_preferences — daily_steps_target, daily_calories_target,
+    // daily_exercise_minutes_target. Steps + calories were previously hardcoded
+    // in the Apple Watch card; the score now reads all three live. Non-indexed
+    // scalar columns, so the index lists are identical to v13; the upgrade hook
+    // backfills the existing row with the defaults.
+    this.version(14)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify(
+            (row: {
+              daily_steps_target?: number;
+              daily_calories_target?: number;
+              daily_exercise_minutes_target?: number;
+            }) => {
+              if (row.daily_steps_target === undefined) {
+                row.daily_steps_target = DEFAULT_DAILY_ACTIVITY_TARGETS.steps;
+              }
+              if (row.daily_calories_target === undefined) {
+                row.daily_calories_target =
+                  DEFAULT_DAILY_ACTIVITY_TARGETS.calories;
+              }
+              if (row.daily_exercise_minutes_target === undefined) {
+                row.daily_exercise_minutes_target =
+                  DEFAULT_DAILY_ACTIVITY_TARGETS.exercise_minutes;
               }
             },
           );

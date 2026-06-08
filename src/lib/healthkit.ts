@@ -14,6 +14,28 @@ import { Capacitor } from '@capacitor/core';
 import { Health, type HealthPermission } from 'capacitor-health';
 import { startOfWeekISODate } from './dateHelpers';
 
+// Per-day averages for steps + active calories over the current week so far,
+// for the Home Fitness Score. Returns null off iOS / without HealthKit so the
+// score gracefully drops those marks rather than scoring them 0. `daysElapsed`
+// is the week's elapsed-day count (Sun..today) — the divisor for the average.
+export async function getWeeklyHealthAverages(
+  daysElapsed: number,
+): Promise<{ caloriesAvg: number; stepsAvg: number } | null> {
+  if (!(await ensureHealthPermissions())) return null;
+  const weekStartISO = new Date(
+    startOfWeekISODate() + 'T00:00:00',
+  ).toISOString();
+  const [steps, calories] = await Promise.all([
+    sumAggregated('steps', weekStartISO),
+    sumAggregated('active-calories', weekStartISO),
+  ]);
+  const divisor = Math.max(1, daysElapsed);
+  return {
+    stepsAvg: Math.round(steps / divisor),
+    caloriesAvg: Math.round(calories / divisor),
+  };
+}
+
 // What the dashboard card renders. Steps/calories are "today so far";
 // workoutsThisWeek counts completed workouts since Sunday; recentWorkouts
 // is the trailing 7-day list (newest first).

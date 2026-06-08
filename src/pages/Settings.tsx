@@ -219,6 +219,43 @@ export default function Settings() {
         />
       </section>
 
+      <section className="mt-6">
+        <SectionLabel>Daily activity</SectionLabel>
+        <p className="text-[11px] text-ink-soft mt-1">
+          Daily-average targets for the Home Fitness Score. Set 0 to drop a
+          mark from the score.
+        </p>
+
+        <NumberRow
+          label="Exercise minutes"
+          hint="Target active minutes per day (cardio + lifting + mobility)."
+          value={prefs.daily_exercise_minutes_target}
+          min={TARGET_RANGES.daily_exercise_minutes.min}
+          max={TARGET_RANGES.daily_exercise_minutes.max}
+          onCommit={(v) =>
+            updateUserPreferences({ daily_exercise_minutes_target: v })
+          }
+        />
+        <NumberRow
+          label="Calories burned"
+          hint="Target active calories per day (from Apple Watch)."
+          value={prefs.daily_calories_target}
+          min={TARGET_RANGES.daily_calories.min}
+          max={TARGET_RANGES.daily_calories.max}
+          onCommit={(v) =>
+            updateUserPreferences({ daily_calories_target: v })
+          }
+        />
+        <NumberRow
+          label="Steps"
+          hint="Target steps per day (from Apple Watch)."
+          value={prefs.daily_steps_target}
+          min={TARGET_RANGES.daily_steps.min}
+          max={TARGET_RANGES.daily_steps.max}
+          onCommit={(v) => updateUserPreferences({ daily_steps_target: v })}
+        />
+      </section>
+
     </div>
   );
 }
