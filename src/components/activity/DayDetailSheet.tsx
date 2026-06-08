@@ -14,6 +14,7 @@ import {
   type MobilityLink,
 } from '../../lib/bundleHelpers';
 import { createSession } from '../../lib/strengthHelpers';
+import { todayISODate } from '../../lib/dateHelpers';
 import { syncedDelete } from '../../db/syncedWrite';
 import {
   PILLAR_LABEL,
@@ -50,6 +51,9 @@ export default function DayDetailSheet({
     month: 'short',
     day: 'numeric',
   });
+  // Future days are view-only — you can't log/add activity that hasn't
+  // happened yet. Today and past days keep the full logging affordances.
+  const isFuture = date > todayISODate();
 
   return (
     <div
@@ -85,13 +89,29 @@ export default function DayDetailSheet({
         </div>
 
         <div className="mt-4">
-          {pillar === 'bundle' && <BundleDay date={date} />}
-          {pillar === 'mobility' && <MobilityDay date={date} />}
-          {pillar === 'cardio' && <CardioDay date={date} onClose={onClose} />}
+          {pillar === 'bundle' && (
+            <BundleDay date={date} readOnly={isFuture} />
+          )}
+          {pillar === 'mobility' && (
+            <MobilityDay date={date} readOnly={isFuture} />
+          )}
+          {pillar === 'cardio' && (
+            <CardioDay date={date} onClose={onClose} canLog={!isFuture} />
+          )}
           {(pillar === 'lower' ||
             pillar === 'upper' ||
             pillar === 'full_body') && (
-            <SessionDay pillar={pillar} date={date} onClose={onClose} />
+            <SessionDay
+              pillar={pillar}
+              date={date}
+              onClose={onClose}
+              canLog={!isFuture}
+            />
+          )}
+          {isFuture && (
+            <p className="mt-3 text-[11px] text-card-mute text-center">
+              Future day — view only.
+            </p>
           )}
         </div>
       </div>
@@ -173,7 +193,7 @@ const WATCH_BADGE = (
 
 // ---- Bundle ---------------------------------------------------------------
 
-function BundleDay({ date }: { date: string }) {
+function BundleDay({ date, readOnly }: { date: string; readOnly: boolean }) {
   const row = useLiveQuery(
     () => db.bundle_logs.where('date').equals(date).first(),
     [date],
@@ -186,6 +206,25 @@ function BundleDay({ date }: { date: string }) {
       prefs?.bundle_calfraise_increment ?? DEFAULT_BUNDLE_CONFIG.calfraise_increment,
   };
   const watchMin = row?.watch_duration_minutes ?? 0;
+
+  if (readOnly) {
+    const lines: string[] = [];
+    if (row?.pushups) lines.push(`Push-ups: ${row.pushups}`);
+    if (row?.ab_rolls) lines.push(`Ab rolls: ${row.ab_rolls}`);
+    if (row?.calf_raises) lines.push(`Calf raises: ${row.calf_raises}`);
+    if (watchMin > 0) lines.push(`⌚ ${watchMin} min strength`);
+    return lines.length === 0 ? (
+      <p className="text-[13px] text-card-mute">Nothing logged this day.</p>
+    ) : (
+      <div className="space-y-1">
+        {lines.map((l) => (
+          <p key={l} className="text-[14px] text-ink">
+            {l}
+          </p>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-1">
@@ -229,7 +268,7 @@ function BundleDay({ date }: { date: string }) {
 
 // ---- Mobility -------------------------------------------------------------
 
-function MobilityDay({ date }: { date: string }) {
+function MobilityDay({ date, readOnly }: { date: string; readOnly: boolean }) {
   const row = useLiveQuery(
     () => db.bundle_logs.where('date').equals(date).first(),
     [date],
@@ -238,6 +277,15 @@ function MobilityDay({ date }: { date: string }) {
   const minMinutes =
     prefs?.bundle_mobility_min_minutes ?? DEFAULT_BUNDLE_CONFIG.mobility_min_minutes;
   const links = parseMobilityLinks(prefs?.bundle_mobility_youtube_links);
+
+  if (readOnly) {
+    const mins = row?.mobility_minutes ?? 0;
+    return mins > 0 ? (
+      <p className="text-[14px] text-ink">Mobility: {mins} min</p>
+    ) : (
+      <p className="text-[13px] text-card-mute">Nothing logged this day.</p>
+    );
+  }
 
   return (
     <MobilityRow
@@ -266,7 +314,15 @@ function MobilityDay({ date }: { date: string }) {
 
 // ---- Cardio ---------------------------------------------------------------
 
-function CardioDay({ date, onClose }: { date: string; onClose: () => void }) {
+function CardioDay({
+  date,
+  onClose,
+  canLog,
+}: {
+  date: string;
+  onClose: () => void;
+  canLog: boolean;
+}) {
   const navigate = useNavigate();
   const logs = useLiveQuery(
     async () => {
@@ -331,16 +387,18 @@ function CardioDay({ date, onClose }: { date: string; onClose: () => void }) {
           ))}
         </div>
       )}
-      <button
-        type="button"
-        onClick={() => {
-          onClose();
-          navigate('/log/cardio');
-        }}
-        className="mt-3 w-full bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[44px]"
-      >
-        Log cardio →
-      </button>
+      {canLog && (
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            navigate('/log/cardio');
+          }}
+          className="mt-3 w-full bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[44px]"
+        >
+          Log cardio →
+        </button>
+      )}
     </div>
   );
 }
@@ -351,10 +409,12 @@ function SessionDay({
   pillar,
   date,
   onClose,
+  canLog,
 }: {
   pillar: 'lower' | 'upper' | 'full_body';
   date: string;
   onClose: () => void;
+  canLog: boolean;
 }) {
   const navigate = useNavigate();
   const sessions = useLiveQuery(
@@ -434,13 +494,15 @@ function SessionDay({
           ))}
         </div>
       )}
-      <button
-        type="button"
-        onClick={start}
-        className="mt-3 w-full bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[44px]"
-      >
-        Start session on this day →
-      </button>
+      {canLog && (
+        <button
+          type="button"
+          onClick={start}
+          className="mt-3 w-full bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[44px]"
+        >
+          Start session on this day →
+        </button>
+      )}
     </div>
   );
 }
