@@ -4,7 +4,7 @@ import { runSeedersIfNeeded } from './db';
 import { runCloudSync } from './lib/sync';
 import { Capacitor } from '@capacitor/core';
 import { isHealthKitAvailable } from './lib/healthkit';
-import { importWatchWorkouts } from './lib/watchImport';
+import { importWatchWorkouts, LAST_IMPORT_KEY } from './lib/watchImport';
 import AppLayout from './components/AppLayout';
 import { ToastProvider } from './components/ui/Toast';
 import Home from './pages/Home';
@@ -20,14 +20,26 @@ import Library from './pages/Library';
 import ExerciseDetail from './pages/ExerciseDetail';
 import Settings from './pages/Settings';
 
+// One-time recovery (STEP 1 fix): short Watch strength sessions were silently
+// dropped by the old over-broad bundle dedup, and the high-water mark then
+// locked them out. On the first launch after the fix, reset the marker and
+// re-scan a 30-day window so those sessions get pulled in; the flag makes it
+// run exactly once. Re-imports are idempotent (dedup), so this is safe.
+const WATCH_RESCAN_FLAG = 'ph_watch_rescan_v1';
+
 // iOS-only Apple Watch auto-import, gated on HealthKit availability. Fully
 // guarded so it can never block or crash startup.
 async function importWatchWorkoutsIfAvailable(): Promise<void> {
   if (Capacitor.getPlatform() !== 'ios') return;
   try {
-    if (await isHealthKitAvailable()) {
-      await importWatchWorkouts();
+    if (!(await isHealthKitAvailable())) return;
+    if (localStorage.getItem(WATCH_RESCAN_FLAG) === null) {
+      localStorage.removeItem(LAST_IMPORT_KEY);
+      await importWatchWorkouts(30);
+      localStorage.setItem(WATCH_RESCAN_FLAG, new Date().toISOString());
+      return;
     }
+    await importWatchWorkouts();
   } catch (e) {
     console.error('Watch import failed:', e);
   }
