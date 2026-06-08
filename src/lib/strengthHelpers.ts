@@ -313,6 +313,9 @@ export async function getDraftSessions(): Promise<DraftSessionDetail[]> {
   const drafts = (await db.sessions.toArray()).filter(
     (s) =>
       s.feel_rating === null &&
+      // Exclude Apple Watch placeholders (incomplete by design, surfaced in
+      // History) — only user-abandoned manual drafts are resumable here.
+      s.source !== 'watch' &&
       (s.type === 'upper' || s.type === 'lower' || s.type === 'full_body'),
   );
   if (drafts.length === 0) return [];
