@@ -72,7 +72,6 @@ function ScoreBar({ mark }: { mark: ScoreMark }) {
         <span className="text-[10px] text-[#5a7a6e]">{mark.label}</span>
         <span className="text-[10px] text-ink tabular-nums">
           {mark.actual}/{mark.target}
-          {mark.perDay ? '/day' : ''}
         </span>
       </div>
       <div className="mt-0.5 h-1.5 rounded-full" style={{ background: '#e8ebe8' }}>
@@ -135,9 +134,12 @@ function FitnessSummary() {
         >
           <StripStat
             label="Cal/day"
-            value={strip.calories === null ? '—' : String(strip.calories)}
+            value={strip.calories === null ? '—' : strip.calories.toLocaleString()}
           />
-          <StripStat label="Exercise min/day" value={String(strip.exerciseMinutes)} />
+          <StripStat
+            label="Exercise min/day"
+            value={strip.exerciseMinutes.toLocaleString()}
+          />
           <StripStat
             label="Steps/day"
             value={strip.steps === null ? '—' : strip.steps.toLocaleString()}

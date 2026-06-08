@@ -250,7 +250,9 @@ function StrengthDetail({
             <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
               {ex.sets.map((s) => (
                 <span key={s.id} className="text-[12px]">
-                  <span className="text-ink-body font-medium">{s.weight}</span>
+                  <span className="text-ink-body font-medium">
+                    {s.weight.toLocaleString()}
+                  </span>
                   <span className="text-card-mute">×{formatSetMagnitude(s)}</span>
                 </span>
               ))}

@@ -123,7 +123,7 @@ export default function ExerciseDetail() {
               {last ? (
                 <>
                   <p className="text-[14px] text-ink mt-1">
-                    <span className="font-medium">{last.lastSet.weight}</span>
+                    <span className="font-medium">{last.lastSet.weight.toLocaleString()}</span>
                     <span className="text-card-mute"> × {formatSetMagnitude(last.lastSet)}</span>
                   </p>
                   <p className="text-[11px] text-card-mute mt-1">
@@ -141,7 +141,7 @@ export default function ExerciseDetail() {
               {pr ? (
                 <>
                   <p className="text-[14px] text-ink mt-1">
-                    <span className="font-medium">{pr.weight}</span>
+                    <span className="font-medium">{pr.weight.toLocaleString()}</span>
                     <span className="text-card-mute"> × {formatSetMagnitude(pr)}</span>
                   </p>
                   <p className="text-[11px] text-card-mute mt-1">
@@ -184,7 +184,7 @@ export default function ExerciseDetail() {
                       {relativeDateLabel(entry.date)}
                     </p>
                     <p className="text-[14px] text-ink mt-0.5">
-                      <span className="font-medium">{entry.topSet.weight}</span>
+                      <span className="font-medium">{entry.topSet.weight.toLocaleString()}</span>
                       <span className="text-card-mute"> × {formatSetMagnitude(entry.topSet)}</span>
                       <span className="text-card-mute">
                         {' · '}

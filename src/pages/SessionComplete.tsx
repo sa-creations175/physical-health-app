@@ -145,7 +145,7 @@ export default function SessionComplete() {
               Volume
             </p>
             <p className="text-[19px] font-medium text-ink mt-1 leading-none">
-              {Math.round(totalVolume)}
+              {Math.round(totalVolume).toLocaleString()}
             </p>
             <p className="text-[10px] text-card-mute mt-0.5">lb·reps</p>
           </div>

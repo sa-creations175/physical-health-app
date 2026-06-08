@@ -114,8 +114,8 @@ export default function AppleWatchActivityCard({
         />
         <StatTile
           label="Active Cal"
-          value={snapshot ? String(snapshot.activeCalories) : null}
-          target={`/ ${CALORIE_TARGET}`}
+          value={snapshot ? snapshot.activeCalories.toLocaleString() : null}
+          target={`/ ${CALORIE_TARGET.toLocaleString()}`}
           met={!!snapshot && snapshot.activeCalories >= CALORIE_TARGET}
         />
         <StatTile
@@ -147,7 +147,8 @@ export default function AppleWatchActivityCard({
               >
                 <span className="truncate">{formatWorkoutType(w.workoutType)}</span>
                 <span className="text-card-mute whitespace-nowrap ml-2">
-                  {w.durationMinutes} min · {w.calories} cal
+                  {w.durationMinutes.toLocaleString()} min ·{' '}
+                  {w.calories.toLocaleString()} cal
                 </span>
               </li>
             ))}

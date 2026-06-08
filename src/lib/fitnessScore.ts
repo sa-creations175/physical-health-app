@@ -15,19 +15,10 @@ import {
 import { getWeeklyHealthAverages } from './healthkit';
 import { PILLAR_COLORS, fillFraction } from './pillarColors';
 
-// Non-pillar marks (calories / steps / exercise minutes) share a neutral slate
-// so the five pillar colors stay distinctive in the bar list.
-const NEUTRAL_MARK = '#5a7a6e';
-
-export type MarkKey =
-  | 'bundle'
-  | 'cardio'
-  | 'lower'
-  | 'upper'
-  | 'mobility'
-  | 'exercise'
-  | 'calories'
-  | 'steps';
+// The dial + bars cover ONLY the five pillar marks. Calories / steps / exercise
+// minutes are context shown in the daily-average strip — they do NOT affect the
+// score (a cardio-heavy day shouldn't quietly inflate the grade).
+export type MarkKey = 'bundle' | 'cardio' | 'lower' | 'upper' | 'mobility';
 
 export interface ScoreMark {
   key: MarkKey;
@@ -35,14 +26,13 @@ export interface ScoreMark {
   color: string;
   actual: number;
   target: number;
-  fraction: number; // clamped 0..1 (0 when target 0 or no data)
+  fraction: number; // clamped 0..1 (0 when target 0)
   participates: boolean; // counts toward the dial
-  perDay: boolean; // daily-average mark vs weekly-count mark
 }
 
 export interface FitnessScore {
-  dialPct: number; // 0..100, average of participating marks' clamped fractions
-  marks: ScoreMark[];
+  dialPct: number; // 0..100, average of participating pillar marks' fractions
+  marks: ScoreMark[]; // the five pillars only
   daysElapsed: number; // Sun..today inclusive, 1..7 — for early-week softening
   strip: {
     calories: number | null; // avg/day, null when HealthKit unavailable
@@ -93,16 +83,13 @@ export async function getFitnessScore(): Promise<FitnessScore> {
   // --- Calories + steps/day (HealthKit; iOS only, null elsewhere) ---
   const hk = await getWeeklyHealthAverages(daysElapsed);
 
+  // Only the five pillars feed the dial + bars.
   const marks: ScoreMark[] = [
-    mark('bundle', 'Bundle', PILLAR_COLORS.bundle.fill, bundleQualDays, prefs.bundle_target, false),
-    mark('cardio', 'Cardio', PILLAR_COLORS.cardio.fill, cardio.qualifyingCount, prefs.cardio_target_weekly, false),
-    mark('lower', 'Lower', PILLAR_COLORS.lower.fill, lower?.thisWeekCount ?? 0, prefs.lifting_target_lower, false),
-    mark('upper', 'Upper', PILLAR_COLORS.upper.fill, upper?.thisWeekCount ?? 0, prefs.lifting_target_upper, false),
-    mark('mobility', 'Mobility', PILLAR_COLORS.mobility.fill, mobTotals.mobilityQualifyingDays, prefs.bundle_mobility_target, false),
-    mark('exercise', 'Exercise min', NEUTRAL_MARK, exerciseAvg, prefs.daily_exercise_minutes_target, true),
-    // Calories + steps participate only when HealthKit data exists.
-    markWithData('calories', 'Calories', NEUTRAL_MARK, hk?.caloriesAvg ?? 0, prefs.daily_calories_target, hk !== null),
-    markWithData('steps', 'Steps', NEUTRAL_MARK, hk?.stepsAvg ?? 0, prefs.daily_steps_target, hk !== null),
+    mark('bundle', 'Bundle', PILLAR_COLORS.bundle.fill, bundleQualDays, prefs.bundle_target),
+    mark('cardio', 'Cardio', PILLAR_COLORS.cardio.fill, cardio.qualifyingCount, prefs.cardio_target_weekly),
+    mark('lower', 'Lower', PILLAR_COLORS.lower.fill, lower?.thisWeekCount ?? 0, prefs.lifting_target_lower),
+    mark('upper', 'Upper', PILLAR_COLORS.upper.fill, upper?.thisWeekCount ?? 0, prefs.lifting_target_upper),
+    mark('mobility', 'Mobility', PILLAR_COLORS.mobility.fill, mobTotals.mobilityQualifyingDays, prefs.bundle_mobility_target),
   ];
 
   const participating = marks.filter((m) => m.participates);
@@ -132,7 +119,6 @@ function mark(
   color: string,
   actual: number,
   target: number,
-  perDay: boolean,
 ): ScoreMark {
   return {
     key,
@@ -142,27 +128,5 @@ function mark(
     target,
     fraction: fillFraction(actual, target),
     participates: target > 0,
-    perDay,
-  };
-}
-
-// As `mark`, but only participates when a data source exists (HealthKit).
-function markWithData(
-  key: MarkKey,
-  label: string,
-  color: string,
-  actual: number,
-  target: number,
-  hasData: boolean,
-): ScoreMark {
-  return {
-    key,
-    label,
-    color,
-    actual,
-    target,
-    fraction: hasData ? fillFraction(actual, target) : 0,
-    participates: hasData && target > 0,
-    perDay: true,
   };
 }

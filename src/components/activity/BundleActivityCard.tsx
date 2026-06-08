@@ -241,7 +241,7 @@ function WeeklyBar({
           {label}
         </span>
         <span className="text-[11px] text-[#0d1f18]">
-          {total} / {weeklyTarget}
+          {total.toLocaleString()} / {weeklyTarget.toLocaleString()}
         </span>
       </div>
       <div className="mt-1">
