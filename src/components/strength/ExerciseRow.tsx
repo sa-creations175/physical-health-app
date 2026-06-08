@@ -59,16 +59,6 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          {/* Drag-handle affordance. The whole row is draggable (drag
-              handlers live on the parent in ActiveSession), so this is
-              purely visual — pointer-events off avoids stealing taps
-              from the header. */}
-          <span
-            aria-hidden="true"
-            className="text-card-mute text-[14px] leading-none select-none pointer-events-none"
-          >
-            ☰
-          </span>
           <h3 className="text-[15px] font-medium text-ink truncate">
             {exercise.name}
           </h3>

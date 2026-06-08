@@ -41,12 +41,14 @@ export default function ActiveSession() {
     [],
   );
 
-  // Optimistic local ordering for drag-and-drop. While the user is
-  // mid-drag (or just after drop, before Dexie's live query refires)
-  // we render from this override so the reorder feels instant. It's
-  // cleared once the live query catches up with the persisted order.
+  // Optimistic local ordering for the reorder controls. After an arrow move
+  // we render from this override so the reorder feels instant; it's cleared
+  // once the live query catches up with the persisted order.
   const [orderOverride, setOrderOverride] = useState<string[] | null>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  // Reorder mode: exercises collapse to compact name-only rows with up/down
+  // arrows (replaces the old iOS-unfriendly drag-and-drop). Sets are hidden
+  // while reordering and expand back on exit.
+  const [reordering, setReordering] = useState(false);
 
   // Clear the override as soon as the live query's persisted order
   // matches it — at that point the live data IS the new truth and the
@@ -69,39 +71,22 @@ export default function ActiveSession() {
     );
   }
 
-  function handleDragStart(e: React.DragEvent, id: string) {
-    setDraggingId(id);
-    // Firefox needs data on the transfer object or dragstart is a no-op.
-    e.dataTransfer.setData('text/plain', id);
-    e.dataTransfer.effectAllowed = 'move';
-  }
-
-  function handleDragOver(e: React.DragEvent, overId: string) {
-    if (!draggingId || draggingId === overId) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const currentOrder = orderedExercises.map((l) => l.id);
-    const fromIdx = currentOrder.indexOf(draggingId);
-    const toIdx = currentOrder.indexOf(overId);
-    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
-    const next = currentOrder.slice();
-    next.splice(fromIdx, 1);
-    next.splice(toIdx, 0, draggingId);
+  // Move one exercise up (dir -1) or down (dir +1) by swapping with its
+  // neighbor. Updates the optimistic override immediately, then persists the
+  // new order; on a write failure we drop the override so the UI snaps back to
+  // Dexie's truth.
+  function move(id: string, dir: -1 | 1) {
+    const order = orderedExercises.map((l) => l.id);
+    const from = order.indexOf(id);
+    const to = from + dir;
+    if (from === -1 || to < 0 || to >= order.length) return;
+    const next = order.slice();
+    [next[from], next[to]] = [next[to], next[from]];
     setOrderOverride(next);
-  }
-
-  async function handleDragEnd() {
-    const settled = orderOverride;
-    setDraggingId(null);
-    if (!settled) return;
-    try {
-      await reorderSessionExercises(settled, sessionExercises);
-    } catch (err) {
+    reorderSessionExercises(next, sessionExercises).catch((err) => {
       console.error('Failed to persist reorder:', err);
-      // Drop the optimistic override on failure so the UI snaps back
-      // to whatever Dexie actually has.
       setOrderOverride(null);
-    }
+    });
   }
 
   async function handleDiscard() {
@@ -126,61 +111,82 @@ export default function ActiveSession() {
         {dateLabel(new Date(session.date + 'T00:00:00'))}
       </p>
 
-      <div className="mt-4">
+      {/* Reorder toggle — only worth showing with more than one exercise. */}
+      {orderedExercises.length > 1 && (
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setReordering((r) => !r)}
+            aria-pressed={reordering}
+            className={`text-[12px] font-medium uppercase tracking-micro min-h-[36px] px-3 rounded-lg border ${
+              reordering
+                ? 'bg-green-deep text-white border-green-deep'
+                : 'bg-card text-green-mid border-card-edge'
+            }`}
+          >
+            {reordering ? '✓ Done' : '⇅ Reorder'}
+          </button>
+        </div>
+      )}
+
+      <div className={orderedExercises.length > 1 ? 'mt-2' : 'mt-4'}>
         {orderedExercises.length === 0 ? (
           <div className="bg-card border border-card-edge rounded-xl p-5 text-card-mute text-[13px] text-center">
             No exercises yet — tap below to add the first one.
           </div>
-        ) : (
-          orderedExercises.map((link) => (
-            <div
+        ) : reordering ? (
+          orderedExercises.map((link, i) => (
+            <CompactExerciseRow
               key={link.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, link.id)}
-              onDragOver={(e) => handleDragOver(e, link.id)}
-              onDragEnd={handleDragEnd}
-              onDrop={(e) => e.preventDefault()}
-              className={`transition-opacity ${
-                draggingId === link.id ? 'opacity-60' : ''
-              }`}
-            >
-              <ExerciseRow link={link} />
-            </div>
+              link={link}
+              isFirst={i === 0}
+              isLast={i === orderedExercises.length - 1}
+              onMoveUp={() => move(link.id, -1)}
+              onMoveDown={() => move(link.id, 1)}
+            />
           ))
+        ) : (
+          orderedExercises.map((link) => <ExerciseRow key={link.id} link={link} />)
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setPickerOpen(true)}
-        style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-        className="mt-3 w-full bg-card border border-card-edge text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
-      >
-        + Add Exercise
-      </button>
+      {/* In reorder mode the editing actions are hidden to keep the list short
+          and the whole order in view; everything returns on exit. */}
+      {!reordering && (
+        <>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+            className="mt-3 w-full bg-card border border-card-edge text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+          >
+            + Add Exercise
+          </button>
 
-      {sessionExercises.length > 0 && (
-        <button
-          type="button"
-          onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
-          className="mt-3 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
-        >
-          Finish Session
-        </button>
+          {sessionExercises.length > 0 && (
+            <button
+              type="button"
+              onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
+              className="mt-3 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+            >
+              Finish Session
+            </button>
+          )}
+
+          {/* Discard link — destructive but quiet. Sits below the primary
+              actions so a thumb resting near the save area can't trigger
+              it. Confirm dialog gates the actual delete. */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setConfirmDiscard(true)}
+              className="text-[12px] text-card-mute underline decoration-dotted underline-offset-4 min-h-[44px]"
+            >
+              Discard session
+            </button>
+          </div>
+        </>
       )}
-
-      {/* Discard link — destructive but quiet. Sits below the primary
-          actions so a thumb resting near the save area can't trigger
-          it. Confirm dialog gates the actual delete. */}
-      <div className="mt-6 text-center">
-        <button
-          type="button"
-          onClick={() => setConfirmDiscard(true)}
-          className="text-[12px] text-card-mute underline decoration-dotted underline-offset-4 min-h-[44px]"
-        >
-          Discard session
-        </button>
-      </div>
 
       {pickerOpen && (
         <ExercisePicker
@@ -217,6 +223,75 @@ function applyOrderOverride(
     return links;
   }
   return override.map((id) => byId.get(id) as SessionExercise);
+}
+
+// Compact, name-only row shown in reorder mode — sets hidden, with up/down
+// arrows (reliable on iOS where drag-and-drop was fiddly). A muted set count
+// stays for orientation without expanding the row.
+function CompactExerciseRow({
+  link,
+  isFirst,
+  isLast,
+  onMoveUp,
+  onMoveDown,
+}: {
+  link: SessionExercise;
+  isFirst: boolean;
+  isLast: boolean;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const exercise = useLiveQuery(
+    () => db.exercises.get(link.exercise_id),
+    [link.exercise_id],
+  );
+  const setCount =
+    useLiveQuery(
+      () => db.sets.where('session_exercise_id').equals(link.id).count(),
+      [link.id],
+      0,
+    ) ?? 0;
+
+  if (!exercise) return null;
+
+  const arrow =
+    'w-11 h-11 flex items-center justify-center rounded-lg border border-card-edge bg-charcoal text-ink text-[18px] leading-none disabled:opacity-30';
+
+  return (
+    <div
+      className="bg-card border border-card-edge rounded-xl px-3 py-2 mt-2 flex items-center justify-between gap-2"
+      style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+    >
+      <div className="min-w-0">
+        <h3 className="text-[15px] font-medium text-ink truncate">
+          {exercise.name}
+        </h3>
+        <p className="text-[11px] text-card-mute">
+          {setCount} set{setCount === 1 ? '' : 's'}
+        </p>
+      </div>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={onMoveUp}
+          disabled={isFirst}
+          aria-label={`Move ${exercise.name} up`}
+          className={arrow}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          onClick={onMoveDown}
+          disabled={isLast}
+          aria-label={`Move ${exercise.name} down`}
+          className={arrow}
+        >
+          ↓
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function DiscardConfirm({
