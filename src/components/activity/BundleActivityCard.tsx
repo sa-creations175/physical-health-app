@@ -113,6 +113,7 @@ export default function BundleActivityCard({
         complete: weekOnTrack,
         accent: pillar.text,
       }}
+      pillar={{ key: 'bundle', color: pillar.fill }}
     >
       {/* Weekly intensity grid */}
       <div className="grid grid-cols-7 gap-1.5">

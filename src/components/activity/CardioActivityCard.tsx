@@ -72,6 +72,7 @@ export default function CardioActivityCard({
         complete,
         accent: pillar.text,
       }}
+      pillar={{ key: 'cardio', color: pillar.fill }}
     >
       <div className="flex items-baseline justify-between">
         <span className="text-[12px] text-[#5f6b65]">

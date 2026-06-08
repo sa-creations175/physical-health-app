@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { todayISODate } from '../../lib/dateHelpers';
 import type { ActivityDot } from '../../lib/dotHelpers';
 import {
@@ -6,6 +6,8 @@ import {
   PILLAR_FILL_ALPHA,
   PILLAR_FILL_ALPHA_COMPLETE,
 } from '../../lib/pillarColors';
+import DayDetailSheet from './DayDetailSheet';
+import type { DetailPillar } from '../../lib/dayDetailHelpers';
 
 // Single-letter weekday initials, Sunday-first to match the app's week math.
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -26,6 +28,10 @@ export interface CardFill {
 // Collapsed: label + count badge + a 7-day intensity dot row + a chevron.
 // Expanded (controlled by the parent — one open at a time): the section's
 // full detail slides in below a hairline divider, in the same growing card.
+//
+// When `pillar` is supplied (Fitness pillars), each day-dot becomes tappable
+// and opens a per-pillar / per-day detail sheet. Cards without a pillar (the
+// Apple Watch row, Nutrition's delivery streak) keep decorative, toggling dots.
 export default function SharedActivityCard({
   label,
   badge,
@@ -35,6 +41,7 @@ export default function SharedActivityCard({
   icon,
   children,
   fill,
+  pillar,
 }: {
   label: string;
   badge: ReactNode;
@@ -44,13 +51,63 @@ export default function SharedActivityCard({
   icon?: ReactNode;
   children?: ReactNode;
   fill?: CardFill;
+  pillar?: { key: DetailPillar; color: string };
 }) {
   const today = todayISODate();
+  const [detailDate, setDetailDate] = useState<string | null>(null);
 
   const fillWidth = fill ? Math.round(fill.fraction * 100) : 0;
   const fillAlpha = fill?.complete
     ? PILLAR_FILL_ALPHA_COMPLETE
     : PILLAR_FILL_ALPHA;
+
+  const dotEls = dots.map((d) => {
+    const swatch = (
+      <span
+        className="rounded-full block"
+        style={{
+          width: 10,
+          height: 10,
+          background: d.color,
+          boxShadow: d.date === today ? '0 0 0 1.5px #1a6b4a' : undefined,
+        }}
+      />
+    );
+    if (!pillar) {
+      return (
+        <div key={d.date} className="flex justify-center">
+          {swatch}
+        </div>
+      );
+    }
+    return (
+      <button
+        key={d.date}
+        type="button"
+        onClick={() => setDetailDate(d.date)}
+        aria-label={`${label} detail for ${d.date}`}
+        className="flex justify-center py-1"
+      >
+        {swatch}
+      </button>
+    );
+  });
+
+  // The dots+initials block. For pillar cards the dots are their own buttons
+  // (open the sheet), so the block is a plain div. For non-pillar cards the
+  // whole block toggles expand, preserving the prior tap area.
+  const dotsBlock = (
+    <>
+      <div className="mt-2 grid grid-cols-7">{dotEls}</div>
+      <div className="mt-1 grid grid-cols-7">
+        {DAY_INITIALS.map((letter, i) => (
+          <span key={i} className="text-[8px] text-dim text-center">
+            {letter}
+          </span>
+        ))}
+      </div>
+    </>
+  );
 
   return (
     <div
@@ -58,9 +115,7 @@ export default function SharedActivityCard({
       // Transparent border by default so the box size matches whether or not
       // the card is complete (only the color changes on completion).
       style={{
-        border: `1.5px solid ${
-          fill?.complete ? fill.color : 'transparent'
-        }`,
+        border: `1.5px solid ${fill?.complete ? fill.color : 'transparent'}`,
       }}
     >
       {/* Progress fill — a soft left-to-right tint behind the content. */}
@@ -74,6 +129,7 @@ export default function SharedActivityCard({
           }}
         />
       )}
+
       <button
         type="button"
         onClick={onToggle}
@@ -104,30 +160,12 @@ export default function SharedActivityCard({
           </div>
         </div>
 
-        {/* 7-day dot row, full card width. Today's dot gets a green-mid ring. */}
-        <div className="mt-2 grid grid-cols-7">
-          {dots.map((d) => (
-            <div key={d.date} className="flex justify-center">
-              <span
-                className="rounded-full block"
-                style={{
-                  width: 10,
-                  height: 10,
-                  background: d.color,
-                  boxShadow: d.date === today ? '0 0 0 1.5px #1a6b4a' : undefined,
-                }}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-1 grid grid-cols-7">
-          {DAY_INITIALS.map((letter, i) => (
-            <span key={i} className="text-[8px] text-dim text-center">
-              {letter}
-            </span>
-          ))}
-        </div>
+        {/* Non-pillar cards: dots live inside the toggle button (decorative). */}
+        {!pillar && dotsBlock}
       </button>
+
+      {/* Pillar cards: tappable dots sit outside the toggle button. */}
+      {pillar && <div className="relative">{dotsBlock}</div>}
 
       {expanded && children && (
         <div
@@ -136,6 +174,15 @@ export default function SharedActivityCard({
         >
           {children}
         </div>
+      )}
+
+      {pillar && detailDate && (
+        <DayDetailSheet
+          pillar={pillar.key}
+          color={pillar.color}
+          date={detailDate}
+          onClose={() => setDetailDate(null)}
+        />
       )}
     </div>
   );

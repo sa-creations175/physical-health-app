@@ -79,6 +79,7 @@ export default function LiftingActivityCard({
         complete,
         accent: pillar.text,
       }}
+      pillar={{ key: type, color: pillar.fill }}
     >
       <p className="text-[12px] text-[#5f6b65]">
         {summary?.lastSession

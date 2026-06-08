@@ -73,6 +73,7 @@ export default function MobilityActivityCard({
         complete: met,
         accent: pillar.text,
       }}
+      pillar={{ key: 'mobility', color: pillar.fill }}
     >
       <MobilityRow
         minutes={todayMinutes}
