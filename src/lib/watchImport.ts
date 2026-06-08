@@ -27,12 +27,20 @@ export const LAST_IMPORT_KEY = 'ph_last_watch_import';
 // already filed it).
 const CARDIO_DUPLICATE_WINDOW_MS = 30 * 60 * 1000;
 
-// HKWorkoutActivityType identifiers that map to mobility/flexibility.
+// HKWorkoutActivityType identifiers that map to mobility/flexibility. These are
+// the exact strings the capacitor-health plugin emits (HealthKit raw → string).
+// NB: 'stretchingCooldown' is NOT one of them — Apple's stretch/cooldown types
+// surface as 'flexibility' (62) and 'cooldown' (80), which is why Watch mobility
+// previously never populated the mobility row.
 const MOBILITY_TYPES = new Set([
   'yoga',
-  'stretchingCooldown',
+  'flexibility',
+  'cooldown',
   'mindAndBody',
   'pilates',
+  'preparationAndRecovery',
+  'taiChi',
+  'barre',
 ]);
 
 export type WatchCategory = 'strength' | 'bundle' | 'cardio' | 'mobility';

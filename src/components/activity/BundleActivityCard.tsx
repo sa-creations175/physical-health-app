@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
+import { useToast } from '../ui/Toast';
 import SharedActivityCard from './SharedActivityCard';
 import { BundleIcon } from './activityIcons';
 import { ProgressBar } from '../ui/primitives';
@@ -50,7 +51,16 @@ export default function BundleActivityCard({
 }) {
   const rows = useLiveQuery(() => db.bundle_logs.toArray(), [], []);
   const prefs = useLiveQuery(() => getUserPreferences(), []);
+  const { showToast } = useToast();
   const today = todayISODate();
+
+  // Log a bundle field and confirm the auto-save with a toast. Bundle logging
+  // already persists on every tap; this just makes the save visible.
+  const logBundle = (
+    field: 'pushups' | 'ab_rolls' | 'calf_raises' | 'mobility_minutes',
+    value: number,
+    confirm: string,
+  ) => upsertBundleLog(today, field, value).then(() => showToast(confirm));
   const weekStart = startOfWeekISODate();
   const weekDates = Array.from({ length: 7 }, (_, i) => addDaysISO(weekStart, i));
 
@@ -163,25 +173,27 @@ export default function BundleActivityCard({
             label="Push-ups"
             value={todayLog?.pushups ?? 0}
             increment={pushupInc}
-            onChange={(next) => upsertBundleLog(today, 'pushups', next)}
+            onChange={(next) => logBundle('pushups', next, `Push-ups: ${next}`)}
           />
           <ExerciseLogRow
             label="Ab rolls"
             value={todayLog?.ab_rolls ?? 0}
             increment={abrollInc}
-            onChange={(next) => upsertBundleLog(today, 'ab_rolls', next)}
+            onChange={(next) => logBundle('ab_rolls', next, `Ab rolls: ${next}`)}
           />
           <ExerciseLogRow
             label="Calf raises"
             value={todayLog?.calf_raises ?? 0}
             increment={calfInc}
-            onChange={(next) => upsertBundleLog(today, 'calf_raises', next)}
+            onChange={(next) => logBundle('calf_raises', next, `Calf raises: ${next}`)}
           />
           <MobilityRow
             minutes={todayLog?.mobility_minutes ?? 0}
             minMinutes={mobilityMin}
             links={links}
-            onChange={(next) => upsertBundleLog(today, 'mobility_minutes', next)}
+            onChange={(next) =>
+              logBundle('mobility_minutes', next, `Mobility: ${next} min`)
+            }
             onAddLink={(label, url) => {
               const next: MobilityLink[] = [
                 ...links,

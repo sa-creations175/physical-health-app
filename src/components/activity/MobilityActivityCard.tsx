@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
+import { useToast } from '../ui/Toast';
 import SharedActivityCard from './SharedActivityCard';
 import { MobilityIcon } from './activityIcons';
 import { MobilityRow } from './bundleLogging';
@@ -31,6 +32,7 @@ export default function MobilityActivityCard({
 }) {
   const rows = useLiveQuery(() => db.bundle_logs.toArray(), [], []);
   const prefs = useLiveQuery(() => getUserPreferences(), []);
+  const { showToast } = useToast();
   const today = todayISODate();
 
   const minMinutes =
@@ -68,7 +70,11 @@ export default function MobilityActivityCard({
         minutes={todayMinutes}
         minMinutes={minMinutes}
         links={links}
-        onChange={(next) => upsertBundleLog(today, 'mobility_minutes', next)}
+        onChange={(next) =>
+          upsertBundleLog(today, 'mobility_minutes', next).then(() =>
+            showToast(`Mobility: ${next} min`),
+          )
+        }
         onAddLink={(label, url) => {
           const next: MobilityLink[] = [
             ...links,

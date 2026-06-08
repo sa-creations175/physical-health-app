@@ -55,7 +55,10 @@ function FitnessHeader() {
     <header
       style={{
         marginTop: 'calc(-1 * env(safe-area-inset-top))',
-        paddingTop: 'calc(env(safe-area-inset-top) + 2rem)',
+        // Extra top clearance vs. the Home header: the small "Fitness" eyebrow
+        // label sits right at the top edge, so it needs more room below the
+        // notch / Dynamic Island than Home's larger first line.
+        paddingTop: 'calc(env(safe-area-inset-top) + 2.75rem)',
         background: '#0f3d2e',
       }}
       className="relative overflow-hidden px-5 pb-5 flex items-start justify-between gap-3"

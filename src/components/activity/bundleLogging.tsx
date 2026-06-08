@@ -204,6 +204,15 @@ export function MobilityRow({
   );
 }
 
+// Always-present default: a YouTube *search* (not a fixed video) so results
+// stay fresh. Rendered above the user's own links and can't be deleted.
+const DEFAULT_MOBILITY_SEARCH = {
+  label: '5-min mobility & stretch (YouTube)',
+  url: `https://www.youtube.com/results?search_query=${encodeURIComponent(
+    "5 minute men's mobility flexibility stretch",
+  )}`,
+};
+
 function MobilityLinks({
   links,
   onAdd,
@@ -257,6 +266,18 @@ function MobilityLinks({
       </button>
 
       <div className="mt-1.5 space-y-1.5">
+        {/* Default search link — always available, not user-deletable. */}
+        <button
+          type="button"
+          onClick={() => window.open(DEFAULT_MOBILITY_SEARCH.url, '_blank')}
+          className="w-full flex items-center justify-between gap-2 bg-[#eef1ef] rounded-md px-3 py-2 text-left min-h-[40px]"
+        >
+          <span className="text-[13px] text-ink truncate">
+            🔎 {DEFAULT_MOBILITY_SEARCH.label}
+          </span>
+          <ExternalLinkIcon />
+        </button>
+
         {links.map((link) => (
           <div key={link.id} className="flex items-center gap-2">
             <button
