@@ -292,6 +292,58 @@ export async function getDraftSessionByType(
   return { sessionId: draft.id, created_at: draft.created_at };
 }
 
+// Full detail for every unfinished (feel_rating null) strength session,
+// newest first — including each exercise and its sets so the stale-session
+// surface on Log Session can SHOW the contents before the user decides to
+// resume or discard. Heavier than getDraftSessionByType (which is just the
+// badge), so it's only called where the contents are actually rendered.
+export interface DraftExerciseDetail {
+  name: string;
+  sets: SetEntry[];
+}
+export interface DraftSessionDetail {
+  sessionId: string;
+  type: 'upper' | 'lower' | 'full_body';
+  date: string;
+  created_at: string;
+  exercises: DraftExerciseDetail[];
+}
+
+export async function getDraftSessions(): Promise<DraftSessionDetail[]> {
+  const drafts = (await db.sessions.toArray()).filter(
+    (s) =>
+      s.feel_rating === null &&
+      (s.type === 'upper' || s.type === 'lower' || s.type === 'full_body'),
+  );
+  if (drafts.length === 0) return [];
+
+  const exName = new Map((await db.exercises.toArray()).map((e) => [e.id, e.name]));
+  const out: DraftSessionDetail[] = [];
+  for (const s of drafts) {
+    const links = (
+      await db.session_exercises.where('session_id').equals(s.id).toArray()
+    ).sort((a, b) => a.order_index - b.order_index);
+    const exercises: DraftExerciseDetail[] = [];
+    for (const l of links) {
+      const sets = await db.sets
+        .where('session_exercise_id')
+        .equals(l.id)
+        .sortBy('created_at');
+      exercises.push({ name: exName.get(l.exercise_id) ?? '—', sets });
+    }
+    out.push({
+      sessionId: s.id,
+      // Narrowed by the filter above; cast past SessionType's 'cardio' member.
+      type: s.type as 'upper' | 'lower' | 'full_body',
+      date: s.date,
+      created_at: s.created_at,
+      exercises,
+    });
+  }
+  out.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  return out;
+}
+
 // Hard-delete a draft session and everything underneath it. Order:
 // sets → session_exercises → session, so a partial failure can't leave
 // dangling children that getDraftSessionByType would resurface. Used by

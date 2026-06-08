@@ -5,10 +5,11 @@ import { db } from '../db/database';
 import ExerciseRow from '../components/strength/ExerciseRow';
 import ExercisePicker from '../components/strength/ExercisePicker';
 import { SectionLabel } from '../components/ui/primitives';
-import { dateLabel } from '../lib/dateHelpers';
+import DateBlock from '../components/ui/DateBlock';
 import {
   discardSession,
   reorderSessionExercises,
+  updateSessionDate,
 } from '../lib/strengthHelpers';
 import type { SessionExercise } from '../db/types';
 
@@ -107,9 +108,16 @@ export default function ActiveSession() {
       <h1 className="text-[22px] font-medium text-ink mt-1">
         {TYPE_LABEL[session.type] ?? session.type}
       </h1>
-      <p className="text-[12px] text-ink-soft mt-1">
-        {dateLabel(new Date(session.date + 'T00:00:00'))}
-      </p>
+      {/* Editable session date — retro-logging or correcting a draft started
+          on the wrong day. Persists immediately via updateSessionDate. */}
+      <div className="mt-2">
+        <DateBlock
+          value={session.date}
+          onChange={(d) => updateSessionDate(session.id, d)}
+          label="Session date"
+          ariaLabel="Session date"
+        />
+      </div>
 
       {/* Reorder toggle — only worth showing with more than one exercise. */}
       {orderedExercises.length > 1 && (
