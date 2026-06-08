@@ -6,8 +6,9 @@ import { getLiftingSummary, type LiftingType } from '../../lib/dashboardQueries'
 import { getUserPreferences } from '../../lib/userPreferences';
 import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
 import { liftingDots } from '../../lib/dotHelpers';
-import { currentWeekISODates } from '../../lib/dateHelpers';
+import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { pillarCallout } from '../../lib/pillarNarrative';
 
 const TARGET_FIELD: Record<LiftingType, 'lifting_target_lower' | 'lifting_target_upper' | 'lifting_target_full_body'> = {
   lower: 'lifting_target_lower',
@@ -44,6 +45,15 @@ export default function LiftingActivityCard({
   const dots = liftingDots(weekDots);
 
   const pillar = PILLAR_COLORS[type];
+  // Full Body has no narrative bank (not in the June 5 design) — it stays
+  // silent. Lower/Upper get a hype callout when their target is active.
+  const callout =
+    (type === 'lower' || type === 'upper') && target > 0
+      ? {
+          text: pillarCallout(type, fillFraction(count, target), todayISODate()),
+          color: pillar.fill,
+        }
+      : undefined;
   const badge =
     target === 0 ? (
       <>
@@ -80,6 +90,7 @@ export default function LiftingActivityCard({
         accent: pillar.text,
       }}
       pillar={{ key: type, color: pillar.fill }}
+      callout={callout}
     >
       <p className="text-[12px] text-[#5f6b65]">
         {summary?.lastSession

@@ -11,8 +11,9 @@ import {
 import { cardioDots } from '../../lib/dotHelpers';
 import { db } from '../../db/database';
 import { LOCAL_USER_ID } from '../../lib/constants';
-import { startOfWeekISODate } from '../../lib/dateHelpers';
+import { startOfWeekISODate, todayISODate } from '../../lib/dateHelpers';
 import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { pillarCallout } from '../../lib/pillarNarrative';
 
 export default function CardioActivityCard({
   expanded,
@@ -52,6 +53,13 @@ export default function CardioActivityCard({
     }, [], 0) ?? 0;
 
   const pillar = PILLAR_COLORS.cardio;
+  const callout =
+    target > 0
+      ? {
+          text: pillarCallout('cardio', fillFraction(qualifying, target), todayISODate()),
+          color: pillar.fill,
+        }
+      : undefined;
 
   return (
     <SharedActivityCard
@@ -73,6 +81,7 @@ export default function CardioActivityCard({
         accent: pillar.text,
       }}
       pillar={{ key: 'cardio', color: pillar.fill }}
+      callout={callout}
     >
       <div className="flex items-baseline justify-between">
         <span className="text-[12px] text-[#5f6b65]">

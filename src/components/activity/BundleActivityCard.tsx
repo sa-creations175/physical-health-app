@@ -21,6 +21,7 @@ import {
 } from '../../lib/bundleHelpers';
 import { bundleDots } from '../../lib/dotHelpers';
 import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { pillarCallout } from '../../lib/pillarNarrative';
 import {
   startOfWeekISODate,
   addDaysISO,
@@ -90,6 +91,17 @@ export default function BundleActivityCard({
   const qualifyingDays = weekLogs.filter(isDayQualifying).length;
   const weekOnTrack = bundleTarget > 0 && qualifyingDays >= bundleTarget;
   const pillar = PILLAR_COLORS.bundle;
+  const callout =
+    bundleTarget > 0
+      ? {
+          text: pillarCallout(
+            'bundle',
+            fillFraction(qualifyingDays, bundleTarget),
+            today,
+          ),
+          color: pillar.fill,
+        }
+      : undefined;
   const dots = bundleDots(byDate, prefs);
   const links = parseMobilityLinks(prefs?.bundle_mobility_youtube_links);
   const todayLog = byDate.get(today) ?? null;
@@ -114,6 +126,7 @@ export default function BundleActivityCard({
         accent: pillar.text,
       }}
       pillar={{ key: 'bundle', color: pillar.fill }}
+      callout={callout}
     >
       {/* Weekly intensity grid */}
       <div className="grid grid-cols-7 gap-1.5">

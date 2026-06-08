@@ -42,6 +42,7 @@ export default function SharedActivityCard({
   children,
   fill,
   pillar,
+  callout,
 }: {
   label: string;
   badge: ReactNode;
@@ -52,6 +53,8 @@ export default function SharedActivityCard({
   children?: ReactNode;
   fill?: CardFill;
   pillar?: { key: DetailPillar; color: string };
+  // Always-present hype callout under the card, left-border in pillar color.
+  callout?: { text: string; color: string };
 }) {
   const today = todayISODate();
   const [detailDate, setDetailDate] = useState<string | null>(null);
@@ -174,6 +177,15 @@ export default function SharedActivityCard({
         >
           {children}
         </div>
+      )}
+
+      {callout && (
+        <p
+          className="relative mt-2 pl-2 text-[11px] leading-snug text-ink-soft"
+          style={{ borderLeft: `2px solid ${callout.color}` }}
+        >
+          {callout.text}
+        </p>
       )}
 
       {pillar && detailDate && (

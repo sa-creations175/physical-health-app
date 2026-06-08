@@ -17,6 +17,7 @@ import {
 } from '../../lib/bundleHelpers';
 import { mobilityDots } from '../../lib/dotHelpers';
 import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { pillarCallout } from '../../lib/pillarNarrative';
 import {
   startOfWeekISODate,
   addDaysISO,
@@ -53,6 +54,17 @@ export default function MobilityActivityCard({
   const todayMinutes = byDate.get(today)?.mobility_minutes ?? 0;
   const met = target > 0 && totals.mobilityQualifyingDays >= target;
   const pillar = PILLAR_COLORS.mobility;
+  const callout =
+    target > 0
+      ? {
+          text: pillarCallout(
+            'mobility',
+            fillFraction(totals.mobilityQualifyingDays, target),
+            today,
+          ),
+          color: pillar.fill,
+        }
+      : undefined;
 
   return (
     <SharedActivityCard
@@ -74,6 +86,7 @@ export default function MobilityActivityCard({
         accent: pillar.text,
       }}
       pillar={{ key: 'mobility', color: pillar.fill }}
+      callout={callout}
     >
       <MobilityRow
         minutes={todayMinutes}

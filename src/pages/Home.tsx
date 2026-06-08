@@ -5,8 +5,13 @@ import { DumbbellIcon, LeafIcon, HeartPulseIcon } from '../components/dashboard/
 import { computeStreak } from '../lib/dashboardQueries';
 import { getUserPreferences } from '../lib/userPreferences';
 import { getFitnessScore, type ScoreMark } from '../lib/fitnessScore';
+import { summaryNarrative } from '../lib/pillarNarrative';
 import { computeDeliveryStreak, getDeliveryWeek } from '../lib/deliveryHelpers';
-import { startOfWeekISODate, currentWeekISODates } from '../lib/dateHelpers';
+import {
+  startOfWeekISODate,
+  currentWeekISODates,
+  todayISODate,
+} from '../lib/dateHelpers';
 import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../lib/defaults';
 
 export default function Home() {
@@ -107,6 +112,19 @@ function FitnessSummary() {
   const bars = score?.marks.filter((m) => m.participates) ?? [];
   const strip = score?.strip;
 
+  // Four-state hype summary (win + nudge / all-clear / early-days / all-low).
+  const narrative = score
+    ? summaryNarrative(
+        score.marks.map((m) => ({
+          key: m.key,
+          fraction: m.fraction,
+          participates: m.participates,
+        })),
+        score.daysElapsed,
+        todayISODate(),
+      )
+    : null;
+
   return (
     <Link to="/fitness" className="block bg-card shadow-card rounded-2xl p-4">
       <div className="flex items-center justify-between">
@@ -126,6 +144,27 @@ function FitnessSummary() {
           )}
         </div>
       </div>
+
+      {narrative && (
+        <div className="mt-3 space-y-0.5">
+          {narrative.message && (
+            <p className="text-[12px] text-ink leading-snug">{narrative.message}</p>
+          )}
+          {narrative.win && (
+            <p className="text-[12px] text-ink leading-snug">{narrative.win}</p>
+          )}
+          {narrative.nudge && (
+            <p className="text-[12px] text-ink-soft leading-snug">
+              → {narrative.nudge}
+            </p>
+          )}
+          {narrative.allClear && (
+            <p className="text-[12px] text-green-mid leading-snug">
+              {narrative.allClear}
+            </p>
+          )}
+        </div>
+      )}
 
       {strip && (
         <div
