@@ -85,6 +85,41 @@ export const DEFAULT_DASHBOARD_SECTION_CONFIG: Record<
   apple_watch: { label: 'Apple Watch', visible: true },
 };
 
+// Fitness page card visibility (Dexie v15). The Fitness page lets the user
+// show/hide each activity card; the choice persists on user_preferences as a
+// JSON string (Dexie columns are scalar), parsed via useFitnessCardConfig.
+// Keys mirror the card order rendered in src/pages/Fitness.tsx. Full Body
+// defaults hidden — it's the optional, usually target-0 lifting card.
+export const FITNESS_CARD_KEYS = [
+  'bundle',
+  'cardio',
+  'lower',
+  'upper',
+  'full_body',
+  'mobility',
+  'watch',
+] as const;
+
+export type FitnessCardKey = (typeof FITNESS_CARD_KEYS)[number];
+
+export interface FitnessCardMeta {
+  label: string;
+  visible: boolean;
+}
+
+export const DEFAULT_FITNESS_CARD_CONFIG: Record<
+  FitnessCardKey,
+  FitnessCardMeta
+> = {
+  bundle: { label: 'Daily Bundle', visible: true },
+  cardio: { label: 'Cardio', visible: true },
+  lower: { label: 'Lower Body', visible: true },
+  upper: { label: 'Upper Body', visible: true },
+  full_body: { label: 'Full Body', visible: false },
+  mobility: { label: 'Mobility', visible: true },
+  watch: { label: 'Apple Watch', visible: true },
+};
+
 // Seeded on first launch in Build 2.1. Order matches the picker's
 // alphabetical view; "most-used chips" override this once history exists.
 export const STARTER_CARDIO_TYPES = [

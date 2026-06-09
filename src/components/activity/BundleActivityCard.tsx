@@ -4,20 +4,15 @@ import { useToast } from '../ui/Toast';
 import SharedActivityCard from './SharedActivityCard';
 import { BundleIcon } from './activityIcons';
 import { ProgressBar } from '../ui/primitives';
-import { ExerciseLogRow, MobilityRow } from './bundleLogging';
-import {
-  getUserPreferences,
-  updateUserPreferences,
-} from '../../lib/userPreferences';
+import { ExerciseLogRow } from './bundleLogging';
+import { getUserPreferences } from '../../lib/userPreferences';
 import { DEFAULT_BUNDLE_CONFIG } from '../../lib/defaults';
 import {
   isDayQualifying,
   getDayIntensity,
   getWeeklyTotals,
   upsertBundleLog,
-  parseMobilityLinks,
   type DayIntensity,
-  type MobilityLink,
 } from '../../lib/bundleHelpers';
 import { bundleDots } from '../../lib/dotHelpers';
 import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
@@ -103,7 +98,6 @@ export default function BundleActivityCard({
         }
       : undefined;
   const dots = bundleDots(byDate, prefs);
-  const links = parseMobilityLinks(prefs?.bundle_mobility_youtube_links);
   const todayLog = byDate.get(today) ?? null;
 
   return (
@@ -208,29 +202,6 @@ export default function BundleActivityCard({
             value={todayLog?.calf_raises ?? 0}
             increment={calfInc}
             onChange={(next) => logBundle('calf_raises', next, `Calf raises: ${next}`)}
-          />
-          <MobilityRow
-            minutes={todayLog?.mobility_minutes ?? 0}
-            minMinutes={mobilityMin}
-            links={links}
-            onChange={(next) =>
-              logBundle('mobility_minutes', next, `Mobility: ${next} min`)
-            }
-            onAddLink={(label, url) => {
-              const next: MobilityLink[] = [
-                ...links,
-                { id: Date.now().toString(), label, url },
-              ];
-              return updateUserPreferences({
-                bundle_mobility_youtube_links: JSON.stringify(next),
-              });
-            }}
-            onDeleteLink={(id) => {
-              const next = links.filter((l) => l.id !== id);
-              return updateUserPreferences({
-                bundle_mobility_youtube_links: JSON.stringify(next),
-              });
-            }}
           />
         </div>
       </div>

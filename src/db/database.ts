@@ -6,6 +6,7 @@ import {
   DEFAULT_MOBILITY_LINKS_JSON,
   DASHBOARD_SECTION_KEYS,
   DEFAULT_DASHBOARD_SECTION_CONFIG,
+  DEFAULT_FITNESS_CARD_CONFIG,
 } from '../lib/defaults';
 import type {
   Session,
@@ -560,6 +561,41 @@ export class PhysicalHealthDB extends Dexie {
               }
             },
           );
+      });
+
+    // v15 (Build 2.12): Fitness page card show/hide. One new user_preferences
+    // column (fitness_card_config) stores per-card { label, visible } as a JSON
+    // string (Dexie columns are scalar). Index list unchanged; the upgrade hook
+    // seeds the string on the existing single prefs row. Fresh installs get it
+    // via buildDefaultPreferences. Full Body is hidden by default.
+    this.version(15)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify((row: { fitness_card_config?: string }) => {
+            if (row.fitness_card_config === undefined) {
+              row.fitness_card_config = JSON.stringify(
+                DEFAULT_FITNESS_CARD_CONFIG,
+              );
+            }
+          });
       });
   }
 }

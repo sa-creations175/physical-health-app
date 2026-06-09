@@ -14,6 +14,7 @@ import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const BAR_AREA_H = 56; // px — tallest bar; others scale to the week's max
 const STUB_H = 4; // px — faint grey stub for empty / future days
+const SCALE_LABEL_H = 12; // px — headroom above the bars for the max-value cap
 
 const ORANGE = '#e0742f';
 const STUB_GREY = '#e8ebe8';
@@ -50,8 +51,22 @@ export default function CaloriesBreakdownCard() {
         Calories Burned
       </p>
 
-      {/* Bars — one per day, scaled to the week's max. */}
-      <div className="mt-3 flex items-end gap-1.5" style={{ height: BAR_AREA_H }}>
+      {/* Bars — one per day, scaled to the week's max. A labeled hairline caps
+          the top of the tallest bar so the scale has a concrete number; each
+          bar also carries its exact value as a hover/long-press title. */}
+      <div className="mt-3 relative" style={{ paddingTop: SCALE_LABEL_H }}>
+        {perDay && max > 1 && (
+          <div className="absolute inset-x-0 top-0 flex items-center gap-1.5">
+            <span
+              className="text-[9px] leading-none whitespace-nowrap"
+              style={{ color: '#a8b3ad' }}
+            >
+              {max.toLocaleString()} cal
+            </span>
+            <div className="flex-1" style={{ borderTop: '0.5px dashed #e0e4e0' }} />
+          </div>
+        )}
+        <div className="flex items-end gap-1.5" style={{ height: BAR_AREA_H }}>
         {weekDates.map((date, i) => {
           const value = perDay?.[i] ?? 0;
           const isFuture = date > today;
@@ -76,6 +91,7 @@ export default function CaloriesBreakdownCard() {
             </div>
           );
         })}
+        </div>
       </div>
 
       {/* Day labels — future days muted. */}

@@ -11,6 +11,7 @@ import {
   DEFAULT_MOBILITY_LINKS_JSON,
   DASHBOARD_SECTION_KEYS,
   DEFAULT_DASHBOARD_SECTION_CONFIG,
+  DEFAULT_FITNESS_CARD_CONFIG,
 } from './defaults';
 import type { UserPreferences } from '../db/types';
 
@@ -69,6 +70,7 @@ function buildDefaultPreferences(): UserPreferences {
     daily_exercise_minutes_target: DEFAULT_DAILY_ACTIVITY_TARGETS.exercise_minutes,
     dashboard_section_order: JSON.stringify(DASHBOARD_SECTION_KEYS),
     dashboard_section_config: JSON.stringify(DEFAULT_DASHBOARD_SECTION_CONFIG),
+    fitness_card_config: JSON.stringify(DEFAULT_FITNESS_CARD_CONFIG),
     created_at: now,
     updated_at: now,
   };

@@ -195,6 +195,10 @@ export interface UserPreferences {
   // order: string[] of section keys; config: Record<key, {label, visible}>.
   dashboard_section_order: string;
   dashboard_section_config: string;
+  // Fitness page card visibility — added v2.12 (Dexie v15). JSON string of
+  // Record<FitnessCardKey, { label, visible }>; parsed by useFitnessCardConfig.
+  // Lets the user show/hide each Fitness card (Full Body hidden by default).
+  fitness_card_config: string;
   created_at: string;
   updated_at: string;
 }
