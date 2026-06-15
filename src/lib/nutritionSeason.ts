@@ -26,7 +26,10 @@ export type FocusAnswer =
 export interface GoalAnswers {
   look: LookAnswer;
   timeline: TimelineAnswer;
-  focus: FocusAnswer;
+  // Multi-select — the user can have several focus areas at once. Directional
+  // only: recommendSeason() keys off look + timeline, so the array is stored
+  // for context but doesn't change the macro math.
+  focus: FocusAnswer[];
 }
 
 export const LOOK_OPTIONS: { value: LookAnswer; label: string }[] = [

@@ -75,7 +75,8 @@ export default function NutritionSetupModal({
   // Page 3 — goal questions
   const [look, setLook] = useState<LookAnswer | null>(null);
   const [timeline, setTimeline] = useState<TimelineAnswer | null>(null);
-  const [focus, setFocus] = useState<FocusAnswer | null>(null);
+  // Multi-select — several focus areas can be active at once.
+  const [focus, setFocus] = useState<FocusAnswer[]>([]);
 
   // Pre-fill from the latest saved profile so re-running (Change season) is fast.
   useEffect(() => {
@@ -187,7 +188,7 @@ export default function NutritionSetupModal({
                   });
                   await startSeason({
                     season_type: seasonType,
-                    goal_answers: { look: look!, timeline: timeline!, focus: focus! },
+                    goal_answers: { look: look!, timeline: timeline!, focus },
                     targets,
                   });
                   showToast(`${seasonLabel(seasonType)} season started`);
@@ -638,8 +639,8 @@ function GoalStep(props: {
   setLook: (v: LookAnswer) => void;
   timeline: TimelineAnswer | null;
   setTimeline: (v: TimelineAnswer) => void;
-  focus: FocusAnswer | null;
-  setFocus: (v: FocusAnswer) => void;
+  focus: FocusAnswer[];
+  setFocus: (v: FocusAnswer[]) => void;
   weightLbs: number;
   bfNum: number;
   heightInches: number;
@@ -665,7 +666,7 @@ function GoalStep(props: {
     void getActiveSeason().then(setCurrent);
   }, []);
 
-  const ready = props.look && props.timeline && props.focus;
+  const ready = props.look && props.timeline && props.focus.length > 0;
 
   async function buildPreview() {
     if (!ready) return;
@@ -674,7 +675,7 @@ function GoalStep(props: {
       const seasonType = recommendSeason({
         look: props.look!,
         timeline: props.timeline!,
-        focus: props.focus!,
+        focus: props.focus,
       });
       const tdee = await computeTDEE(
         props.sex,
@@ -716,12 +717,17 @@ function GoalStep(props: {
           setPreview(null);
         }}
       />
-      <QuestionGroup
+      <MultiQuestionGroup
         question="Where are you most focused right now?"
+        hint="Choose any that apply"
         options={FOCUS_OPTIONS}
-        value={props.focus}
-        onChange={(v) => {
-          props.setFocus(v);
+        values={props.focus}
+        onToggle={(v) => {
+          props.setFocus(
+            props.focus.includes(v)
+              ? props.focus.filter((f) => f !== v)
+              : [...props.focus, v],
+          );
           setPreview(null);
         }}
       />
@@ -807,6 +813,51 @@ function QuestionGroup<T extends string>({
             {o.label}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Multi-select variant — any number of options can be highlighted at once.
+// Tapping a selected option deselects it. Used for focus areas, which aren't
+// mutually exclusive (unlike look + timeline).
+function MultiQuestionGroup<T extends string>({
+  question,
+  hint,
+  options,
+  values,
+  onToggle,
+}: {
+  question: string;
+  hint: string;
+  options: { value: T; label: string }[];
+  values: T[];
+  onToggle: (v: T) => void;
+}) {
+  return (
+    <div>
+      <p className="text-[13px] font-medium text-ink">{question}</p>
+      <p className="text-[11px] text-card-mute mb-2">{hint}</p>
+      <div className="space-y-1.5">
+        {options.map((o) => {
+          const selected = values.includes(o.value);
+          return (
+            <button
+              key={o.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onToggle(o.value)}
+              className={`w-full text-left rounded-xl px-3.5 py-3 text-[14px] border min-h-[48px] flex items-center justify-between ${
+                selected
+                  ? 'border-green-deep bg-[#edf7f2] text-ink font-medium'
+                  : 'border-card-edge bg-card text-ink-body'
+              }`}
+            >
+              <span>{o.label}</span>
+              {selected && <span className="text-green-deep text-[15px]">✓</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
