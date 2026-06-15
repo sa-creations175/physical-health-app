@@ -33,6 +33,21 @@ const TABLES: { table: Table<unknown, string>; ph: string }[] = [
 
 const INITIAL_PUSH_FLAG = 'ph_cloud_initial_push_done';
 
+// One-time backfill for the Phase 3a nutrition tables. The initial bulk push
+// (initialPushIfEmpty) is gated on the cloud being empty, and its flag was set
+// long ago — so when the Phase 3a tables shipped, existing local rows had no
+// path to the cloud except per-write write-through. While the new tables were
+// missing their anon GRANT, those write-throughs were silently rejected
+// (42501), leaving the cloud empty. This pushes any local Phase 3a rows up once
+// the grant is in place, so a device that still holds the data backfills the
+// cloud instead of losing it on the next clean rebuild.
+const PHASE3A_REPUSH_FLAG = 'ph_phase3a_repush_done';
+const PHASE3A_TABLES: { table: Table<unknown, string>; ph: string }[] = [
+  { table: db.body_stats, ph: 'ph_body_stats' },
+  { table: db.body_measurements, ph: 'ph_body_measurements' },
+  { table: db.nutrition_seasons, ph: 'ph_nutrition_seasons' },
+];
+
 // One-time: if the cloud has no sessions yet, push all local rows up so any
 // data logged before sync existed lands in the cloud. Skips (without marking
 // done) on any error — e.g. the migration hasn't been applied yet — so it
@@ -87,12 +102,31 @@ async function pullFromCloud(): Promise<void> {
   }
 }
 
+// Upsert any local Phase 3a rows to the cloud, exactly once. Uses upsert (by id)
+// so it's idempotent and safe to re-run. Bails WITHOUT setting the flag on any
+// error — e.g. the grant migration (006) hasn't been applied yet, so the upsert
+// still 42501s — so it retries on a later launch once the cloud accepts it.
+async function repushPhase3aIfNeeded(): Promise<void> {
+  if (!supabase) return;
+  if (localStorage.getItem(PHASE3A_REPUSH_FLAG)) return;
+
+  for (const { table, ph } of PHASE3A_TABLES) {
+    const rows = await table.toArray();
+    if (rows.length === 0) continue;
+    const { error } = await supabase.from(ph).upsert(rows);
+    if (error) return; // not yet writable (grant missing / unreachable) — retry next launch
+  }
+  // All rows pushed (or there were none to push) — mark done.
+  localStorage.setItem(PHASE3A_REPUSH_FLAG, '1');
+}
+
 // Called once at startup after Dexie is seeded/ready. No-ops without a client.
 export async function runCloudSync(): Promise<void> {
   if (!supabase) return;
   try {
     await initialPushIfEmpty();
     await pullFromCloud();
+    await repushPhase3aIfNeeded();
   } catch {
     /* sync is best-effort — startup must never depend on it */
   }
