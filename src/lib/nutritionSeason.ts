@@ -256,6 +256,172 @@ export function recommendationReasoning(
   return `Based on your goals, we recommend a ${m.label.toLowerCase()} — ${m.blurb}. That works out to about ${targets.daily_calories_target.toLocaleString()} calories a day with ${targets.protein_target_g}g protein, ${targets.carbs_target_g}g carbs, and ${targets.fat_target_g}g fat.`;
 }
 
+// ---- Recommendation explanation copy ----------------------------------------
+// "State the facts, pros and cons, what the research says" — inform fully,
+// never override the user's choice. Plain explanation of what each season's
+// math means, surfaced under the YOUR BASELINE / TDEE line.
+export const SEASON_EXPLANATION: Record<SeasonType, string> = {
+  cut_moderate:
+    "We're targeting a ~350 calorie daily deficit below your TDEE. At this pace, expect roughly 0.5–0.75 lbs of fat loss per week — slow enough to preserve muscle.",
+  cut_aggressive:
+    "We're targeting a ~500 calorie daily deficit. Faster fat loss (~1 lb/week) but higher risk of muscle loss — protein stays high to protect your gains.",
+  maintain:
+    'Eating at your TDEE — no surplus, no deficit. Goal is to hold your current composition while training hard.',
+  build_lean:
+    "We're adding ~250 calories above your TDEE. Slow, controlled muscle building with minimal fat gain.",
+  build_aggressive:
+    "We're adding ~450 calories above your TDEE. Faster muscle gain but expect some fat gain alongside it.",
+};
+
+// Trade-offs of the chosen season — always shown below the targets. Framed as
+// trade-offs, not warnings (the user's pick is never overridden).
+export const SEASON_PROS_CONS: Record<
+  SeasonType,
+  { pros: string[]; cons: string[] }
+> = {
+  cut_moderate: {
+    pros: [
+      'Steady fat loss without crashing energy',
+      'High protein preserves muscle through the cut',
+      'Sustainable pace — easy to stick with',
+    ],
+    cons: [
+      'Slower than an aggressive cut',
+      'Requires consistent tracking',
+      'Strength may dip slightly in a deficit',
+    ],
+  },
+  cut_aggressive: {
+    pros: [
+      'Fastest fat loss',
+      'Less total time spent dieting',
+      'Visible results sooner',
+    ],
+    cons: [
+      'Higher risk of muscle loss',
+      'Lower energy, harder training sessions',
+      'Hunger makes adherence tougher',
+    ],
+  },
+  maintain: {
+    pros: [
+      'Holds your hard-won composition',
+      'Full energy for training and recovery',
+      'No dieting stress or restriction',
+    ],
+    cons: [
+      'No active fat loss or muscle gain',
+      'Easy to drift without a clear target',
+      'Recomposition is slow at best',
+    ],
+  },
+  build_lean: {
+    pros: [
+      'Builds muscle with minimal fat gain',
+      'Strong training fuel without the bloat',
+      'Stays lean enough to skip a long cut later',
+    ],
+    cons: [
+      'Slower scale and size progress',
+      'Requires eating above maintenance consistently',
+      'Patience needed before size shows',
+    ],
+  },
+  build_aggressive: {
+    pros: [
+      'Fastest muscle and strength gain',
+      'Maximum fuel for heavy training',
+      'Big lifts feel easier with the surplus',
+    ],
+    cons: [
+      'Noticeable fat gain alongside the muscle',
+      'A cut will likely be needed afterward',
+      'Can add more fat than muscle you can actually build',
+    ],
+  },
+};
+
+// ---- Body-composition research guidance -------------------------------------
+// Conditional on the user's current BF% estimate. Returns null when no estimate
+// exists yet (the component then shows a gentle "complete your estimate" nudge
+// without blocking the rest of the screen).
+export interface BodyFatGuidance {
+  heading: string;
+  paragraphs: string[];
+  prosLabel: string;
+  pros: string[];
+  consLabel: string;
+  cons: string[];
+}
+
+export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
+  if (bf === null || bf <= 0) return null;
+
+  if (bf > 16) {
+    return {
+      heading: 'A note on your body composition',
+      paragraphs: [
+        'Research from sports scientists like Dr. Mike Israetel and Eric Helms suggests that above ~16% body fat, your body is less efficient at building muscle. Excess body fat impairs insulin sensitivity and hormone optimization — both of which affect how well your body partitions calories toward muscle vs fat storage.',
+        'Most evidence-based coaches recommend cutting to 12–14% body fat first, then transitioning to a lean bulk. You build more muscle per calorie in a leaner state.',
+      ],
+      prosLabel: 'Pros of cutting first',
+      pros: [
+        'Better muscle-building efficiency afterward',
+        'Improved insulin sensitivity',
+        'Hormones optimize',
+        "You'll look and feel better at a lower BF% baseline",
+      ],
+      consLabel: 'Cons of cutting first',
+      cons: [
+        'Slower path to "bigger"',
+        'Requires discipline',
+        'May feel like going backward if size is the goal',
+      ],
+    };
+  }
+
+  if (bf >= 12) {
+    return {
+      heading: "You're in the sweet spot",
+      paragraphs: [
+        "At your current body fat percentage, you're in the range where recomposition — losing fat and building muscle simultaneously — is genuinely achievable, especially with your training history. It's slower than a dedicated cut or bulk, but sustainable and effective.",
+        'If your goal is both leaner and more muscular, a lean build at a small surplus is well-supported by research at this body fat range.',
+      ],
+      prosLabel: 'Pros of recomp',
+      pros: [
+        'Simultaneous progress on both goals',
+        'No dramatic diet phases',
+        'Sustainable long-term',
+      ],
+      consLabel: 'Cons of recomp',
+      cons: [
+        'Slower than a dedicated cut or bulk',
+        'Requires patience',
+        'Harder to measure progress week-to-week',
+      ],
+    };
+  }
+
+  return {
+    heading: "You're already lean",
+    paragraphs: [
+      'Below 12% body fat, your body is primed for muscle building. Research consistently shows better muscle protein synthesis, improved testosterone levels, and superior calorie partitioning at lower body fat percentages.',
+      'A lean bulk is the evidence-based recommendation here — a small surplus maximizes muscle gain while keeping fat gain minimal.',
+    ],
+    prosLabel: 'Pros of lean bulk',
+    pros: [
+      'Best muscle-building environment',
+      'Hormones optimized',
+      'Efficient calorie partitioning',
+    ],
+    consLabel: 'Cons of lean bulk',
+    cons: [
+      'Requires consistent eating above maintenance',
+      'Some fat gain is normal and expected',
+    ],
+  };
+}
+
 // ---- Season read / write ----------------------------------------------------
 
 export async function getActiveSeason(): Promise<NutritionSeason | null> {

@@ -25,7 +25,9 @@ import {
   recommendSeason,
   computeTDEE,
   generateTargets,
-  recommendationReasoning,
+  SEASON_EXPLANATION,
+  SEASON_PROS_CONS,
+  bodyFatGuidance,
   seasonLabel,
   startSeason,
   getActiveSeason,
@@ -654,7 +656,7 @@ function GoalStep(props: {
   const [preview, setPreview] = useState<{
     targets: GeneratedTargets;
     seasonType: ReturnType<typeof recommendSeason>;
-    reasoning: string;
+    tdee: number;
     estimatedActivity: boolean;
     daysOfData: number;
   } | null>(null);
@@ -688,7 +690,7 @@ function GoalStep(props: {
       setPreview({
         targets,
         seasonType,
-        reasoning: recommendationReasoning(seasonType, targets),
+        tdee: tdee.tdee,
         estimatedActivity: tdee.estimatedActivity,
         daysOfData: tdee.daysOfData,
       });
@@ -743,28 +745,66 @@ function GoalStep(props: {
         </button>
       ) : (
         <div className="space-y-3">
-          <div className="bg-card border border-card-edge rounded-xl p-4">
-            <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
-              Recommended · {seasonLabel(preview.seasonType)}
-            </p>
-            <p className="mt-1.5 text-[13px] text-ink-body leading-snug">
-              {preview.reasoning}
-            </p>
-            {preview.estimatedActivity ? (
-              <p className="mt-2 text-[11px] text-card-mute leading-snug">
-                No Apple Watch active-calorie history yet, so this uses an
-                estimated activity level. It’ll personalize automatically once
-                Watch data builds up.
+          {/* Recommendation header + baseline / what we're doing / research */}
+          <div className="bg-card border border-card-edge rounded-xl p-4 space-y-4">
+            <Micro>Recommended · {seasonLabel(preview.seasonType)}</Micro>
+
+            {/* 1. Your baseline (TDEE) */}
+            <div>
+              <Micro>Your baseline</Micro>
+              <p className="mt-1 text-[13px] text-ink-body leading-snug">
+                Based on your body stats and Apple Watch data, your body burns
+                approximately{' '}
+                <span className="font-medium text-ink">
+                  {preview.tdee.toLocaleString()}
+                </span>{' '}
+                calories per day to maintain your current weight. This is your
+                TDEE — total daily energy expenditure.
               </p>
-            ) : preview.daysOfData < 90 ? (
-              <p className="mt-2 text-[11px] text-card-mute leading-snug">
-                Based on {preview.daysOfData} days of Watch data so far — it
-                keeps refining as more comes in.
+              {preview.estimatedActivity ? (
+                <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
+                  No Apple Watch active-calorie history yet, so this uses an
+                  estimated activity level. It’ll personalize automatically once
+                  Watch data builds up.
+                </p>
+              ) : preview.daysOfData < 90 ? (
+                <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
+                  Based on {preview.daysOfData} days of Watch data so far — it
+                  keeps refining as more comes in.
+                </p>
+              ) : null}
+            </div>
+
+            {/* 2. What we're doing */}
+            <div>
+              <Micro>What we’re doing</Micro>
+              <p className="mt-1 text-[13px] text-ink-body leading-snug">
+                {SEASON_EXPLANATION[preview.seasonType]}
               </p>
-            ) : null}
+            </div>
+
+            {/* 3. What the research says (conditional on BF%) */}
+            <div>
+              <Micro>What the research says</Micro>
+              <ResearchNote bf={props.bfNum > 0 ? props.bfNum : null} />
+            </div>
           </div>
 
+          {/* 4. Your targets */}
           <TargetComparison current={current} targets={preview.targets} />
+
+          {/* 5. Pros & cons of the chosen season (always shown) */}
+          <div className="bg-card border border-card-edge rounded-xl p-4">
+            <Micro>Pros &amp; cons of this season</Micro>
+            <div className="mt-2">
+              <ProsCons
+                prosLabel="Pros"
+                pros={SEASON_PROS_CONS[preview.seasonType].pros}
+                consLabel="Cons"
+                cons={SEASON_PROS_CONS[preview.seasonType].cons}
+              />
+            </div>
+          </div>
 
           <button
             type="button"
@@ -858,6 +898,98 @@ function MultiQuestionGroup<T extends string>({
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// Green section micro-label, matching the app's SectionLabel treatment.
+function Micro({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
+      {children}
+    </p>
+  );
+}
+
+// Research-backed body-composition guidance, conditional on the user's BF%.
+// Gentle nudge (never a block) when no estimate exists yet.
+function ResearchNote({ bf }: { bf: number | null }) {
+  const g = bodyFatGuidance(bf);
+  if (!g) {
+    return (
+      <p className="mt-1 text-[12px] text-card-mute leading-snug">
+        Complete your body fat estimate on the previous step to get personalized
+        research-backed guidance here.
+      </p>
+    );
+  }
+  return (
+    <div className="mt-1">
+      <p className="text-[13px] font-medium text-ink">{g.heading}</p>
+      {g.paragraphs.map((para, i) => (
+        <p key={i} className="mt-1.5 text-[13px] text-ink-body leading-snug">
+          {para}
+        </p>
+      ))}
+      <div className="mt-2.5">
+        <ProsCons
+          prosLabel={g.prosLabel}
+          pros={g.pros}
+          consLabel={g.consLabel}
+          cons={g.cons}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Two-column trade-offs. Pros read in green, cons in muted ink — these are
+// trade-offs, not warnings, so the cons are deliberately not alarm-red.
+function ProsCons({
+  prosLabel,
+  pros,
+  consLabel,
+  cons,
+}: {
+  prosLabel: string;
+  pros: string[];
+  consLabel: string;
+  cons: string[];
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      <div>
+        <p className="text-[10px] tracking-micro uppercase font-semibold text-green-mid">
+          {prosLabel}
+        </p>
+        <ul className="mt-1 space-y-1">
+          {pros.map((p) => (
+            <li
+              key={p}
+              className="text-[12px] leading-snug text-ink-body flex gap-1.5"
+            >
+              <span className="text-green-deep">+</span>
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p className="text-[10px] tracking-micro uppercase font-semibold text-card-mute">
+          {consLabel}
+        </p>
+        <ul className="mt-1 space-y-1">
+          {cons.map((c) => (
+            <li
+              key={c}
+              className="text-[12px] leading-snug text-card-mute flex gap-1.5"
+            >
+              <span>–</span>
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
