@@ -84,7 +84,17 @@ export async function getUserPreferences(): Promise<UserPreferences> {
   const existing = await db.user_preferences.get(LOCAL_USER_ID);
   if (existing) return existing;
   const row = buildDefaultPreferences();
-  await syncedPut(db.user_preferences, row);
+  try {
+    await syncedPut(db.user_preferences, row);
+  } catch {
+    // A Dexie liveQuery runs its querier in a read-only transaction, so on a
+    // brand-new database the lazy-create write is rejected (ReadOnlyError)
+    // before runSeedersIfNeeded() has had a chance to create the row. Swallow
+    // it and return the in-memory defaults — the seeder persists the row
+    // outside any liveQuery a moment later, and live reads then see it. Without
+    // this guard the rejection propagates out of every getUserPreferences()
+    // liveQuery and white-screens the app on first launch.
+  }
   return row;
 }
 

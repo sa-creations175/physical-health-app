@@ -9,7 +9,7 @@ import { supabase } from './supabase';
 //
 // Local Dexie remains the source of truth the UI reads; this only replicates.
 
-// All 14 stores paired with their ph_ tables. Order is irrelevant (no FK
+// All 17 stores paired with their ph_ tables. Order is irrelevant (no FK
 // constraints in the Supabase schema).
 const TABLES: { table: Table<unknown, string>; ph: string }[] = [
   { table: db.sessions, ph: 'ph_sessions' },
@@ -26,6 +26,9 @@ const TABLES: { table: Table<unknown, string>; ph: string }[] = [
   { table: db.user_preferences, ph: 'ph_user_preferences' },
   { table: db.delivery_days, ph: 'ph_delivery_days' },
   { table: db.bundle_logs, ph: 'ph_bundle_logs' },
+  { table: db.body_stats, ph: 'ph_body_stats' },
+  { table: db.body_measurements, ph: 'ph_body_measurements' },
+  { table: db.nutrition_seasons, ph: 'ph_nutrition_seasons' },
 ];
 
 const INITIAL_PUSH_FLAG = 'ph_cloud_initial_push_done';

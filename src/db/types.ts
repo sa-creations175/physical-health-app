@@ -113,6 +113,81 @@ export interface NutritionLog {
   water_glasses: number;
   veg_servings: number;
   supplements_taken: string[]; // supplement ids
+  // Daily water logged in 1000ml bottles — added Dexie v16 (Phase 3a). The full
+  // nutrition_logs reshape (meal_entries JSON) lands in Phase 3b; for 3a this is
+  // the one new field the bottle row writes to. null on rows that predate it.
+  water_bottles_logged: number | null;
+  updated_at: string;
+}
+
+// ---- Phase 3a: Body composition + nutrition seasons --------------------------
+
+export type BiologicalSex = 'male' | 'female';
+
+// How a body-fat % reading was produced, in source-priority order (DEXA wins,
+// then Navy tape, then the onboarding-only AI/visual estimates).
+export type MeasurementSource =
+  | 'navy_method'
+  | 'dexa'
+  | 'ai_photo_estimate'
+  | 'visual_estimate';
+
+export type SeasonType =
+  | 'cut_aggressive'
+  | 'cut_moderate'
+  | 'maintain'
+  | 'build_lean'
+  | 'build_aggressive';
+
+// Stable-ish body inputs, recorded over time (weight is the recurring one;
+// height/age/sex change rarely). Newest row by recorded_at is "current".
+// Lean mass is NOT stored here — it's derived from the latest weight + latest
+// bf_percentage at read time so it always reflects both live sources.
+export interface BodyStats {
+  id: string;
+  user_id: string;
+  recorded_at: string; // ISO datetime
+  weight_lbs: number;
+  height_inches: number;
+  age: number;
+  biological_sex: BiologicalSex;
+}
+
+// A body-fat % reading. For Navy-method rows the circumferences are present and
+// bf_percentage is computed from them; for dexa / ai / visual rows the
+// circumferences are null and bf_percentage is entered/estimated directly.
+export interface BodyMeasurement {
+  id: string;
+  user_id: string;
+  recorded_at: string; // ISO datetime
+  neck_inches: number | null;
+  waist_inches: number | null;
+  hips_inches: number | null;
+  bf_percentage: number; // 0–100
+  source: MeasurementSource;
+  notes: string | null;
+}
+
+// A nutrition "season" — the active macro goal. Exactly one is current at a
+// time (ended_at === null); switching a season closes the old row and opens a
+// new one, so the full history of past targets is preserved.
+export interface NutritionSeason {
+  id: string;
+  user_id: string;
+  started_at: string; // ISO datetime
+  ended_at: string | null; // null = currently active
+  season_type: SeasonType;
+  // The three goal-question answers as a JSON string (Dexie columns are scalar).
+  goal_answers: string;
+  daily_calories_target: number;
+  protein_target_g: number;
+  carbs_target_g: number;
+  fat_target_g: number;
+  fiber_guideline_g: number;
+  sodium_guideline_mg: number;
+  sugar_guideline_g: number;
+  water_target_bottles: number;
+  created_at: string;
   updated_at: string;
 }
 

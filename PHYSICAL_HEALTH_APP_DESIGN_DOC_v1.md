@@ -1616,3 +1616,19 @@ A debugging + hardening pass on the v2.9 Watch auto-import (workouts initially w
 
 - **Schema**: Dexie v13 (unchanged this build). `npm run build` clean; `npx cap sync ios` clean.
 - Pushed to origin/main, no Co-Authored-By trailer.
+
+
+---
+
+# Body Health — Nutrition System Design Spec
+June 14, 2026
+
+_Appended June 14, 2026. Full four-layer nutrition system (Body Profile → Season+Targets → Daily Logging) plus recovery intelligence and AI goal visualization. Build phasing 3a–3d at the end._
+
+---
+
+## Overview
+
+Nutrition in the Body app is not obsessive logging. It is a smart, connected system that knows your body, knows your goals, and tells you whether you are on track — with as little friction as possible. The system has three layers that talk to each other continuously.
+
+(See conversation of 2026-06-14 for the canonical source; the build implements Phase 3a first.)

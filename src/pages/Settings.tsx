@@ -6,9 +6,13 @@ import {
   updateUserPreferences,
   TARGET_RANGES,
 } from '../lib/userPreferences';
+import NutritionSetupModal from '../components/nutrition/NutritionSetupModal';
+import { getActiveSeason, seasonLabel } from '../lib/nutritionSeason';
 
 export default function Settings() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
+  const season = useLiveQuery(() => getActiveSeason(), []);
+  const [seasonSetup, setSeasonSetup] = useState(false);
 
   if (!prefs) {
     return (
@@ -23,6 +27,22 @@ export default function Settings() {
       <p className="text-[12px] text-ink-soft mt-1">
         Targets save automatically when you tap away from the field.
       </p>
+
+      <section className="mt-6">
+        <SectionLabel>Nutrition season</SectionLabel>
+        <p className="text-[11px] text-ink-soft mt-1">
+          {season
+            ? `Current: ${seasonLabel(season.season_type)}. Re-runs the goal questions and shows a before/after before switching.`
+            : 'Set up your macro targets from your body and goals.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => setSeasonSetup(true)}
+          className="mt-2 rounded-xl py-2.5 px-4 text-[13px] font-medium text-white bg-green-deep min-h-[44px]"
+        >
+          {season ? 'Change season' : 'Set up nutrition'}
+        </button>
+      </section>
 
       <section className="mt-6">
         <SectionLabel>Weekly targets</SectionLabel>
@@ -256,6 +276,12 @@ export default function Settings() {
         />
       </section>
 
+      {seasonSetup && (
+        <NutritionSetupModal
+          onClose={() => setSeasonSetup(false)}
+          onComplete={() => setSeasonSetup(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,0 +1,219 @@
+========================================
+BODY HEALTH APP — SESSION SUMMARY
+May 25, 2026
+========================================
+
+WHAT SHIPPED THIS SESSION
+--------------------------
+
+Build 2.2 — UX Fixes
+- Draft/resume sessions (no more lost gym logs)
+- Editable session dates for retroactive logging
+- Exercise delete + arrow reorder + per-exercise notes
+- Lifting tiles tap-to-route
+- Cardio qualifying minutes on dashboard
+- Progressive overload prompt removed
+- Squats → calf raises cross-populate (current session)
+
+Build 2.3 — No-Delivery Streak Card
+- Daily tap to mark clean vs. ordered
+- 7-day grid, streak counter, best streak
+
+Build 2.4 — Daily Bundle Tracker
+- Pushups / ab rolls / calf raises / mobility
+- Per-exercise independent logging with superset increments
+- YouTube links collapsible section on mobility row
+- Weekly qualifying days streak
+
+Design System Overhaul
+- Full light theme matching Finance OS
+- Background #f5f7f5, white floating cards, shadow-card
+- Bricolage Grotesque (headings) + DM Sans (body)
+- Deep green (#0f3d2e) hero bands on Home + Fitness
+- Arc ring decorations on hero bands
+
+Build 2.5 — Dashboard Reorder
+- Arrow-based section reorder (up/down)
+- Section rename (inline edit)
+- Show/hide toggle per section
+- Stored in user_preferences
+
+Build 2.6 — Polish + Mobility
+- Mobility added to Daily Bundle (duration-based, 5min threshold)
+- Cardio card tap → /log/cardio
+- iOS safe area / notch fix
+- Squats → calf raises cross-populate
+
+Build 2.7 — 5-Tab Navigation Restructure
+- Home: 3 summary cards (Fitness / Nutrition / Health)
+- Fitness: all activity compact cards with 7-day dot rows
+- Nutrition: protein/water/veg/supplements + streaks + bundle
+- Health: placeholder for Phase 5
+- Log: existing type-select unchanged
+- SharedActivityCard component — intensity gradient dots
+- Library moved inside Fitness header
+- Settings moved to gear icon on Home header
+
+Build 2.8 — Fitness Header + Icons
+- Deep green hero band on Fitness page (This Week · date range)
+- Inline SVG accent icons per card (↓ Lower, ↑ Upper, ⚡ Full,
+  ❤️ Cardio, 🌸 Mobility, 🔥 Bundle, ⌚ Apple Watch)
+- Spacing polish pass
+
+Supabase Phase 6 — Cloud Sync
+- 14 ph_ tables created in shared Supabase project
+- Write-through sync on all writes (syncedAdd/Update/Delete)
+- Initial data push on first load
+- RLS: permissive policies + anon role grants
+- Data confirmed live in Supabase
+
+Apple Developer + Capacitor iOS
+- Apple Developer account enrolled ($99/year)
+- Capacitor 8 wrapping the React PWA
+- Body Health installed natively on iPhone via Xcode
+- Developer Mode enabled on iPhone
+
+HealthKit Integration
+- Steps (vs 10k target)
+- Active calories (vs 600 target)
+- Workouts this week count
+- Recent workouts list
+- Permissions granted, data pulling live
+
+Build 2.9/2.10 — Apple Watch Auto-Import
+- Full classification system:
+    traditionalStrengthTraining ≤30min → Daily Bundle
+    traditionalStrengthTraining >30min → Strength session
+    functionalStrengthTraining → Daily Bundle
+    yoga/stretch/mindAndBody/pilates → Mobility
+    everything else → Cardio
+- Type inference for strength: checks same-day manual sessions
+- Duplicate prevention: 30min window for cardio, date-level for bundle/mobility
+- source='watch' on Watch-created rows
+- source='merged' on Watch-augmented manual sessions
+- ⌚ icon in History for both watch and merged rows
+- 90-day historical import button in Settings
+- Debug panels in Settings (temporary — needs cleanup)
+
+App Icon
+- Deep green (#0f3d2e) rounded square
+- Faint white serif "SA" watermark (~5% opacity)
+- White barbell + dark green ECG pulse line
+- Installed on iPhone home screen as "Body Health"
+
+Build 2.10 — Home Page Visual
+- Progress rings on Fitness summary card (A/B → chose rings)
+  Lower (#0f3d2e) / Upper (#1a6b4a) / Cardio (#22c37e)
+  Clockwise fill from 12 o'clock, clamped to full ring
+- Delivery streak dots on Nutrition summary card (7-day grid)
+
+History View
+- List view + Calendar view toggle
+- Filters: All / Lower / Upper / Full / Cardio
+- Calendar: colored dots per workout type, tap day → expand
+- ⌚ icon on Watch-sourced and merged sessions
+
+
+CURRENT STATE
+-------------
+- App name: Body Health
+- Design doc: PHYSICAL_HEALTH_APP_DESIGN_DOC_v1.md (v2.10)
+- Dexie: v13, 14 tables
+- Supabase: live, ph_ prefix tables
+- Capacitor: iOS native build
+- HealthKit: connected and pulling live data
+- Watch import: working, 90-day history imported
+- Latest commit: 9d28d40 (progress rings + delivery dots)
+- Latest cap sync: index-BKgtvKEI.js
+
+
+OUTSTANDING / NEXT UP
+---------------------
+1. IMMEDIATE: Run Supabase migration 003 in SQL editor:
+   ALTER TABLE ph_cardio_logs ADD COLUMN IF NOT EXISTS source TEXT;
+   ALTER TABLE ph_sessions    ADD COLUMN IF NOT EXISTS source TEXT;
+   ALTER TABLE ph_bundle_logs ADD COLUMN IF NOT EXISTS source TEXT;
+   ALTER TABLE ph_bundle_logs ADD COLUMN IF NOT EXISTS watch_duration_minutes INTEGER;
+
+2. CLEANUP COMMIT: Remove debug tooling from Settings:
+   - watchDebug.ts
+   - Watch import log panel
+   - Cardio logs inspector panel
+   - Clean up manual cardio logs panel
+
+3. Nutrition Phase 3 — actual protein/water/veg/supplements logging
+
+4. Repeat last session — pre-load last session's exercises/sets
+   on the strength type-select screen
+
+5. Health check-ins — doctor/dentist/derm tracker (Phase 5)
+
+6. Rename design doc: PHYSICAL_HEALTH_APP_DESIGN_DOC_v1_phase1_complete.md
+   → PHYSICAL_HEALTH_APP_DESIGN_DOC_v1.md (end-of-session cleanup)
+
+
+========================================
+CLAUDE CHAT PROMPT (paste to continue design work)
+========================================
+
+Continuing work on the Body Health app — part of my Personal OS suite.
+
+Current state as of May 25, 2026:
+- Native iOS app via Capacitor, installed on iPhone as "Body Health"
+- Dexie v13, 14 tables, Supabase cloud sync live (ph_ prefix)
+- 5-tab nav: Home / Fitness / Nutrition / Health / Log
+- HealthKit connected: steps, active cal, workouts from Apple Watch
+- Apple Watch auto-import working with 90-day historical import
+- Light theme: bg #f5f7f5, white cards, Bricolage Grotesque + DM Sans,
+  deep green (#0f3d2e) hero bands
+- Home page has progress rings (Fitness) + delivery streak dots (Nutrition)
+- History view with list + calendar toggle, Watch icon on imported rows
+
+Outstanding design conversations:
+1. Nutrition Phase 3 — actual protein/water/veg/supplements logging UI
+2. Health check-ins — doctor/dentist/derm tracker
+3. Repeat last session on strength type-select screen
+4. Any new design/UX ideas
+
+Paste PHYSICAL_HEALTH_APP_DESIGN_DOC_v1.md and
+PERSONAL_OS_DESIGN_PRINCIPLES_3.md for full context.
+
+
+========================================
+CLAUDE CODE PROMPT (paste in terminal to continue building)
+========================================
+
+Continuing work on the Body Health App at
+~/Documents/physical-health-app.
+
+Current state:
+- Vite + React + TypeScript + Tailwind + Dexie v13 + Supabase +
+  Capacitor iOS
+- Native iOS build: run `npm run build && npx cap sync ios` then
+  clean build in Xcode (Shift+Cmd+K → Cmd+R) to push to device
+- Vercel auto-deploys on push to origin/main
+- IMPORTANT: never include Co-Authored-By trailer in commits —
+  Vercel Hobby plan blocks those deploys
+- .env.production exists locally (gitignored) with real Supabase
+  credentials — never commit it
+- Design doc: PHYSICAL_HEALTH_APP_DESIGN_DOC_v1.md (currently v2.10)
+
+Do this first — cleanup commit:
+1. Remove src/lib/watchDebug.ts
+2. Remove Watch import log panel from Settings.tsx
+3. Remove Cardio logs inspector panel from Settings.tsx
+4. Remove Clean up manual cardio logs panel from Settings.tsx
+5. Commit as "chore: remove Watch import debug tooling"
+6. Push to origin/main (no Co-Authored-By trailer)
+7. npx cap sync ios
+8. Give me the commit hash
+
+Then next features in priority order:
+1. Nutrition Phase 3 — protein/water/veg/supplements daily logging UI
+   on the Nutrition page (the card is currently a visual shell)
+2. Repeat last session — on strength type-select, offer to pre-load
+   last session's exercises/sets with editable weights/reps
+3. Health check-ins — doctor/dentist/derm tracker on the Health tab
+
+After each build: npm run build, push to origin/main (no
+Co-Authored-By), npx cap sync ios, give me the commit hash.

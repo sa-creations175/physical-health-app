@@ -23,6 +23,9 @@ import type {
   Goal,
   PromptRecord,
   UserPreferences,
+  BodyStats,
+  BodyMeasurement,
+  NutritionSeason,
 } from './types';
 
 export class PhysicalHealthDB extends Dexie {
@@ -40,6 +43,9 @@ export class PhysicalHealthDB extends Dexie {
   goals!: Table<Goal, string>;
   prompts!: Table<PromptRecord, string>;
   user_preferences!: Table<UserPreferences, string>;
+  body_stats!: Table<BodyStats, string>;
+  body_measurements!: Table<BodyMeasurement, string>;
+  nutrition_seasons!: Table<NutritionSeason, string>;
 
   constructor() {
     super('physical_health_db');
@@ -594,6 +600,48 @@ export class PhysicalHealthDB extends Dexie {
               row.fitness_card_config = JSON.stringify(
                 DEFAULT_FITNESS_CARD_CONFIG,
               );
+            }
+          });
+      });
+
+    // v16 (Build 3.0 / Phase 3a): nutrition system foundation — body profile +
+    // macro calculator. Three new stores:
+    //   - body_stats: weight/height/age/sex over time (newest = current).
+    //   - body_measurements: bf% readings (Navy tape, DEXA, AI/visual estimate).
+    //   - nutrition_seasons: the active macro goal + generated targets; one row
+    //     is current (ended_at null), past rows preserved for history.
+    // All three are indexed on user_id + a time column so "latest" / "active"
+    // queries don't table-scan. They have no rows on upgrade, so they need no
+    // backfill — but nutrition_logs gains water_bottles_logged (the bottle row's
+    // store until the Phase 3b reshape), which DOES backfill on the existing
+    // rows to null.
+    this.version(16)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+        body_stats: 'id, user_id, recorded_at',
+        body_measurements: 'id, user_id, recorded_at',
+        nutrition_seasons: 'id, user_id, started_at, ended_at',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('nutrition_logs')
+          .toCollection()
+          .modify((row: { water_bottles_logged?: number | null }) => {
+            if (row.water_bottles_logged === undefined) {
+              row.water_bottles_logged = null;
             }
           });
       });

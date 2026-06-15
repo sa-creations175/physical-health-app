@@ -63,6 +63,43 @@ export async function getWeeklyHealthAverages(
   };
 }
 
+// Rolling N-day (default 90) average of daily active calories, the activity
+// half of the personalized TDEE (BMR + this). Returns the average over the days
+// that actually have samples plus how many days of data backed it, so the macro
+// calculator can note "using only N days of history". null off iOS / without
+// HealthKit, where there's no Watch data to read.
+export async function getActiveCaloriesDailyAverage(
+  daysBack = 90,
+): Promise<{ avgPerDay: number; daysOfData: number } | null> {
+  if (!(await ensureHealthPermissions())) return null;
+  const start = new Date();
+  start.setDate(start.getDate() - daysBack);
+  start.setHours(0, 0, 0, 0);
+  try {
+    const { aggregatedData } = await Health.queryAggregated({
+      startDate: start.toISOString(),
+      endDate: new Date().toISOString(),
+      dataType: 'active-calories',
+      bucket: 'day',
+    });
+    const byDate = new Map<string, number>();
+    for (const sample of aggregatedData) {
+      const key = new Date(sample.startDate).toLocaleDateString('en-CA');
+      byDate.set(key, (byDate.get(key) ?? 0) + (sample.value || 0));
+    }
+    const days = [...byDate.values()].filter((v) => v > 0);
+    if (days.length === 0) return { avgPerDay: 0, daysOfData: 0 };
+    const total = days.reduce((sum, v) => sum + v, 0);
+    return {
+      avgPerDay: Math.round(total / days.length),
+      daysOfData: days.length,
+    };
+  } catch (e) {
+    console.error('HK error at getActiveCaloriesDailyAverage:', e);
+    return null;
+  }
+}
+
 // What the dashboard card renders. Steps/calories are "today so far";
 // workoutsThisWeek counts completed workouts since Sunday; recentWorkouts
 // is the trailing 7-day list (newest first).
