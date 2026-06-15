@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import DeliveryActivityCard from '../components/activity/DeliveryActivityCard';
-import BundleActivityCard from '../components/activity/BundleActivityCard';
 import NutritionSetupModal from '../components/nutrition/NutritionSetupModal';
 import BodyLogSheet, { type BodyLogMode } from '../components/nutrition/BodyLogSheet';
 import {
@@ -69,7 +68,6 @@ export default function Nutrition() {
 
       <div className="px-5 mt-4 space-y-2">
         <DeliveryActivityCard expanded={open === 'delivery'} onToggle={() => toggle('delivery')} />
-        <BundleActivityCard expanded={open === 'bundle'} onToggle={() => toggle('bundle')} />
       </div>
 
       {setupOpen && (
