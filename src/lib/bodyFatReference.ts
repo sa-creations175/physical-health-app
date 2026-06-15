@@ -1,60 +1,63 @@
-// Visual body-fat reference ranges for men (Phase 3a onboarding). The user
-// picks the band that looks closest to them; the chosen band's low/high become
-// the starting range saved as a 'visual_estimate' measurement (its midpoint is
-// the stored bf%). Descriptions stand in for reference photos — drop real
-// reference images in alongside `mid` later without changing the data shape.
+// Visual body-fat reference bands for men (Phase 2 of nutrition setup). Each
+// band renders an SVG silhouette (muscle definition scaling with `level`),
+// its % label, a short descriptor, and a 1–2 sentence description. Tapping a
+// band selects it; its `pct` is stored as the starting 'visual_estimate'.
 export interface BodyFatBand {
-  low: number;
-  high: number;
-  label: string;
-  description: string;
+  pct: number; // representative % stored when this band is picked
+  label: string; // e.g. "~15%"
+  descriptor: string; // e.g. "Fit"
+  description: string; // 1–2 sentences of what's visible at this level
+  // 0 (leanest) … 5 (highest) — drives the silhouette's ab definition + waist.
+  level: number;
 }
 
 export const MALE_BODY_FAT_BANDS: BodyFatBand[] = [
   {
-    low: 6,
-    high: 9,
-    label: '6–9%',
-    description: 'Stage-lean — striated, vascular, every muscle visible.',
+    pct: 8,
+    label: '~8%',
+    descriptor: 'Competition lean',
+    level: 0,
+    description:
+      'Striations and visible vascularity across the whole frame. Stage-ready conditioning that’s hard to hold year-round.',
   },
   {
-    low: 10,
-    high: 13,
-    label: '10–13%',
-    description: 'Very lean — clear six-pack, visible vascularity.',
+    pct: 12,
+    label: '~12%',
+    descriptor: 'Athletic',
+    level: 1,
+    description:
+      'A clear six-pack with defined arms and chest. The lean, athletic look most people train toward.',
   },
   {
-    low: 14,
-    high: 17,
-    label: '14–17%',
-    description: 'Lean & athletic — abs visible, defined arms and chest.',
+    pct: 15,
+    label: '~15%',
+    descriptor: 'Fit',
+    level: 2,
+    description:
+      'Abs are visible over a flat midsection. Fit and healthy without extreme dieting.',
   },
   {
-    low: 18,
-    high: 21,
-    label: '18–21%',
-    description: 'Fit — faint ab outline, a little softness over it.',
+    pct: 18,
+    label: '~18%',
+    descriptor: 'Average',
+    level: 3,
+    description:
+      'A faint ab outline with a little softness over it. A solid, everyday-fit shape.',
   },
   {
-    low: 22,
-    high: 27,
-    label: '22–27%',
-    description: 'Average — little definition, softer midsection.',
+    pct: 22,
+    label: '~22%',
+    descriptor: 'Soft',
+    level: 4,
+    description:
+      'Little muscle definition and a softer midsection. A common starting point before a cut.',
   },
   {
-    low: 28,
-    high: 34,
-    label: '28–34%',
-    description: 'Higher — no visible abs, fuller midsection.',
-  },
-  {
-    low: 35,
-    high: 45,
-    label: '35%+',
-    description: 'High — significant fat over the whole frame.',
+    pct: 26,
+    label: '~25%+',
+    descriptor: 'High',
+    level: 5,
+    description:
+      'No visible abs and a fuller midsection. A focused cut pays off quickly from here.',
   },
 ];
-
-export function bandMidpoint(band: BodyFatBand): number {
-  return Math.round((band.low + band.high) / 2);
-}

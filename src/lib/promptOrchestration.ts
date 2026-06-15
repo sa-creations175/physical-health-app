@@ -40,9 +40,20 @@ export const PROMPT_TYPES = {
   supplement_missed: { priority: 'low', re_prompt_after_days: 1 },
   health_checkin_overdue: { priority: 'high', re_prompt_after_days: 7 },
   week_review: { priority: 'medium', re_prompt_after_days: 7 },
+  // Bi-weekly Navy-Method body-fat re-measure (Phase 3a). Fires when the most
+  // recent body_measurements row is older than 14 days.
+  body_measurement_due: { priority: 'medium', re_prompt_after_days: 14 },
 } as const satisfies Record<string, PromptTypeDefinition>;
 
 export type PromptType = keyof typeof PROMPT_TYPES;
+
+// Display copy per type, read by whatever prompt surface renders an active
+// prompt (the surface itself is Phase 4/5). Partial for now — entries are added
+// as each trigger comes online.
+export const PROMPT_COPY: Partial<Record<PromptType, string>> = {
+  body_measurement_due:
+    'Time for your bi-weekly body check-in — grab a tape measure and update your measurements.',
+};
 
 const MS_PER_DAY = 86_400_000;
 
@@ -124,6 +135,45 @@ export async function dismissPrompt(promptId: string): Promise<void> {
   await syncedUpdate(db.prompts, promptId, {
     dismissed_at: new Date().toISOString(),
   });
+}
+
+// Trigger: the most recent body-fat measurement is older than 14 days. Called
+// from the startup sequence after the cloud pull completes (so a freshly
+// restored measurement is counted), never during an active session — the
+// active-session guard lives in canFirePrompt. Only nudges once a BF% is
+// actually on record (any source); with nothing logged there's nothing to
+// re-measure. Best-effort: never throws out, so it can't break startup.
+const BODY_MEASUREMENT_INTERVAL_DAYS = 14;
+
+// Runs once per app load. The startup effect double-fires under React
+// StrictMode (dev), and canFirePrompt→firePrompt isn't atomic, so two
+// concurrent calls would both pass the suppression check and fire twice. This
+// synchronous guard returns immediately on the second call, before any await.
+let bodyMeasurementCheckRan = false;
+
+export async function checkBodyMeasurementDue(): Promise<void> {
+  if (bodyMeasurementCheckRan) return;
+  bodyMeasurementCheckRan = true;
+  try {
+    // Cheap suppression first (active session / daily cap / re-prompt window).
+    if (!(await canFirePrompt('body_measurement_due'))) return;
+
+    const measurements = await db.body_measurements
+      .where('user_id')
+      .equals(LOCAL_USER_ID)
+      .toArray();
+    if (measurements.length === 0) return; // no BF% on record yet
+
+    const latest = measurements.reduce((a, b) =>
+      a.recorded_at > b.recorded_at ? a : b,
+    );
+    const ageMs = Date.now() - Date.parse(latest.recorded_at);
+    if (ageMs < BODY_MEASUREMENT_INTERVAL_DAYS * MS_PER_DAY) return;
+
+    await firePrompt('body_measurement_due');
+  } catch (e) {
+    console.error('checkBodyMeasurementDue failed:', e);
+  }
 }
 
 // Prompts that are eligible to surface in the UI right now: fired, not

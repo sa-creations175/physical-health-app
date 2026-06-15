@@ -10,9 +10,9 @@ import {
 } from '../../lib/bodyComposition';
 import {
   MALE_BODY_FAT_BANDS,
-  bandMidpoint,
   type BodyFatBand,
 } from '../../lib/bodyFatReference';
+import BodyFatSilhouette from './BodyFatSilhouette';
 import {
   isAiEstimateAvailable,
   estimateBodyFatFromPhoto,
@@ -387,7 +387,7 @@ function BodyFatStep(props: {
       {/* Visual reference chart */}
       <VisualReferencePanel
         onPick={(band) => {
-          props.setBfPercent(String(bandMidpoint(band)));
+          props.setBfPercent(String(band.pct));
           props.setBfSource('visual_estimate');
         }}
         selected={props.bfSource === 'visual_estimate' ? props.bfPercent : null}
@@ -491,21 +491,32 @@ function VisualReferencePanel({
   selected: string | null;
 }) {
   return (
-    <MethodShell title="Visual reference chart" hint="Pick the range that looks closest">
-      <div className="space-y-1.5">
+    <MethodShell title="Visual reference chart" hint="Tap the level that looks closest">
+      <div className="grid grid-cols-2 gap-2">
         {MALE_BODY_FAT_BANDS.map((band) => {
-          const isSel = selected === String(bandMidpoint(band));
+          const isSel = selected === String(band.pct);
           return (
             <button
               key={band.label}
               type="button"
+              aria-pressed={isSel}
               onClick={() => onPick(band)}
-              className={`w-full text-left rounded-lg px-3 py-2 border ${
-                isSel ? 'border-green-deep bg-[#edf7f2]' : 'border-card-edge bg-charcoal'
+              className={`text-left rounded-lg border p-2.5 flex flex-col ${
+                isSel
+                  ? 'border-green-deep bg-[#edf7f2]'
+                  : 'border-card-edge bg-charcoal'
               }`}
             >
-              <span className="text-[13px] font-medium text-ink">{band.label}</span>
-              <span className="block text-[11px] text-card-mute leading-snug">
+              <span className="block mx-auto h-20 w-14">
+                <BodyFatSilhouette level={band.level} />
+              </span>
+              <span className="mt-1.5 text-[14px] font-medium text-ink">
+                {band.label}
+              </span>
+              <span className="text-[11px] font-medium uppercase tracking-micro text-green-mint">
+                {band.descriptor}
+              </span>
+              <span className="mt-1 text-[11px] text-card-mute leading-snug">
                 {band.description}
               </span>
             </button>

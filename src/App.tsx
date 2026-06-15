@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { runSeedersIfNeeded } from './db';
 import { runCloudSync } from './lib/sync';
+import { checkBodyMeasurementDue } from './lib/promptOrchestration';
 import { Capacitor } from '@capacitor/core';
 import { isHealthKitAvailable } from './lib/healthkit';
 import { importWatchWorkouts, LAST_IMPORT_KEY } from './lib/watchImport';
@@ -48,10 +49,12 @@ async function importWatchWorkoutsIfAvailable(): Promise<void> {
 function App() {
   useEffect(() => {
     // Seed/heal local data first, then run cloud sync (initial push + pull),
+    // then run startup prompt triggers (after the pull, so restored rows count),
     // then auto-import Apple Watch workouts (iOS only). Each phase is
     // best-effort and never blocks local boot.
     runSeedersIfNeeded()
       .then(() => runCloudSync())
+      .then(() => checkBodyMeasurementDue())
       .then(() => importWatchWorkoutsIfAvailable())
       .catch((err) => {
         console.error('Startup (seed/sync/import) failed:', err);
