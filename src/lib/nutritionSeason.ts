@@ -422,6 +422,25 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
   };
 }
 
+// ---- 'Both' contextual tip --------------------------------------------------
+// Inline, informational tip shown on the goal page the moment the user picks
+// 'Both' (lean + muscular), keyed to their current BF% in three zones:
+//   > 15  → cut first; recomp/bulk now is inefficient at this body fat
+//   12–15 → recomp viable but slower; the lean-bulk entry point is near
+//   < 12  → null (lean bulk is already the right call — no tip needed)
+// Returns null below ~12% and whenever there's no BF% to reason about; the
+// caller also gates on the 'Both' selection so it disappears on any other pick.
+export function bothLookTip(bf: number | null): string | null {
+  if (bf === null || bf <= 0) return null;
+  if (bf > 15) {
+    return "💡 At your current body fat, cutting first will get you better results. Most coaches recommend reaching ~12% BF before starting a lean bulk — you'll build more muscle per calorie, stay leaner during the bulk, and have more runway before needing to cut again. Consider 'Leaner' now and switch seasons when you get there.";
+  }
+  if (bf >= 12) {
+    return "💡 You're close to the ideal lean bulk entry point (~12% BF). A recomp approach works here but is slower. If you want to maximize muscle-building efficiency, a short cut to get to 12% first is worth considering before switching to a lean build season.";
+  }
+  return null;
+}
+
 // ---- Season read / write ----------------------------------------------------
 
 export async function getActiveSeason(): Promise<NutritionSeason | null> {

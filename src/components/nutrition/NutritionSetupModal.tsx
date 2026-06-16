@@ -27,6 +27,7 @@ import {
   SEASON_EXPLANATION,
   SEASON_PROS_CONS,
   bodyFatGuidance,
+  bothLookTip,
   seasonLabel,
   startSeason,
   getActiveSeason,
@@ -717,6 +718,7 @@ function GoalStep(props: {
           setPreview(null);
         }}
       />
+      <BothLookTip look={props.look} bf={props.bfNum > 0 ? props.bfNum : null} />
       <QuestionGroup
         question="What’s your timeline feeling like?"
         options={TIMELINE_OPTIONS}
@@ -906,6 +908,30 @@ function MultiQuestionGroup<T extends string>({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// Inline contextual tip that appears the moment 'Both' is selected on the look
+// question, keyed to the user's BF% (see bothLookTip). Informational only —
+// never blocks — and vanishes when the selection changes away from 'Both' or
+// when there's no BF% on record.
+function BothLookTip({
+  look,
+  bf,
+}: {
+  look: LookAnswer | null;
+  bf: number | null;
+}) {
+  if (look !== 'both') return null;
+  const copy = bothLookTip(bf);
+  if (!copy) return null;
+  return (
+    <div
+      className="rounded-xl bg-[#edf7f2] px-3.5 py-3"
+      style={{ borderLeft: '3px solid #0F6E56' }}
+    >
+      <p className="text-[12px] text-ink-body leading-snug">{copy}</p>
     </div>
   );
 }
