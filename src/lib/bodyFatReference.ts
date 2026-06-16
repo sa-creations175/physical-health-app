@@ -11,43 +11,43 @@ export interface BodyFatBand {
 
 export const MALE_BODY_FAT_BANDS: BodyFatBand[] = [
   {
-    pct: 8,
-    label: '~8%',
+    pct: 10, // midpoint of 8–11%
+    label: '8–11%',
     descriptor: 'Competition lean',
     description:
       'Striations and visible vascularity across the whole frame. Stage-ready conditioning that’s hard to hold year-round.',
   },
   {
-    pct: 12,
-    label: '~12%',
+    pct: 13, // midpoint of 12–14%
+    label: '12–14%',
     descriptor: 'Athletic',
     description:
       'A clear six-pack with defined arms and chest. The lean, athletic look most people train toward.',
   },
   {
-    pct: 15,
-    label: '~15%',
+    pct: 16, // midpoint of 15–17%
+    label: '15–17%',
     descriptor: 'Fit',
     description:
       'Abs are visible over a flat midsection. Fit and healthy without extreme dieting.',
   },
   {
-    pct: 18,
-    label: '~18%',
+    pct: 19, // midpoint of 18–21%
+    label: '18–21%',
     descriptor: 'Average',
     description:
       'A faint ab outline with a little softness over it. A solid, everyday-fit shape.',
   },
   {
-    pct: 22,
-    label: '~22%',
+    pct: 23, // midpoint of 22–25%
+    label: '22–25%',
     descriptor: 'Soft',
     description:
       'Little muscle definition and a softer midsection. A common starting point before a cut.',
   },
   {
-    pct: 26,
-    label: '~25%+',
+    pct: 27, // 25%+
+    label: '25%+',
     descriptor: 'High',
     description:
       'No visible abs and a fuller midsection. A focused cut pays off quickly from here.',

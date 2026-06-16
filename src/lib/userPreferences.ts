@@ -71,6 +71,7 @@ function buildDefaultPreferences(): UserPreferences {
     dashboard_section_order: JSON.stringify(DASHBOARD_SECTION_KEYS),
     dashboard_section_config: JSON.stringify(DEFAULT_DASHBOARD_SECTION_CONFIG),
     fitness_card_config: JSON.stringify(DEFAULT_FITNESS_CARD_CONFIG),
+    dexa_nudge_dismissed: false,
     created_at: now,
     updated_at: now,
   };

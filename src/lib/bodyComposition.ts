@@ -69,6 +69,17 @@ export async function getLatestMeasurement(): Promise<BodyMeasurement | null> {
   return rows[0] ?? null;
 }
 
+// Whether any DEXA-sourced body-fat reading exists — gates the Nutrition tab's
+// DEXA nudge (it hides once the user has logged a real scan).
+export async function hasDexaMeasurement(): Promise<boolean> {
+  const count = await db.body_measurements
+    .where('user_id')
+    .equals(LOCAL_USER_ID)
+    .filter((m) => m.source === 'dexa')
+    .count();
+  return count > 0;
+}
+
 // Current lean mass from the latest weight + latest bf%. Derived live so it
 // reflects whichever of the two was most recently updated. null until both a
 // weigh-in and a bf% reading exist.

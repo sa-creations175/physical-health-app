@@ -275,6 +275,9 @@ export interface UserPreferences {
   // Record<FitnessCardKey, { label, visible }>; parsed by useFitnessCardConfig.
   // Lets the user show/hide each Fitness card (Full Body hidden by default).
   fitness_card_config: string;
+  // Whether the user has dismissed the one-time DEXA-scan nudge on the Nutrition
+  // tab — added Dexie v17 (Phase 3a follow-up). Defaults false; set true on tap.
+  dexa_nudge_dismissed: boolean;
   created_at: string;
   updated_at: string;
 }
