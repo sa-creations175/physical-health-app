@@ -208,19 +208,40 @@ export default function NutritionSetupModal({
               onEditBodyStats={() => setStep(1)}
               onConfirm={async (targets, seasonType) => {
                 try {
-                  await logBodyStats({
-                    weight_lbs: weightLbs,
-                    height_inches: heightInches,
-                    age: ageNum,
-                    biological_sex: sex,
-                  });
-                  await logBodyMeasurement({
-                    bf_percentage: bfNum,
-                    source: bfSource!,
-                    neck_inches: neck ? parseFloat(neck) : null,
-                    waist_inches: waist ? parseFloat(waist) : null,
-                    hips_inches: hips ? parseFloat(hips) : null,
-                  });
+                  // Only append a new body_stats / body_measurements row when a
+                  // value actually changed — a plain season change shouldn't
+                  // duplicate unchanged body data. The season row always writes.
+                  const [latestStats, latestMeasurement] = await Promise.all([
+                    getLatestBodyStats(),
+                    getLatestMeasurement(),
+                  ]);
+                  const statsChanged =
+                    !latestStats ||
+                    latestStats.weight_lbs !== weightLbs ||
+                    latestStats.height_inches !== heightInches ||
+                    latestStats.age !== ageNum ||
+                    latestStats.biological_sex !== sex;
+                  if (statsChanged) {
+                    await logBodyStats({
+                      weight_lbs: weightLbs,
+                      height_inches: heightInches,
+                      age: ageNum,
+                      biological_sex: sex,
+                    });
+                  }
+                  const measurementChanged =
+                    !latestMeasurement ||
+                    latestMeasurement.bf_percentage !== bfNum ||
+                    latestMeasurement.source !== bfSource;
+                  if (measurementChanged) {
+                    await logBodyMeasurement({
+                      bf_percentage: bfNum,
+                      source: bfSource!,
+                      neck_inches: neck ? parseFloat(neck) : null,
+                      waist_inches: waist ? parseFloat(waist) : null,
+                      hips_inches: hips ? parseFloat(hips) : null,
+                    });
+                  }
                   await startSeason({
                     season_type: seasonType,
                     goal_answers: { look: look!, timeline: timeline!, focus },
