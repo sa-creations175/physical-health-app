@@ -82,12 +82,19 @@ export default function NutritionSetupModal({
   // Multi-select — several focus areas can be active at once.
   const [focus, setFocus] = useState<FocusAnswer[]>([]);
 
-  // Pre-fill from the latest saved profile so re-running (Change season) is fast.
+  // Block the body until the initial load resolves so we land on the right page
+  // without a flash of Page 1 (we skip to Page 3 when a season already exists).
+  const [initializing, setInitializing] = useState(true);
+
+  // Pre-fill from the latest saved profile + active season so re-running (Change
+  // season) is fast: Pages 1–2 are pre-populated and skipped, landing on Page 3
+  // with the previous goal answers pre-selected.
   useEffect(() => {
     void (async () => {
-      const [stats, measurement] = await Promise.all([
+      const [stats, measurement, season] = await Promise.all([
         getLatestBodyStats(),
         getLatestMeasurement(),
+        getActiveSeason(),
       ]);
       if (stats) {
         setWeight(String(stats.weight_lbs));
@@ -103,6 +110,23 @@ export default function NutritionSetupModal({
         if (measurement.waist_inches) setWaist(String(measurement.waist_inches));
         if (measurement.hips_inches) setHips(String(measurement.hips_inches));
       }
+      if (season) {
+        try {
+          const ga = JSON.parse(season.goal_answers) as {
+            look?: LookAnswer;
+            timeline?: TimelineAnswer;
+            focus?: FocusAnswer[];
+          };
+          if (ga.look) setLook(ga.look);
+          if (ga.timeline) setTimeline(ga.timeline);
+          if (Array.isArray(ga.focus)) setFocus(ga.focus);
+        } catch {
+          /* malformed goal_answers — leave the questions blank */
+        }
+        // Body stats + BF% rarely change — skip straight to the goal questions.
+        setStep(3);
+      }
+      setInitializing(false);
     })();
   }, []);
 
@@ -129,6 +153,12 @@ export default function NutritionSetupModal({
         onClick={(e) => e.stopPropagation()}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
+        {initializing ? (
+          <div className="p-10 text-center text-card-mute text-[13px]">
+            Loading…
+          </div>
+        ) : (
+          <>
         <Header step={step} onClose={onClose} />
 
         <div className="px-5 pb-5">
@@ -175,6 +205,7 @@ export default function NutritionSetupModal({
               heightInches={heightInches}
               ageNum={ageNum}
               sex={sex}
+              onEditBodyStats={() => setStep(1)}
               onConfirm={async (targets, seasonType) => {
                 try {
                   await logBodyStats({
@@ -227,6 +258,8 @@ export default function NutritionSetupModal({
               Continue
             </button>
           </div>
+        )}
+          </>
         )}
       </div>
     </div>
@@ -393,6 +426,7 @@ function BodyFatStep(props: {
           props.setBfSource('visual_estimate');
         }}
         selected={props.bfSource === 'visual_estimate' ? props.bfPercent : null}
+        defaultOpen={props.bfSource === 'visual_estimate'}
       />
 
       {/* AI photo estimate — only when the key is configured */}
@@ -421,6 +455,7 @@ function BodyFatStep(props: {
           props.setBfSource('navy_method');
         }}
         active={props.bfSource === 'navy_method'}
+        defaultOpen={props.bfSource === 'navy_method'}
       />
 
       {/* Confirm / adjust the chosen estimate */}
@@ -461,12 +496,14 @@ function MethodShell({
   title,
   hint,
   children,
+  defaultOpen = false,
 }: {
   title: string;
   hint: string;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="bg-card border border-card-edge rounded-xl overflow-hidden">
       <button
@@ -488,12 +525,18 @@ function MethodShell({
 function VisualReferencePanel({
   onPick,
   selected,
+  defaultOpen,
 }: {
   onPick: (band: BodyFatBand) => void;
   selected: string | null;
+  defaultOpen?: boolean;
 }) {
   return (
-    <MethodShell title="Visual reference chart" hint="Tap the level that looks closest">
+    <MethodShell
+      title="Visual reference chart"
+      hint="Tap the level that looks closest"
+      defaultOpen={defaultOpen}
+    >
       <div className="grid grid-cols-2 gap-2">
         {MALE_BODY_FAT_BANDS.map((band) => {
           const isSel = selected === String(band.pct);
@@ -605,6 +648,7 @@ function NavyPanel(props: {
   setHips: (v: string) => void;
   onCompute: (bf: number) => void;
   active: boolean;
+  defaultOpen?: boolean;
 }) {
   const computed = useMemo(
     () =>
@@ -619,7 +663,11 @@ function NavyPanel(props: {
   );
 
   return (
-    <MethodShell title="Navy Method (tape measure)" hint="Most accurate at home — do this bi-weekly">
+    <MethodShell
+      title="Navy Method (tape measure)"
+      hint="Most accurate at home — do this bi-weekly"
+      defaultOpen={props.defaultOpen}
+    >
       <div className="space-y-2">
         <div className="flex gap-2">
           <Field label="Neck" value={props.neck} onChange={props.setNeck} suffix="in" width="flex-1" />
@@ -658,6 +706,7 @@ function GoalStep(props: {
   heightInches: number;
   ageNum: number;
   sex: BiologicalSex;
+  onEditBodyStats: () => void;
   onConfirm: (
     targets: GeneratedTargets,
     seasonType: ReturnType<typeof recommendSeason>,
@@ -719,6 +768,15 @@ function GoalStep(props: {
 
   return (
     <div className="space-y-4 pt-1">
+      <div className="flex justify-end -mt-1">
+        <button
+          type="button"
+          onClick={props.onEditBodyStats}
+          className="text-[12px] font-medium text-green-mint min-h-[44px]"
+        >
+          Update body stats →
+        </button>
+      </div>
       <QuestionGroup
         question="How do you want your body to look and feel?"
         options={LOOK_OPTIONS}
