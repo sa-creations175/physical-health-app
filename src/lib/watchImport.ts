@@ -17,10 +17,60 @@ import {
 import { createCardioLog, createCardioType } from './cardioHelpers';
 import type { BundleLog, Session } from '../db/types';
 
-// localStorage marker for the high-water mark of imported workouts. Read on
-// startup so we only process workouts that started after the last run; also
-// surfaced as "Last synced" in the Apple Watch card.
+// localStorage marker — the timestamp of the last import run. Retained as a
+// "Last synced" display value and a coarse perf bound (we never scan further
+// back than the lookback window). It is NO LONGER a correctness gate: dedup is
+// now identity-based (see below), so a workout that reaches HealthKit *after*
+// this marker advanced past its start time is still picked up.
 export const LAST_IMPORT_KEY = 'ph_last_watch_import';
+
+// Identity-based dedup. A forward-only timestamp gate silently locked out any
+// workout whose start preceded the marker but hadn't actually been imported yet
+// (Watch → iPhone HealthKit sync lag, multiple app opens per day). Instead we
+// remember a stable identity per processed workout and skip on that, so each
+// workout is filed exactly once regardless of when it surfaces or in what order.
+const IMPORTED_KEYS_KEY = 'ph_watch_imported_keys';
+
+// Stable per-workout identity. HealthKit start timestamps are unique per
+// workout; combining start + type + rounded duration is collision-proof in
+// practice and available from every workout row without a source UUID.
+export function workoutKey(w: HealthWorkout): string {
+  return `${w.startDate}|${w.workoutType}|${w.durationMinutes}`;
+}
+
+function loadImportedKeys(): Set<string> {
+  try {
+    const raw = localStorage.getItem(IMPORTED_KEYS_KEY);
+    return new Set<string>(raw ? (JSON.parse(raw) as string[]) : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+// Persist the imported-key set, pruning anything older than the scan window so
+// localStorage doesn't grow without bound — keys outside the window are never
+// consulted again anyway.
+function saveImportedKeys(keys: Set<string>, windowStartMs: number): void {
+  const pruned = [...keys].filter((k) => {
+    const t = Date.parse(k.slice(0, k.indexOf('|')));
+    return Number.isNaN(t) || t >= windowStartMs;
+  });
+  try {
+    localStorage.setItem(IMPORTED_KEYS_KEY, JSON.stringify(pruned));
+  } catch {
+    /* storage full / unavailable — dedup degrades to the per-category checks */
+  }
+}
+
+// The workouts that still need filing: those whose identity isn't already in the
+// processed set. Pure + exported so the dedup decision is unit-testable without
+// HealthKit. This REPLACES the old `startDate > marker` gate.
+export function selectWorkoutsToProcess(
+  workouts: HealthWorkout[],
+  importedKeys: Set<string>,
+): HealthWorkout[] {
+  return workouts.filter((w) => !importedKeys.has(workoutKey(w)));
+}
 
 // A cardio workout within this window of an existing cardio log is treated as
 // the same activity (the user may have logged it manually, or a previous import
@@ -312,9 +362,11 @@ async function importOne(w: HealthWorkout): Promise<ImportResult> {
 
 // ---- Orchestrator ---------------------------------------------------------
 
-// Called once at startup (after cloud sync) on iOS. Reads the last 7 days of
-// Watch workouts, processes only those started after the last import, and bumps
-// the high-water mark. Safe to call anywhere — no-ops off iOS / without HealthKit.
+// Called once at startup (after cloud sync) on iOS. Scans a rolling window of
+// HealthKit workouts (≥ 24h — default 7 days) and files each one that hasn't
+// been processed before, keyed by identity rather than a timestamp gate, so
+// same-day stragglers that arrive after a prior run are still caught. Safe to
+// call anywhere — no-ops off iOS / without HealthKit.
 export async function importWatchWorkouts(daysBack = 7): Promise<number> {
   if (Capacitor.getPlatform() !== 'ios') {
     return 0;
@@ -323,35 +375,32 @@ export async function importWatchWorkouts(daysBack = 7): Promise<number> {
     return 0;
   }
 
-  const workouts = await getRecentWorkouts(daysBack);
+  // Always look back at least 24h so a workout that synced from the Watch after
+  // an earlier same-day open is still in range.
+  const lookbackDays = Math.max(1, daysBack);
+  const workouts = await getRecentWorkouts(lookbackDays);
+  const windowStartMs = Date.now() - lookbackDays * 24 * 60 * 60 * 1000;
 
-  const lastRaw = localStorage.getItem(LAST_IMPORT_KEY);
-  const last = lastRaw ? new Date(lastRaw) : null;
-  const hadValidMarker = last !== null && !Number.isNaN(last.getTime());
-  const fresh = hadValidMarker
-    ? workouts.filter((w) => new Date(w.startDate) > (last as Date))
-    : workouts; // first run: process the whole window
+  const importedKeys = loadImportedKeys();
+  const pending = selectWorkoutsToProcess(workouts, importedKeys);
 
   let importedCount = 0;
-  for (const w of fresh) {
+  for (const w of pending) {
     try {
       const { action } = await importOne(w);
+      // Mark processed whether it was imported or skipped as a same-day/category
+      // duplicate — both mean "handled, don't revisit". Only a thrown error
+      // leaves the key unset so a transient failure retries next launch. (On a
+      // cold start with an empty key set, the per-category dedup in importOne is
+      // the safety net that prevents re-importing already-filed workouts.)
+      importedKeys.add(workoutKey(w));
       if (action === 'imported') importedCount += 1;
     } catch (e) {
       console.error('Watch import error for workout', w.workoutType, e);
     }
   }
 
-  // Advance the high-water mark to "now" once we've actually imported something.
-  // But on a *first* run that imported nothing (HealthKit returned no workouts
-  // yet, or everything was a duplicate), back-date the marker 7 days instead —
-  // otherwise a "now" marker would permanently lock out workouts a later run
-  // would have picked up.
-  const importedNothing = workouts.length === 0 || importedCount === 0;
-  const marker =
-    !hadValidMarker && importedNothing
-      ? new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString()
-      : new Date().toISOString();
-  localStorage.setItem(LAST_IMPORT_KEY, marker);
+  saveImportedKeys(importedKeys, windowStartMs);
+  localStorage.setItem(LAST_IMPORT_KEY, new Date().toISOString());
   return importedCount;
 }
