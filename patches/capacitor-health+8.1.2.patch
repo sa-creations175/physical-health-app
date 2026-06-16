@@ -1,0 +1,133 @@
+diff --git a/node_modules/capacitor-health/dist/esm/definitions.d.ts b/node_modules/capacitor-health/dist/esm/definitions.d.ts
+index e2d0c67..bd17c17 100644
+--- a/node_modules/capacitor-health/dist/esm/definitions.d.ts
++++ b/node_modules/capacitor-health/dist/esm/definitions.d.ts
+@@ -59,7 +59,7 @@ export interface HealthPlugin {
+      */
+     queryRecords(request: QueryRecordsRequest): Promise<QueryRecordsResponse>;
+ }
+-export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'WRITE_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS';
++export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'WRITE_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_EXERCISE_TIME' | 'READ_HEART_RATE_VARIABILITY' | 'READ_RESTING_HEART_RATE' | 'READ_VO2_MAX';
+ export interface PermissionsRequest {
+     permissions: HealthPermission[];
+ }
+@@ -105,7 +105,7 @@ export interface Workout {
+ export interface QueryAggregatedRequest {
+     startDate: string;
+     endDate: string;
+-    dataType: 'steps' | 'active-calories' | 'mindfulness';
++    dataType: 'steps' | 'active-calories' | 'mindfulness' | 'exercise-time' | 'hrv' | 'resting-heart-rate' | 'vo2-max';
+     bucket: string;
+     /**
+      * Optional list of package names (Android) or bundle identifiers (iOS) to
+diff --git a/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift b/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift
+index 3c96dc2..659496f 100644
+--- a/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift
++++ b/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift
+@@ -100,6 +100,14 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+             ].compactMap{$0}
+         case "READ_MINDFULNESS":
+             return [HKObjectType.categoryType(forIdentifier: .mindfulSession)!].compactMap{$0}
++        case "READ_EXERCISE_TIME":
++            return [HKObjectType.quantityType(forIdentifier: .appleExerciseTime)].compactMap{$0}
++        case "READ_HEART_RATE_VARIABILITY":
++            return [HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)].compactMap{$0}
++        case "READ_RESTING_HEART_RATE":
++            return [HKObjectType.quantityType(forIdentifier: .restingHeartRate)].compactMap{$0}
++        case "READ_VO2_MAX":
++            return [HKObjectType.quantityType(forIdentifier: .vo2Max)].compactMap{$0}
+         default:
+             return []
+         }
+@@ -111,11 +119,33 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+             return HKObjectType.quantityType(forIdentifier: .stepCount)
+         case "active-calories":
+             return HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)
++        case "exercise-time":
++            return HKObjectType.quantityType(forIdentifier: .appleExerciseTime)
++        case "hrv":
++            return HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)
++        case "resting-heart-rate":
++            return HKObjectType.quantityType(forIdentifier: .restingHeartRate)
++        case "vo2-max":
++            return HKObjectType.quantityType(forIdentifier: .vo2Max)
+         default:
+             return nil
+         }
+     }
+ 
++    // The aggregation operator each data type needs: cumulative sum for additive
++    // metrics (steps, calories, exercise minutes), average for the per-reading
++    // discrete metrics (HRV, resting HR), and most-recent for VO2 max.
++    func aggregateOptions(_ dataType: String) -> HKStatisticsOptions {
++        switch dataType {
++        case "hrv", "resting-heart-rate":
++            return .discreteAverage
++        case "vo2-max":
++            return .discreteMostRecent
++        default:
++            return .cumulativeSum
++        }
++    }
++    
+     
+     @objc func queryAggregated(_ call: CAPPluginCall) {
+         guard let startDateString = call.getString("startDate"),
+@@ -154,10 +184,12 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+                 return
+             }
+ 
++            let options = aggregateOptions(dataTypeString)
++
+             let query = HKStatisticsCollectionQuery(
+                 quantityType: dataType,
+                 quantitySamplePredicate: predicate,
+-                options: [.cumulativeSum],
++                options: options,
+                 anchorDate: startDate,
+                 intervalComponents: interval
+             )
+@@ -171,17 +203,39 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+                 var aggregatedSamples: [[String: Any]] = []
+ 
+                 result?.enumerateStatistics(from: startDate, to: endDate) { statistics, stop in
+-                    if let sum = statistics.sumQuantity() {
++                    // Pick the accessor that matches the aggregation option used.
++                    let quantity: HKQuantity?
++                    if options.contains(.discreteAverage) {
++                        quantity = statistics.averageQuantity()
++                    } else if options.contains(.discreteMostRecent) {
++                        quantity = statistics.mostRecentQuantity()
++                    } else {
++                        quantity = statistics.sumQuantity()
++                    }
++
++                    if let quantity = quantity {
+                         let startDate = statistics.startDate.timeIntervalSince1970 * 1000
+                         let endDate = statistics.endDate.timeIntervalSince1970 * 1000
+ 
++                        let bpmUnit = HKUnit.count().unitDivided(by: HKUnit.minute())
++                        let vo2Unit = HKUnit(from: "ml/kg*min")
++                        let msUnit = HKUnit.secondUnit(with: .milli)
++
+                         var value: Double = -1.0
+                         if(dataTypeString == "steps" && dataType.is(compatibleWith: HKUnit.count())) {
+-                            value = sum.doubleValue(for: HKUnit.count())
++                            value = quantity.doubleValue(for: HKUnit.count())
+                         } else if(dataTypeString == "active-calories" && dataType.is(compatibleWith: HKUnit.kilocalorie())) {
+-                            value = sum.doubleValue(for: HKUnit.kilocalorie())
++                            value = quantity.doubleValue(for: HKUnit.kilocalorie())
+                         } else if(dataTypeString == "mindfulness" && dataType.is(compatibleWith: HKUnit.second())) {
+-                            value = sum.doubleValue(for: HKUnit.second())
++                            value = quantity.doubleValue(for: HKUnit.second())
++                        } else if(dataTypeString == "exercise-time" && dataType.is(compatibleWith: HKUnit.minute())) {
++                            value = quantity.doubleValue(for: HKUnit.minute())
++                        } else if(dataTypeString == "hrv" && dataType.is(compatibleWith: msUnit)) {
++                            value = quantity.doubleValue(for: msUnit)
++                        } else if(dataTypeString == "resting-heart-rate" && dataType.is(compatibleWith: bpmUnit)) {
++                            value = quantity.doubleValue(for: bpmUnit)
++                        } else if(dataTypeString == "vo2-max" && dataType.is(compatibleWith: vo2Unit)) {
++                            value = quantity.doubleValue(for: vo2Unit)
+                         }
+ 
+ 

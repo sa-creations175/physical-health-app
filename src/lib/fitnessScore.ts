@@ -12,7 +12,7 @@ import {
   currentWeekISODates,
   todayISODate,
 } from './dateHelpers';
-import { getWeeklyHealthAverages } from './healthkit';
+import { getWeeklyHealthAverages, getExerciseMinutesThisWeek } from './healthkit';
 import { PILLAR_COLORS, fillFraction } from './pillarColors';
 
 // The dial + bars cover ONLY the five pillar marks. Calories / steps / exercise
@@ -36,7 +36,7 @@ export interface FitnessScore {
   daysElapsed: number; // Sun..today inclusive, 1..7 — for early-week softening
   strip: {
     calories: number | null; // avg/day, null when HealthKit unavailable
-    exerciseMinutes: number; // avg/day (app-logged)
+    exerciseMinutes: number; // avg/day (Apple Exercise ring; app-logged fallback)
     steps: number | null; // avg/day, null when HealthKit unavailable
   };
 }
@@ -59,26 +59,34 @@ export async function getFitnessScore(): Promise<FitnessScore> {
   const bundleQualDays = bundleWeek.filter(isDayQualifying).length;
   const mobTotals = getWeeklyTotals(bundleWeek, prefs.bundle_mobility_min_minutes);
 
-  // --- Exercise minutes/day (app-logged: cardio + sessions + watch + mobility) ---
-  const [cardioLogs, sessions] = await Promise.all([
+  // --- Exercise minutes/day ---
+  // Primary source: Apple's Exercise ring (HKQuantityTypeIdentifierAppleExerciseTime),
+  // week total ÷ days elapsed. Falls back to the app-logged sum (cardio +
+  // sessions + watch-strength + mobility) when HealthKit is unavailable (web,
+  // no Watch) — so the strip shows a real number rather than 0.
+  const [cardioLogs, sessions, hkExerciseWeek] = await Promise.all([
     db.cardio_logs.where('user_id').equals(LOCAL_USER_ID).toArray(),
     db.sessions.toArray(),
+    getExerciseMinutesThisWeek(),
   ]);
-  let exerciseMinutes = 0;
+  let appLoggedMinutes = 0;
   for (const l of cardioLogs) {
     if (new Date(l.started_at).toLocaleDateString('en-CA') >= weekStart) {
-      exerciseMinutes += l.duration_minutes;
+      appLoggedMinutes += l.duration_minutes;
     }
   }
   for (const s of sessions) {
     if (s.date >= weekStart && s.date <= weekEnd) {
-      exerciseMinutes += s.duration_minutes ?? 0;
+      appLoggedMinutes += s.duration_minutes ?? 0;
     }
   }
   for (const b of bundleWeek) {
-    exerciseMinutes += (b.watch_duration_minutes ?? 0) + (b.mobility_minutes ?? 0);
+    appLoggedMinutes += (b.watch_duration_minutes ?? 0) + (b.mobility_minutes ?? 0);
   }
-  const exerciseAvg = Math.round(exerciseMinutes / daysElapsed);
+  const exerciseAvg =
+    hkExerciseWeek != null
+      ? Math.round(hkExerciseWeek / daysElapsed)
+      : Math.round(appLoggedMinutes / daysElapsed);
 
   // --- Calories + steps/day (HealthKit; iOS only, null elsewhere) ---
   const hk = await getWeeklyHealthAverages(daysElapsed);

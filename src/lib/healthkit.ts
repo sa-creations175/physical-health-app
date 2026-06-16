@@ -100,6 +100,82 @@ export async function getActiveCaloriesDailyAverage(
   }
 }
 
+// Total Apple Exercise-ring minutes for the current week so far (Sun..now),
+// via HKQuantityTypeIdentifierAppleExerciseTime. This is the real Exercise ring,
+// not a sum of logged workout durations. Returns null off iOS / without
+// HealthKit so the Fitness Score falls back to its app-logged calculation
+// rather than showing 0.
+export async function getExerciseMinutesThisWeek(): Promise<number | null> {
+  if (!(await ensureHealthPermissions())) return null;
+  const weekStartISO = new Date(
+    startOfWeekISODate() + 'T00:00:00',
+  ).toISOString();
+  try {
+    const { aggregatedData } = await Health.queryAggregated({
+      startDate: weekStartISO,
+      endDate: new Date().toISOString(),
+      dataType: 'exercise-time',
+      bucket: 'day',
+    });
+    const total = aggregatedData.reduce(
+      (sum, s) => sum + (s.value > 0 ? s.value : 0),
+      0,
+    );
+    return Math.round(total);
+  } catch (e) {
+    console.error('HK error at getExerciseMinutesThisWeek:', e);
+    return null;
+  }
+}
+
+// Recovery metrics for Phase 3c. They aren't surfaced in the UI yet, but the
+// permissions are already requested (above) and these are queryable now. HRV
+// (ms) and resting HR (bpm) are the most recent day's average; VO2 max
+// (mL/kg·min) is the most recent reading (it's measured infrequently). Each
+// field is null when unavailable (off iOS, no HealthKit, or no samples).
+export interface RecoverySnapshot {
+  hrvMs: number | null;
+  restingHrBpm: number | null;
+  vo2Max: number | null;
+}
+
+async function latestDailyValue(
+  dataType: 'hrv' | 'resting-heart-rate' | 'vo2-max',
+  daysBack: number,
+): Promise<number | null> {
+  const start = new Date();
+  start.setDate(start.getDate() - daysBack);
+  start.setHours(0, 0, 0, 0);
+  try {
+    const { aggregatedData } = await Health.queryAggregated({
+      startDate: start.toISOString(),
+      endDate: new Date().toISOString(),
+      dataType,
+      bucket: 'day',
+    });
+    const withValues = aggregatedData
+      .filter((s) => s.value > 0)
+      .sort(
+        (a, b) =>
+          new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+      );
+    return withValues.length ? withValues[withValues.length - 1].value : null;
+  } catch (e) {
+    console.error(`HK error at latestDailyValue(${dataType}):`, e);
+    return null;
+  }
+}
+
+export async function getRecoverySnapshot(): Promise<RecoverySnapshot | null> {
+  if (!(await ensureHealthPermissions())) return null;
+  const [hrvMs, restingHrBpm, vo2Max] = await Promise.all([
+    latestDailyValue('hrv', 7),
+    latestDailyValue('resting-heart-rate', 7),
+    latestDailyValue('vo2-max', 90),
+  ]);
+  return { hrvMs, restingHrBpm, vo2Max };
+}
+
 // What the dashboard card renders. Steps/calories are "today so far";
 // workoutsThisWeek counts completed workouts since Sunday; recentWorkouts
 // is the trailing 7-day list (newest first).
@@ -119,12 +195,19 @@ export interface HealthSnapshot {
   recentWorkouts: HealthWorkout[];
 }
 
-// Read scopes we actually use. NSHealthShareUsageDescription covers these;
-// we don't request write scopes because nothing here writes to Health yet.
+// Read scopes we actually use. NSHealthShareUsageDescription covers all of
+// these; we don't request write scopes because nothing here writes to Health.
+// Exercise time powers the Fitness Score's exercise-minutes mark now; HRV /
+// resting HR / VO2 max are requested up front so the recovery layer (Phase 3c)
+// can read them without re-prompting the user later.
 const READ_PERMISSIONS: HealthPermission[] = [
   'READ_STEPS',
   'READ_ACTIVE_CALORIES',
   'READ_WORKOUTS',
+  'READ_EXERCISE_TIME',
+  'READ_HEART_RATE_VARIABILITY',
+  'READ_RESTING_HEART_RATE',
+  'READ_VO2_MAX',
 ];
 
 // True only inside the native iOS app with the Health store reachable.
