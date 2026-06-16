@@ -680,6 +680,39 @@ export class PhysicalHealthDB extends Dexie {
             }
           });
       });
+
+    // v18: macro-style selector. nutrition_seasons gains macro_style (the fat/
+    // carb split chosen at setup). Non-indexed scalar, so the index list is
+    // identical to v17; the upgrade hook backfills existing season rows to
+    // 'balanced' (the prior implicit behavior).
+    this.version(18)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+        body_stats: 'id, user_id, recorded_at',
+        body_measurements: 'id, user_id, recorded_at',
+        nutrition_seasons: 'id, user_id, started_at, ended_at',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('nutrition_seasons')
+          .toCollection()
+          .modify((row: { macro_style?: string }) => {
+            if (row.macro_style === undefined) row.macro_style = 'balanced';
+          });
+      });
   }
 }
 

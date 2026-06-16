@@ -140,6 +140,10 @@ export type SeasonType =
   | 'build_moderate'
   | 'build_aggressive';
 
+// How the non-protein calories are split. Protein stays fixed at its season
+// value; the style sets the fat share (and carbs take the remainder).
+export type MacroStyle = 'balanced' | 'lower_carb' | 'higher_carb';
+
 // Stable-ish body inputs, recorded over time (weight is the recurring one;
 // height/age/sex change rarely). Newest row by recorded_at is "current".
 // Lean mass is NOT stored here — it's derived from the latest weight + latest
@@ -178,6 +182,9 @@ export interface NutritionSeason {
   started_at: string; // ISO datetime
   ended_at: string | null; // null = currently active
   season_type: SeasonType;
+  // Macro split style chosen at setup — added Dexie v18. 'balanced' on rows that
+  // predate the column. Drives the fat share; protein + calories are unaffected.
+  macro_style: MacroStyle;
   // The three goal-question answers as a JSON string (Dexie columns are scalar).
   goal_answers: string;
   daily_calories_target: number;

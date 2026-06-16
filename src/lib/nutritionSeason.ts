@@ -4,6 +4,7 @@ import { LOCAL_USER_ID } from './constants';
 import { getActiveCaloriesDailyAverage } from './healthkit';
 import type {
   BiologicalSex,
+  MacroStyle,
   NutritionSeason,
   SeasonType,
 } from '../db/types';
@@ -55,14 +56,12 @@ export const FOCUS_OPTIONS: { value: FocusAnswer; label: string }[] = [
 
 // ---- Season math ------------------------------------------------------------
 // Each season's numbers, from the spec's season table. calorie_adjustment is
-// the daily delta off TDEE; protein_per_lb_lean is the hard protein anchor;
-// fat_pct sets the fat share of calories (which encodes the carb descriptor —
-// fewer carbs ⇒ a higher fat share); carbs are the remainder.
+// the daily delta off TDEE; protein_per_lb_lean is the hard protein anchor. The
+// fat/carb split is set by the macro style (MACRO_STYLE_FAT_PCT), not here.
 interface SeasonMath {
   label: string;
   calorie_adjustment: number;
   protein_per_lb_lean: number;
-  fat_pct: number;
   // Plain-language fragment used in the recommendation reasoning.
   blurb: string;
 }
@@ -72,7 +71,6 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
     label: 'Aggressive cut',
     calorie_adjustment: -500,
     protein_per_lb_lean: 1.05,
-    fat_pct: 0.3,
     blurb:
       '~500 calorie daily deficit with protein kept very high to protect muscle and carbs pulled back',
   },
@@ -80,7 +78,6 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
     label: 'Moderate cut',
     calorie_adjustment: -350,
     protein_per_lb_lean: 1.0,
-    fat_pct: 0.27,
     blurb:
       '~350 calorie daily deficit, protein stays high to protect your muscle, carbs moderate',
   },
@@ -88,7 +85,6 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
     label: 'Maintain',
     calorie_adjustment: 0,
     protein_per_lb_lean: 0.9,
-    fat_pct: 0.25,
     blurb:
       'eating right at maintenance with higher carbs to fuel training and recomp slowly',
   },
@@ -96,7 +92,6 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
     label: 'Lean bulk',
     calorie_adjustment: 250,
     protein_per_lb_lean: 1.0,
-    fat_pct: 0.25,
     blurb:
       '~250 calorie daily surplus with higher carbs to build muscle while staying lean',
   },
@@ -104,7 +99,6 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
     label: 'Moderate bulk',
     calorie_adjustment: 400,
     protein_per_lb_lean: 0.9,
-    fat_pct: 0.25,
     blurb:
       '~400 calorie daily surplus with higher carbs for steady muscle gain, expecting some fat alongside',
   },
@@ -112,7 +106,6 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
     label: 'Aggressive bulk',
     calorie_adjustment: 600,
     protein_per_lb_lean: 0.9,
-    fat_pct: 0.23,
     blurb:
       '~600 calorie daily surplus with high carbs to drive maximum muscle gain',
   },
@@ -204,7 +197,9 @@ export const SEASON_PICKER_OPTIONS: SeasonPickerOption[] = [
 ];
 
 // ---- TDEE -------------------------------------------------------------------
-// Revised Harris-Benedict BMR (metric inputs converted from lbs / inches).
+// Mifflin-St Jeor BMR (metric inputs converted from lbs / inches) — the most
+// validated resting-burn equation for most adults. Male/female differ only in
+// the constant (+5 vs −161). Kept in sync with the in-app TDEE explainer.
 export function computeBMR(
   sex: BiologicalSex,
   weightLbs: number,
@@ -213,10 +208,8 @@ export function computeBMR(
 ): number {
   const kg = weightLbs / 2.2046;
   const cm = heightInches * 2.54;
-  const bmr =
-    sex === 'male'
-      ? 88.362 + 13.397 * kg + 4.799 * cm - 5.677 * age
-      : 447.593 + 9.247 * kg + 3.098 * cm - 4.33 * age;
+  const base = 10 * kg + 6.25 * cm - 5 * age;
+  const bmr = sex === 'male' ? base + 5 : base - 161;
   return Math.round(bmr);
 }
 
@@ -261,6 +254,42 @@ export async function computeTDEE(
   };
 }
 
+// ---- Macro style ------------------------------------------------------------
+// Protein stays fixed at its season value; the style sets the fat share of
+// total calories, and carbs take whatever calories remain.
+export const MACRO_STYLE_FAT_PCT: Record<MacroStyle, number> = {
+  balanced: 0.28,
+  lower_carb: 0.38,
+  higher_carb: 0.2,
+};
+
+export interface MacroStyleOption {
+  value: MacroStyle;
+  name: string;
+  description: string;
+}
+
+export const MACRO_STYLE_OPTIONS: MacroStyleOption[] = [
+  {
+    value: 'balanced',
+    name: 'Balanced',
+    description:
+      'Standard split — moderate carbs and fat. Best for most people and general performance.',
+  },
+  {
+    value: 'lower_carb',
+    name: 'Lower Carb',
+    description:
+      'Fewer carbs, more fat. May accelerate fat loss and reduce insulin spikes — works well for carb-sensitive people and during cuts.',
+  },
+  {
+    value: 'higher_carb',
+    name: 'Higher Carb',
+    description:
+      'More carbs, less fat. Better for high training volume and performance. Common in lean bulk phases.',
+  },
+];
+
 // ---- Target generation ------------------------------------------------------
 export interface GeneratedTargets {
   daily_calories_target: number;
@@ -273,20 +302,30 @@ export interface GeneratedTargets {
   water_target_bottles: number;
 }
 
+// Just the calorie target for a season at a given TDEE — used by the picker
+// cards. Calories depend only on the season's adjustment, not the macro style.
+export function seasonCalories(seasonType: SeasonType, tdee: number): number {
+  return Math.max(
+    1200,
+    Math.round(tdee + SEASON_MATH[seasonType].calorie_adjustment),
+  );
+}
+
 // Build every target from the season, the lean mass (protein anchor + water),
-// and the personalized TDEE. Protein is fixed first, fat takes its share of
-// calories, carbs are whatever calories remain.
+// the personalized TDEE, and the macro style. Protein is fixed first, fat takes
+// its style-determined share of calories, carbs are whatever calories remain.
 export function generateTargets(
   seasonType: SeasonType,
   leanMassLbs: number,
   tdee: number,
+  macroStyle: MacroStyle = 'balanced',
 ): GeneratedTargets {
   const m = SEASON_MATH[seasonType];
-  const calories = Math.max(1200, Math.round(tdee + m.calorie_adjustment));
+  const calories = seasonCalories(seasonType, tdee);
 
   const protein = Math.round(m.protein_per_lb_lean * leanMassLbs);
   const proteinCal = protein * 4;
-  const fatCal = calories * m.fat_pct;
+  const fatCal = calories * MACRO_STYLE_FAT_PCT[macroStyle];
   const fat = Math.round(fatCal / 9);
   const carbs = Math.max(0, Math.round((calories - proteinCal - fatCal) / 4));
 
@@ -555,6 +594,7 @@ export function daysInSeason(season: NutritionSeason, now = new Date()): number 
 // so exactly one is live and the full history of past targets is preserved.
 export async function startSeason(input: {
   season_type: SeasonType;
+  macro_style: MacroStyle;
   goal_answers: GoalAnswers;
   targets: GeneratedTargets;
 }): Promise<NutritionSeason> {
@@ -574,6 +614,7 @@ export async function startSeason(input: {
     started_at: now,
     ended_at: null,
     season_type: input.season_type,
+    macro_style: input.macro_style,
     goal_answers: JSON.stringify(input.goal_answers),
     ...input.targets,
     created_at: now,

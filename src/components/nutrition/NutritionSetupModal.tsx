@@ -27,6 +27,8 @@ import {
   SEASON_EXPLANATION,
   SEASON_PROS_CONS,
   SEASON_PICKER_OPTIONS,
+  MACRO_STYLE_OPTIONS,
+  seasonCalories,
   bodyFatGuidance,
   bothLookTip,
   seasonLabel,
@@ -39,6 +41,7 @@ import {
 } from '../../lib/nutritionSeason';
 import type {
   BiologicalSex,
+  MacroStyle,
   MeasurementSource,
   NutritionSeason,
   SeasonType,
@@ -206,7 +209,7 @@ export default function NutritionSetupModal({
               ageNum={ageNum}
               sex={sex}
               onEditBodyStats={() => setStep(1)}
-              onConfirm={async (targets, seasonType) => {
+              onConfirm={async (targets, seasonType, macroStyle) => {
                 try {
                   // Only append a new body_stats / body_measurements row when a
                   // value actually changed — a plain season change shouldn't
@@ -244,6 +247,7 @@ export default function NutritionSetupModal({
                   }
                   await startSeason({
                     season_type: seasonType,
+                    macro_style: macroStyle,
                     goal_answers: { look: look!, timeline: timeline!, focus },
                     targets,
                   });
@@ -740,6 +744,7 @@ function GoalStep(props: {
   onConfirm: (
     targets: GeneratedTargets,
     seasonType: ReturnType<typeof recommendSeason>,
+    macroStyle: MacroStyle,
   ) => Promise<void>;
 }) {
   // The briefing/picker hold the recommended season + the inputs (lean mass,
@@ -752,6 +757,7 @@ function GoalStep(props: {
     daysOfData: number;
   } | null>(null);
   const [selectedType, setSelectedType] = useState<SeasonType | null>(null);
+  const [macroStyle, setMacroStyle] = useState<MacroStyle>('balanced');
   const [computing, setComputing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [current, setCurrent] = useState<NutritionSeason | null>(null);
@@ -855,7 +861,12 @@ function GoalStep(props: {
           // selectedType is set alongside preview; targets recompute live as the
           // user taps a different season card.
           const chosen = selectedType ?? preview.recommendedType;
-          const targets = generateTargets(chosen, preview.lean, preview.tdee);
+          const targets = generateTargets(
+            chosen,
+            preview.lean,
+            preview.tdee,
+            macroStyle,
+          );
           return (
             <div className="space-y-3">
               {/* STEP 1 — Research briefing (about the recommended season) */}
@@ -885,6 +896,7 @@ function GoalStep(props: {
                       it keeps refining as more comes in.
                     </p>
                   ) : null}
+                  <TdeeExplainer />
                 </div>
 
                 <div>
@@ -908,9 +920,13 @@ function GoalStep(props: {
                 <SeasonPicker
                   recommended={preview.recommendedType}
                   selected={chosen}
+                  tdee={preview.tdee}
                   onSelect={setSelectedType}
                 />
               </div>
+
+              {/* Macro style — splits the non-protein calories */}
+              <MacroStyleSelector selected={macroStyle} onSelect={setMacroStyle} />
 
               {/* STEP 3 — Selected season's targets + pros/cons (live) */}
               <TargetComparison current={current} targets={targets} />
@@ -932,7 +948,7 @@ function GoalStep(props: {
                 disabled={saving}
                 onClick={async () => {
                   setSaving(true);
-                  await props.onConfirm(targets, chosen);
+                  await props.onConfirm(targets, chosen, macroStyle);
                   setSaving(false);
                 }}
                 className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-50"
@@ -1036,10 +1052,12 @@ function MultiQuestionGroup<T extends string>({
 function SeasonPicker({
   recommended,
   selected,
+  tdee,
   onSelect,
 }: {
   recommended: SeasonType;
   selected: SeasonType;
+  tdee: number;
   onSelect: (t: SeasonType) => void;
 }) {
   return (
@@ -1047,6 +1065,7 @@ function SeasonPicker({
       {SEASON_PICKER_OPTIONS.map((opt) => {
         const isSel = selected === opt.seasonType;
         const isRec = recommended === opt.seasonType;
+        const cals = seasonCalories(opt.seasonType, tdee);
         return (
           <button
             key={opt.seasonType}
@@ -1067,6 +1086,9 @@ function SeasonPicker({
             <span className="block text-[14px] font-medium text-ink pr-24">
               {opt.name}
             </span>
+            <span className="block text-[15px] font-semibold text-ink mt-0.5">
+              {cals.toLocaleString()} cal/day
+            </span>
             <span className="block text-[11px] font-medium text-green-mint mt-0.5">
               {opt.calorieLine}
             </span>
@@ -1076,6 +1098,110 @@ function SeasonPicker({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+// Macro-style selector — single-select pills shown once a season is chosen.
+// Protein stays fixed; the style sets the fat/carb split and re-renders the
+// targets preview below live.
+function MacroStyleSelector({
+  selected,
+  onSelect,
+}: {
+  selected: MacroStyle;
+  onSelect: (s: MacroStyle) => void;
+}) {
+  return (
+    <div className="bg-card border border-card-edge rounded-xl p-4">
+      <Micro>Macro style</Micro>
+      <p className="mt-1 text-[12px] text-card-mute leading-snug">
+        Protein stays high regardless. Choose how to split the rest.
+      </p>
+      <div className="mt-2 space-y-2">
+        {MACRO_STYLE_OPTIONS.map((opt) => {
+          const isSel = selected === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              aria-pressed={isSel}
+              onClick={() => onSelect(opt.value)}
+              className={`w-full text-left rounded-lg border p-3 ${
+                isSel
+                  ? 'border-green-deep bg-[#edf7f2]'
+                  : 'border-card-edge bg-charcoal'
+              }`}
+            >
+              <span className="block text-[13px] font-medium text-ink">
+                {opt.name}
+              </span>
+              <span className="block text-[11px] text-card-mute leading-snug mt-0.5">
+                {opt.description}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Collapsible "How is this calculated?" explainer for the TDEE figure.
+function TdeeExplainer() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="text-[12px] font-medium text-green-mint"
+      >
+        How is this calculated? {open ? '↑' : '↓'}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-xl bg-charcoal border border-card-edge p-3 space-y-3">
+          <p className="text-[11px] tracking-micro uppercase font-semibold text-green-mint">
+            Your TDEE is calculated in two steps
+          </p>
+
+          <div>
+            <Micro>Step 1 — Resting burn (BMR)</Micro>
+            <p className="mt-1 text-[12px] text-ink-body leading-snug">
+              Using the Mifflin-St Jeor formula — the most validated BMR equation
+              for most adults:
+            </p>
+            <p className="mt-1 font-mono text-[11px] text-ink-body leading-snug">
+              Male: (10 × weight kg) + (6.25 × height cm) − (5 × age) + 5
+              <br />
+              Female: (10 × weight kg) + (6.25 × height cm) − (5 × age) − 161
+            </p>
+            <p className="mt-1 text-[12px] text-ink-body leading-snug">
+              This is what your body burns at complete rest, just existing.
+            </p>
+          </div>
+
+          <div>
+            <Micro>Step 2 — Active burn (from Apple Watch)</Micro>
+            <p className="mt-1 text-[12px] text-ink-body leading-snug">
+              Your 90-day rolling average of daily active calories from
+              HealthKit. This is your real movement burn — not a generic activity
+              multiplier. If you had a lazy month, your TDEE reflects it. If you
+              were crushing it, it reflects that too.
+            </p>
+          </div>
+
+          <p className="font-mono text-[11px] text-ink leading-snug">
+            TDEE = BMR + avg daily active calories
+          </p>
+
+          <p className="text-[11px] text-card-mute leading-snug">
+            Note: Apple Watch active calories can slightly undercount or overcount
+            depending on Watch fit and workout type. It’s still more accurate than
+            a self-reported activity level.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
