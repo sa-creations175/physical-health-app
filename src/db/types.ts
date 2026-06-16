@@ -140,9 +140,15 @@ export type SeasonType =
   | 'build_moderate'
   | 'build_aggressive';
 
-// How the non-protein calories are split. Protein stays fixed at its season
-// value; the style sets the fat share (and carbs take the remainder).
-export type MacroStyle = 'balanced' | 'lower_carb' | 'higher_carb';
+// How the calories are split. For most styles protein stays at its season value
+// and the style sets the fat share (carbs take the remainder). 'high_protein_cut'
+// is cut-only — it raises protein to 1.2g/lb lean and keeps fat at the balanced
+// share, trading carbs for muscle protection in a deficit.
+export type MacroStyle =
+  | 'balanced'
+  | 'lower_carb'
+  | 'higher_carb'
+  | 'high_protein_cut';
 
 // Stable-ish body inputs, recorded over time (weight is the recurring one;
 // height/age/sex change rarely). Newest row by recorded_at is "current".

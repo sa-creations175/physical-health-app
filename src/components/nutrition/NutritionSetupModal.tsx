@@ -29,6 +29,7 @@ import {
   SEASON_PICKER_OPTIONS,
   MACRO_STYLE_OPTIONS,
   seasonCalories,
+  isCutSeason,
   bodyFatGuidance,
   bothLookTip,
   seasonLabel,
@@ -921,12 +922,23 @@ function GoalStep(props: {
                   recommended={preview.recommendedType}
                   selected={chosen}
                   tdee={preview.tdee}
-                  onSelect={setSelectedType}
+                  onSelect={(t) => {
+                    setSelectedType(t);
+                    // High-protein cut is cut-only — drop back to balanced if
+                    // the user moves to a non-cut season.
+                    if (!isCutSeason(t) && macroStyle === 'high_protein_cut') {
+                      setMacroStyle('balanced');
+                    }
+                  }}
                 />
               </div>
 
-              {/* Macro style — splits the non-protein calories */}
-              <MacroStyleSelector selected={macroStyle} onSelect={setMacroStyle} />
+              {/* Macro style — splits the calories (high-protein cut is cut-only) */}
+              <MacroStyleSelector
+                seasonType={chosen}
+                selected={macroStyle}
+                onSelect={setMacroStyle}
+              />
 
               {/* STEP 3 — Selected season's targets + pros/cons (live) */}
               <TargetComparison current={current} targets={targets} />
@@ -1106,12 +1118,18 @@ function SeasonPicker({
 // Protein stays fixed; the style sets the fat/carb split and re-renders the
 // targets preview below live.
 function MacroStyleSelector({
+  seasonType,
   selected,
   onSelect,
 }: {
+  seasonType: SeasonType;
   selected: MacroStyle;
   onSelect: (s: MacroStyle) => void;
 }) {
+  // 'high_protein_cut' only applies to cut seasons.
+  const options = MACRO_STYLE_OPTIONS.filter(
+    (o) => o.value !== 'high_protein_cut' || isCutSeason(seasonType),
+  );
   return (
     <div className="bg-card border border-card-edge rounded-xl p-4">
       <Micro>Macro style</Micro>
@@ -1119,7 +1137,7 @@ function MacroStyleSelector({
         Protein stays high regardless. Choose how to split the rest.
       </p>
       <div className="mt-2 space-y-2">
-        {MACRO_STYLE_OPTIONS.map((opt) => {
+        {options.map((opt) => {
           const isSel = selected === opt.value;
           return (
             <button

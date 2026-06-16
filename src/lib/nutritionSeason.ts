@@ -261,7 +261,17 @@ export const MACRO_STYLE_FAT_PCT: Record<MacroStyle, number> = {
   balanced: 0.28,
   lower_carb: 0.38,
   higher_carb: 0.2,
+  high_protein_cut: 0.28, // same fat share as balanced; the protein is what moves
 };
+
+// Protein anchor in g/lb lean for 'high_protein_cut' — overrides the season's
+// default protein (cut-only style; the rest use the season value).
+const HIGH_PROTEIN_CUT_PER_LB = 1.2;
+
+// The cut seasons — gate for the cut-only 'high_protein_cut' macro style.
+export function isCutSeason(seasonType: SeasonType): boolean {
+  return seasonType === 'cut_moderate' || seasonType === 'cut_aggressive';
+}
 
 export interface MacroStyleOption {
   value: MacroStyle;
@@ -287,6 +297,12 @@ export const MACRO_STYLE_OPTIONS: MacroStyleOption[] = [
     name: 'Higher Carb',
     description:
       'More carbs, less fat. Better for high training volume and performance. Common in lean bulk phases.',
+  },
+  {
+    value: 'high_protein_cut',
+    name: 'High Protein Cut',
+    description:
+      'More protein to protect muscle during a cut. Research supports up to 1.2g per lb of lean mass when in a calorie deficit — reduces muscle loss risk at the cost of slightly fewer carbs.',
   },
 ];
 
@@ -323,7 +339,13 @@ export function generateTargets(
   const m = SEASON_MATH[seasonType];
   const calories = seasonCalories(seasonType, tdee);
 
-  const protein = Math.round(m.protein_per_lb_lean * leanMassLbs);
+  // High-protein cut raises the protein anchor; every other style uses the
+  // season's default.
+  const proteinPerLb =
+    macroStyle === 'high_protein_cut'
+      ? HIGH_PROTEIN_CUT_PER_LB
+      : m.protein_per_lb_lean;
+  const protein = Math.round(proteinPerLb * leanMassLbs);
   const proteinCal = protein * 4;
   const fatCal = calories * MACRO_STYLE_FAT_PCT[macroStyle];
   const fat = Math.round(fatCal / 9);
