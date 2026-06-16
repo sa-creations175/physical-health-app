@@ -479,6 +479,15 @@ function BodyFatStep(props: {
         defaultOpen={props.bfSource === 'navy_method'}
       />
 
+      {/* DEXA scan tip — persistent, informational (no dismiss) */}
+      <div className="rounded-xl bg-[#edf7f2] px-4 py-3">
+        <p className="text-[12px] text-ink-body leading-snug">
+          📋 For the most accurate body fat baseline, consider booking a DEXA
+          scan. It’s the gold standard — and the app accepts manual DEXA entry as
+          your highest-priority BF% source.
+        </p>
+      </div>
+
       {/* Confirm / adjust the chosen estimate */}
       <div className="bg-card border border-card-edge rounded-xl p-4 mt-1">
         <span className="text-[12px] text-card-mute">

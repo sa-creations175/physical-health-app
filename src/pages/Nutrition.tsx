@@ -12,12 +12,7 @@ import {
   getLatestBodyStats,
   getLatestMeasurement,
   getCurrentLeanMass,
-  hasDexaMeasurement,
 } from '../lib/bodyComposition';
-import {
-  getUserPreferences,
-  updateUserPreferences,
-} from '../lib/userPreferences';
 import {
   getNutritionLogForDate,
   bottlesFromLog,
@@ -41,13 +36,6 @@ export default function Nutrition() {
   const leanMass = useLiveQuery(() => getCurrentLeanMass(), []);
   const waterLog = useLiveQuery(() => getNutritionLogForDate(today), [today]);
   const bottles = bottlesFromLog(waterLog);
-  const prefs = useLiveQuery(() => getUserPreferences(), []);
-  const hasDexa = useLiveQuery(() => hasDexaMeasurement(), []);
-
-  // One-time DEXA nudge: only once setup is complete (an active season exists),
-  // no DEXA reading is on record, and the user hasn't dismissed it.
-  const showDexaNudge =
-    !!season && hasDexa === false && !!prefs && !prefs.dexa_nudge_dismissed;
 
   return (
     <div className="pt-8 pb-4">
@@ -76,14 +64,6 @@ export default function Nutrition() {
           onWeigh={() => setBodyLog('weigh')}
           onMeasure={() => setBodyLog('measure')}
         />
-
-        {showDexaNudge && (
-          <DexaNudge
-            onDismiss={() =>
-              void updateUserPreferences({ dexa_nudge_dismissed: true })
-            }
-          />
-        )}
       </div>
 
       <div className="px-5 mt-4 space-y-2">
@@ -368,27 +348,6 @@ function BodyStatsCard({
           Log measurements
         </button>
       </div>
-    </div>
-  );
-}
-
-// ---- DEXA nudge ------------------------------------------------------------
-
-function DexaNudge({ onDismiss }: { onDismiss: () => void }) {
-  return (
-    <div className="bg-card shadow-card rounded-2xl p-4">
-      <p className="text-[13px] text-ink-body leading-snug">
-        📋 For the most accurate body fat baseline, consider booking a DEXA scan.
-        It’s the gold standard — and the app accepts manual DEXA entry as your
-        highest-priority BF% source.
-      </p>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="mt-3 rounded-xl py-2 px-4 text-[13px] font-medium text-ink-body bg-charcoal border border-card-edge min-h-[44px]"
-      >
-        Got it
-      </button>
     </div>
   );
 }
