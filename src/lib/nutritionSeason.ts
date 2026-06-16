@@ -19,7 +19,7 @@ export type TimelineAnswer = 'slow' | 'moderate' | 'fast';
 export type FocusAnswer =
   | 'leanness'
   | 'upper_size'
-  | 'lower_strength'
+  | 'lower_size'
   | 'conditioning'
   | 'balanced';
 
@@ -48,7 +48,7 @@ export const TIMELINE_OPTIONS: { value: TimelineAnswer; label: string }[] = [
 export const FOCUS_OPTIONS: { value: FocusAnswer; label: string }[] = [
   { value: 'leanness', label: 'Overall leanness' },
   { value: 'upper_size', label: 'Upper body size' },
-  { value: 'lower_strength', label: 'Lower body strength' },
+  { value: 'lower_size', label: 'Lower body size' },
   { value: 'conditioning', label: 'Athletic conditioning' },
   { value: 'balanced', label: 'Balanced' },
 ];
