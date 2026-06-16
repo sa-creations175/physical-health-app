@@ -12,7 +12,6 @@ import {
   MALE_BODY_FAT_BANDS,
   type BodyFatBand,
 } from '../../lib/bodyFatReference';
-import BodyFatSilhouette from './BodyFatSilhouette';
 import {
   isAiEstimateAvailable,
   estimateBodyFatFromPhoto,
@@ -501,16 +500,13 @@ function VisualReferencePanel({
               type="button"
               aria-pressed={isSel}
               onClick={() => onPick(band)}
-              className={`text-left rounded-lg border p-2.5 flex flex-col ${
+              className={`text-left rounded-lg border p-3 flex flex-col ${
                 isSel
                   ? 'border-green-deep bg-[#edf7f2]'
                   : 'border-card-edge bg-charcoal'
               }`}
             >
-              <span className="block mx-auto h-20 w-14">
-                <BodyFatSilhouette level={band.level} />
-              </span>
-              <span className="mt-1.5 text-[14px] font-medium text-ink">
+              <span className="text-[14px] font-medium text-ink">
                 {band.label}
               </span>
               <span className="text-[11px] font-medium uppercase tracking-micro text-green-mint">
