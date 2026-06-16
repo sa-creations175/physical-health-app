@@ -26,6 +26,7 @@ import {
   generateTargets,
   SEASON_EXPLANATION,
   SEASON_PROS_CONS,
+  SEASON_PICKER_OPTIONS,
   bodyFatGuidance,
   bothLookTip,
   seasonLabel,
@@ -40,6 +41,7 @@ import type {
   BiologicalSex,
   MeasurementSource,
   NutritionSeason,
+  SeasonType,
 } from '../../db/types';
 
 // The Nutrition setup flow — a three-page onboarding modal opened on first
@@ -661,13 +663,16 @@ function GoalStep(props: {
     seasonType: ReturnType<typeof recommendSeason>,
   ) => Promise<void>;
 }) {
+  // The briefing/picker hold the recommended season + the inputs (lean mass,
+  // TDEE) needed to recompute any season's targets live as the user taps cards.
   const [preview, setPreview] = useState<{
-    targets: GeneratedTargets;
-    seasonType: ReturnType<typeof recommendSeason>;
+    recommendedType: SeasonType;
     tdee: number;
+    lean: number;
     estimatedActivity: boolean;
     daysOfData: number;
   } | null>(null);
+  const [selectedType, setSelectedType] = useState<SeasonType | null>(null);
   const [computing, setComputing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [current, setCurrent] = useState<NutritionSeason | null>(null);
@@ -678,15 +683,20 @@ function GoalStep(props: {
 
   const ready = props.look && props.timeline && props.focus.length > 0;
 
+  // Reset the briefing whenever an answer changes so it's rebuilt fresh.
+  function resetPreview() {
+    setPreview(null);
+    setSelectedType(null);
+  }
+
   async function buildPreview() {
     if (!ready) return;
     setComputing(true);
     try {
-      const seasonType = recommendSeason({
-        look: props.look!,
-        timeline: props.timeline!,
-        focus: props.focus,
-      });
+      const recommendedType = recommendSeason(
+        { look: props.look!, timeline: props.timeline!, focus: props.focus },
+        props.bfNum > 0 ? props.bfNum : null,
+      );
       const tdee = await computeTDEE(
         props.sex,
         props.weightLbs,
@@ -694,14 +704,14 @@ function GoalStep(props: {
         props.ageNum,
       );
       const lean = leanMassLbs(props.weightLbs, props.bfNum);
-      const targets = generateTargets(seasonType, lean, tdee.tdee);
       setPreview({
-        targets,
-        seasonType,
+        recommendedType,
         tdee: tdee.tdee,
+        lean,
         estimatedActivity: tdee.estimatedActivity,
         daysOfData: tdee.daysOfData,
       });
+      setSelectedType(recommendedType); // pre-select the recommendation
     } finally {
       setComputing(false);
     }
@@ -715,7 +725,7 @@ function GoalStep(props: {
         value={props.look}
         onChange={(v) => {
           props.setLook(v);
-          setPreview(null);
+          resetPreview();
         }}
       />
       <BothLookTip look={props.look} bf={props.bfNum > 0 ? props.bfNum : null} />
@@ -725,7 +735,7 @@ function GoalStep(props: {
         value={props.timeline}
         onChange={(v) => {
           props.setTimeline(v);
-          setPreview(null);
+          resetPreview();
         }}
       />
       <MultiQuestionGroup
@@ -739,7 +749,7 @@ function GoalStep(props: {
               ? props.focus.filter((f) => f !== v)
               : [...props.focus, v],
           );
-          setPreview(null);
+          resetPreview();
         }}
       />
 
@@ -753,81 +763,101 @@ function GoalStep(props: {
           {computing ? 'Calculating…' : 'See my targets'}
         </button>
       ) : (
-        <div className="space-y-3">
-          {/* Recommendation header + baseline / what we're doing / research */}
-          <div className="bg-card border border-card-edge rounded-xl p-4 space-y-4">
-            <Micro>Recommended · {seasonLabel(preview.seasonType)}</Micro>
+        (() => {
+          // selectedType is set alongside preview; targets recompute live as the
+          // user taps a different season card.
+          const chosen = selectedType ?? preview.recommendedType;
+          const targets = generateTargets(chosen, preview.lean, preview.tdee);
+          return (
+            <div className="space-y-3">
+              {/* STEP 1 — Research briefing (about the recommended season) */}
+              <div className="bg-card border border-card-edge rounded-xl p-4 space-y-4">
+                <Micro>Recommended · {seasonLabel(preview.recommendedType)}</Micro>
 
-            {/* 1. Your baseline (TDEE) */}
-            <div>
-              <Micro>Your baseline</Micro>
-              <p className="mt-1 text-[13px] text-ink-body leading-snug">
-                Based on your body stats and Apple Watch data, your body burns
-                approximately{' '}
-                <span className="font-medium text-ink">
-                  {preview.tdee.toLocaleString()}
-                </span>{' '}
-                calories per day to maintain your current weight. This is your
-                TDEE — total daily energy expenditure.
-              </p>
-              {preview.estimatedActivity ? (
-                <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
-                  No Apple Watch active-calorie history yet, so this uses an
-                  estimated activity level. It’ll personalize automatically once
-                  Watch data builds up.
+                <div>
+                  <Micro>Your baseline</Micro>
+                  <p className="mt-1 text-[13px] text-ink-body leading-snug">
+                    Based on your body stats and Apple Watch data, your body
+                    burns approximately{' '}
+                    <span className="font-medium text-ink">
+                      {preview.tdee.toLocaleString()}
+                    </span>{' '}
+                    calories per day to maintain your current weight. This is
+                    your TDEE — total daily energy expenditure.
+                  </p>
+                  {preview.estimatedActivity ? (
+                    <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
+                      No Apple Watch active-calorie history yet, so this uses an
+                      estimated activity level. It’ll personalize automatically
+                      once Watch data builds up.
+                    </p>
+                  ) : preview.daysOfData < 90 ? (
+                    <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
+                      Based on {preview.daysOfData} days of Watch data so far —
+                      it keeps refining as more comes in.
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <Micro>What we’re doing</Micro>
+                  <p className="mt-1 text-[13px] text-ink-body leading-snug">
+                    {SEASON_EXPLANATION[preview.recommendedType]}
+                  </p>
+                </div>
+
+                <div>
+                  <Micro>What the research says</Micro>
+                  <ResearchNote bf={props.bfNum > 0 ? props.bfNum : null} />
+                </div>
+              </div>
+
+              {/* STEP 2 — Six-option season picker */}
+              <div>
+                <p className="text-[13px] font-medium text-ink mb-2">
+                  Choose your season
                 </p>
-              ) : preview.daysOfData < 90 ? (
-                <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
-                  Based on {preview.daysOfData} days of Watch data so far — it
-                  keeps refining as more comes in.
-                </p>
-              ) : null}
+                <SeasonPicker
+                  recommended={preview.recommendedType}
+                  selected={chosen}
+                  onSelect={setSelectedType}
+                />
+              </div>
+
+              {/* STEP 3 — Selected season's targets + pros/cons (live) */}
+              <TargetComparison current={current} targets={targets} />
+
+              <div className="bg-card border border-card-edge rounded-xl p-4">
+                <Micro>Pros &amp; cons of this season</Micro>
+                <div className="mt-2">
+                  <ProsCons
+                    prosLabel="Pros"
+                    pros={SEASON_PROS_CONS[chosen].pros}
+                    consLabel="Cons"
+                    cons={SEASON_PROS_CONS[chosen].cons}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={saving}
+                onClick={async () => {
+                  setSaving(true);
+                  await props.onConfirm(targets, chosen);
+                  setSaving(false);
+                }}
+                className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-50"
+              >
+                {saving
+                  ? 'Saving…'
+                  : current
+                    ? 'Switch to this season'
+                    : 'Start this season'}
+              </button>
             </div>
-
-            {/* 2. What we're doing */}
-            <div>
-              <Micro>What we’re doing</Micro>
-              <p className="mt-1 text-[13px] text-ink-body leading-snug">
-                {SEASON_EXPLANATION[preview.seasonType]}
-              </p>
-            </div>
-
-            {/* 3. What the research says (conditional on BF%) */}
-            <div>
-              <Micro>What the research says</Micro>
-              <ResearchNote bf={props.bfNum > 0 ? props.bfNum : null} />
-            </div>
-          </div>
-
-          {/* 4. Your targets */}
-          <TargetComparison current={current} targets={preview.targets} />
-
-          {/* 5. Pros & cons of the chosen season (always shown) */}
-          <div className="bg-card border border-card-edge rounded-xl p-4">
-            <Micro>Pros &amp; cons of this season</Micro>
-            <div className="mt-2">
-              <ProsCons
-                prosLabel="Pros"
-                pros={SEASON_PROS_CONS[preview.seasonType].pros}
-                consLabel="Cons"
-                cons={SEASON_PROS_CONS[preview.seasonType].cons}
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            disabled={saving}
-            onClick={async () => {
-              setSaving(true);
-              await props.onConfirm(preview.targets, preview.seasonType);
-              setSaving(false);
-            }}
-            className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-50"
-          >
-            {saving ? 'Saving…' : current ? 'Switch to this season' : 'Start this season'}
-          </button>
-        </div>
+          );
+        })()
       )}
     </div>
   );
@@ -908,6 +938,56 @@ function MultiQuestionGroup<T extends string>({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// The six-option season picker. The app-recommended option carries a badge and
+// is pre-selected; tapping any card selects it (green border) and drives the
+// live targets + pros/cons below. All six are always available.
+function SeasonPicker({
+  recommended,
+  selected,
+  onSelect,
+}: {
+  recommended: SeasonType;
+  selected: SeasonType;
+  onSelect: (t: SeasonType) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {SEASON_PICKER_OPTIONS.map((opt) => {
+        const isSel = selected === opt.seasonType;
+        const isRec = recommended === opt.seasonType;
+        return (
+          <button
+            key={opt.seasonType}
+            type="button"
+            aria-pressed={isSel}
+            onClick={() => onSelect(opt.seasonType)}
+            className={`relative w-full text-left rounded-xl border p-3.5 ${
+              isSel
+                ? 'border-green-deep bg-[#edf7f2]'
+                : 'border-card-edge bg-card'
+            }`}
+          >
+            {isRec && (
+              <span className="absolute top-2.5 right-2.5 text-[9px] tracking-micro uppercase font-semibold text-white bg-green-deep rounded-full px-2 py-0.5">
+                Recommended
+              </span>
+            )}
+            <span className="block text-[14px] font-medium text-ink pr-24">
+              {opt.name}
+            </span>
+            <span className="block text-[11px] font-medium text-green-mint mt-0.5">
+              {opt.calorieLine}
+            </span>
+            <span className="block text-[12px] text-card-mute leading-snug mt-1">
+              {opt.description}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

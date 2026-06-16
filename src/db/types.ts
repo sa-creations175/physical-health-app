@@ -137,6 +137,7 @@ export type SeasonType =
   | 'cut_moderate'
   | 'maintain'
   | 'build_lean'
+  | 'build_moderate'
   | 'build_aggressive';
 
 // Stable-ish body inputs, recorded over time (weight is the recurring one;

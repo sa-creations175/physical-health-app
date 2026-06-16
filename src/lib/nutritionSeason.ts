@@ -78,11 +78,11 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
   },
   cut_moderate: {
     label: 'Moderate cut',
-    calorie_adjustment: -325,
+    calorie_adjustment: -350,
     protein_per_lb_lean: 1.0,
     fat_pct: 0.27,
     blurb:
-      '~325 calorie daily deficit, protein stays high to protect your muscle, carbs moderate',
+      '~350 calorie daily deficit, protein stays high to protect your muscle, carbs moderate',
   },
   maintain: {
     label: 'Maintain',
@@ -93,20 +93,28 @@ export const SEASON_MATH: Record<SeasonType, SeasonMath> = {
       'eating right at maintenance with higher carbs to fuel training and recomp slowly',
   },
   build_lean: {
-    label: 'Lean build',
+    label: 'Lean bulk',
     calorie_adjustment: 250,
     protein_per_lb_lean: 1.0,
     fat_pct: 0.25,
     blurb:
       '~250 calorie daily surplus with higher carbs to build muscle while staying lean',
   },
+  build_moderate: {
+    label: 'Moderate bulk',
+    calorie_adjustment: 400,
+    protein_per_lb_lean: 0.9,
+    fat_pct: 0.25,
+    blurb:
+      '~400 calorie daily surplus with higher carbs for steady muscle gain, expecting some fat alongside',
+  },
   build_aggressive: {
-    label: 'Aggressive build',
-    calorie_adjustment: 450,
+    label: 'Aggressive bulk',
+    calorie_adjustment: 600,
     protein_per_lb_lean: 0.9,
     fat_pct: 0.23,
     blurb:
-      '~450 calorie daily surplus with high carbs to drive maximum muscle gain',
+      '~600 calorie daily surplus with high carbs to drive maximum muscle gain',
   },
 };
 
@@ -115,9 +123,13 @@ export function seasonLabel(type: SeasonType): string {
 }
 
 // Map the goal answers to a recommended season. Look + timeline drive the
-// cut/maintain/build axis and its intensity; focus is directional and rides
-// along in the reasoning rather than changing the numbers in v1.
-export function recommendSeason(answers: GoalAnswers): SeasonType {
+// cut/maintain/build axis and its intensity. For 'both' (lean + muscular) the
+// current BF% decides instead of timeline: above ~15% you lean out first, at or
+// below ~15% a lean bulk is the better entry point. focus stays directional.
+export function recommendSeason(
+  answers: GoalAnswers,
+  bf: number | null = null,
+): SeasonType {
   const { look, timeline } = answers;
   if (look === 'maintain') return 'maintain';
   if (look === 'leaner') {
@@ -126,13 +138,70 @@ export function recommendSeason(answers: GoalAnswers): SeasonType {
   if (look === 'bigger') {
     return timeline === 'fast' ? 'build_aggressive' : 'build_lean';
   }
-  // 'both' — lean + muscular: recomp at maintenance when unhurried, a lean
-  // build when there's some urgency, a moderate cut when they want it fast
-  // (lean out first, then build).
+  // 'both' — BF%-driven: cut first if over ~15%, otherwise lean bulk.
+  if (bf !== null && bf > 0) {
+    return bf > 15 ? 'cut_moderate' : 'build_lean';
+  }
+  // No BF% on record — fall back to the timeline-based read.
   if (timeline === 'slow') return 'maintain';
   if (timeline === 'moderate') return 'build_lean';
   return 'cut_moderate';
 }
+
+// The six season options for the picker, in display order. Each card shows the
+// name, a one-line calorie consequence, and a one-sentence description; the math
+// itself lives in SEASON_MATH and TargetComparison renders the real targets.
+export interface SeasonPickerOption {
+  seasonType: SeasonType;
+  name: string;
+  calorieLine: string;
+  description: string;
+}
+
+export const SEASON_PICKER_OPTIONS: SeasonPickerOption[] = [
+  {
+    seasonType: 'cut_aggressive',
+    name: 'Aggressive Cut',
+    calorieLine: '~500 cal deficit · ~1 lb/week fat loss',
+    description:
+      'Fastest path to lean. Higher muscle loss risk — protein stays high to protect your gains.',
+  },
+  {
+    seasonType: 'cut_moderate',
+    name: 'Moderate Cut',
+    calorieLine: '~350 cal deficit · ~0.5–0.75 lb/week fat loss',
+    description:
+      'The sweet spot for fat loss. Slow enough to preserve muscle, fast enough to see progress.',
+  },
+  {
+    seasonType: 'maintain',
+    name: 'Maintain',
+    calorieLine: 'At your TDEE · hold current composition',
+    description:
+      "Eat to perform. Hold what you've built while training hard.",
+  },
+  {
+    seasonType: 'build_lean',
+    name: 'Lean Bulk',
+    calorieLine: '+250 cal above TDEE · slow, clean muscle gain',
+    description:
+      'The patient play. Minimal fat gain, maximum muscle efficiency.',
+  },
+  {
+    seasonType: 'build_moderate',
+    name: 'Moderate Bulk',
+    calorieLine: '+400 cal above TDEE · steady muscle gain',
+    description:
+      "Balanced build. Expect some fat alongside the muscle — that's normal.",
+  },
+  {
+    seasonType: 'build_aggressive',
+    name: 'Aggressive Bulk',
+    calorieLine: '+600 cal above TDEE · fastest muscle gain',
+    description:
+      'Eat to grow. Significant fat gain expected — plan a cut after.',
+  },
+];
 
 // ---- TDEE -------------------------------------------------------------------
 // Revised Harris-Benedict BMR (metric inputs converted from lbs / inches).
@@ -269,8 +338,10 @@ export const SEASON_EXPLANATION: Record<SeasonType, string> = {
     'Eating at your TDEE — no surplus, no deficit. Goal is to hold your current composition while training hard.',
   build_lean:
     "We're adding ~250 calories above your TDEE. Slow, controlled muscle building with minimal fat gain.",
+  build_moderate:
+    "We're adding ~400 calories above your TDEE. Steady muscle gain — expect some fat alongside it.",
   build_aggressive:
-    "We're adding ~450 calories above your TDEE. Faster muscle gain but expect some fat gain alongside it.",
+    "We're adding ~600 calories above your TDEE. Fastest muscle gain, but significant fat gain is expected — plan a cut after.",
 };
 
 // Trade-offs of the chosen season — always shown below the targets. Framed as
@@ -325,6 +396,18 @@ export const SEASON_PROS_CONS: Record<
       'Slower scale and size progress',
       'Requires eating above maintenance consistently',
       'Patience needed before size shows',
+    ],
+  },
+  build_moderate: {
+    pros: [
+      'Steady, reliable muscle gain',
+      'Strong fuel for progressive overload',
+      'Faster size progress than a lean bulk',
+    ],
+    cons: [
+      'Some fat gain alongside the muscle',
+      'A cut is likely needed down the line',
+      'Less precise than a lean bulk',
     ],
   },
   build_aggressive: {
