@@ -4,6 +4,7 @@ import { runSeedersIfNeeded } from './db';
 import { runCloudSync } from './lib/sync';
 import { checkBodyMeasurementDue } from './lib/promptOrchestration';
 import { autoSaveUnfinishedSessions } from './lib/sessionSets';
+import { seedGoalsIfEmpty } from './lib/goals';
 import { Capacitor } from '@capacitor/core';
 import { isHealthKitAvailable } from './lib/healthkit';
 import { importWatchWorkouts, LAST_IMPORT_KEY } from './lib/watchImport';
@@ -50,12 +51,16 @@ async function importWatchWorkoutsIfAvailable(): Promise<void> {
 function App() {
   useEffect(() => {
     // Seed/heal local data first, then run cloud sync (initial push + pull),
+    // then seed goals if there are none,
     // then save any strength session left unfinished on an earlier day, then
     // run startup prompt triggers (after the pull, so restored rows count),
     // then auto-import Apple Watch workouts (iOS only). Each phase is
     // best-effort and never blocks local boot.
     runSeedersIfNeeded()
       .then(() => runCloudSync())
+      // Goals seed after the pull: a device joining an existing cloud copy
+      // takes its goals rather than pushing a fresh standard set over them.
+      .then(() => seedGoalsIfEmpty())
       .then(() => autoSaveUnfinishedSessions())
       .then(() => checkBodyMeasurementDue())
       .then(() => importWatchWorkoutsIfAvailable())

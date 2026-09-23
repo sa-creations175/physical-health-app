@@ -27,6 +27,7 @@ import type {
   BodyMeasurement,
   NutritionSeason,
   SessionPlan,
+  BodyGoal,
 } from './types';
 
 export class PhysicalHealthDB extends Dexie {
@@ -48,6 +49,7 @@ export class PhysicalHealthDB extends Dexie {
   body_measurements!: Table<BodyMeasurement, string>;
   nutrition_seasons!: Table<NutritionSeason, string>;
   session_plans!: Table<SessionPlan, string>;
+  body_goals!: Table<BodyGoal, string>;
 
   constructor() {
     super('physical_health_db');
@@ -780,6 +782,32 @@ export class PhysicalHealthDB extends Dexie {
             if (row.one_tap_repeat === undefined) row.one_tap_repeat = true;
           });
       });
+
+    // v20: body goals. One row per goal the person owns (weekly counts and
+    // daily averages); Home and Fitness read every target from here. Seeded
+    // by runSeedersIfNeeded from the existing target preferences, which stay
+    // in place but are no longer read for targets.
+    this.version(20).stores({
+      sessions: 'id, user_id, type, date, created_at',
+      exercises: 'id, user_id, name, muscle_group, last_used_at',
+      session_exercises: 'id, session_id, exercise_id, order_index',
+      sets: 'id, session_exercise_id, set_number, created_at',
+      cardio_types: 'id, user_id, name, last_used_at',
+      cardio_logs: 'id, user_id, started_at, created_at',
+      delivery_days: 'id, user_id, date',
+      bundle_logs: 'id, user_id, date',
+      nutrition_logs: 'id, user_id, date',
+      supplements: 'id, user_id, active',
+      health_checkins: 'id, user_id, type',
+      goals: 'id, user_id, pillar, parent_goal_id',
+      prompts: 'id, user_id, type, fired_at, dismissed_at',
+      user_preferences: 'id, user_id',
+      body_stats: 'id, user_id, recorded_at',
+      body_measurements: 'id, user_id, recorded_at',
+      nutrition_seasons: 'id, user_id, started_at, ended_at',
+      session_plans: 'id, user_id, type',
+      body_goals: 'id, user_id, period, order_index',
+    });
   }
 }
 

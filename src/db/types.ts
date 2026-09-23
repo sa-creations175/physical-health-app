@@ -263,6 +263,33 @@ export interface HealthCheckin {
   updated_at: string;
 }
 
+// A goal the person owns — added Dexie v20. Home and Fitness read every
+// target from these rows: the score dial and rows, the daily mini-bars, the
+// calorie goal line, "goal met" and the amber misses. `metric` ties a goal to
+// what the app measures, so renaming "Daily Bundle" to "Morning set" keeps it
+// counting; a goal the person adds themselves has metric null.
+export type GoalPeriod = 'week' | 'day';
+export type WeeklyGoalMetric = 'bundle' | 'cardio' | 'lower' | 'upper' | 'full_body' | 'mobility';
+export type DailyGoalMetric = 'calories' | 'exercise_minutes' | 'steps';
+export type GoalMetric = WeeklyGoalMetric | DailyGoalMetric;
+
+export interface BodyGoal {
+  id: string;
+  user_id: string;
+  name: string;
+  metric: GoalMetric | null;
+  target: number;
+  unit: string; // 'days' | 'sessions' | 'times' | 'calories' | 'minutes' | 'steps'
+  period: GoalPeriod;
+  // Daily goals can be unticked: the number stays on Home, the goal doesn't.
+  active: boolean;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Directional goals (Phase 5 goals layer, unused so far). Not the body goals
+// above.
 export interface Goal {
   id: string;
   user_id: string;
