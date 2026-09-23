@@ -1,3 +1,4 @@
+import type { BodyGoal } from '../../db/types';
 import { Watch } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
@@ -42,9 +43,11 @@ const INTENSITY_INITIAL: Record<DayIntensity, string> = {
 };
 
 export default function BundleActivityCard({
+  goal,
   expanded,
   onToggle,
 }: {
+  goal: BodyGoal; // the weekly goal this card shows: its name and target (days)
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -68,7 +71,7 @@ export default function BundleActivityCard({
     .map((d) => byDate.get(d))
     .filter((r): r is BundleLog => r !== undefined);
 
-  const bundleTarget = prefs?.bundle_target ?? DEFAULT_BUNDLE_CONFIG.weekly_target;
+  const bundleTarget = goal.target;
   const mobilityMin =
     prefs?.bundle_mobility_min_minutes ?? DEFAULT_BUNDLE_CONFIG.mobility_min_minutes;
   const pushupTarget =
@@ -100,10 +103,11 @@ export default function BundleActivityCard({
 
   return (
     <SharedActivityCard
-      label="Daily Bundle"
+      label={goal.name}
       badge={
         <>
-          {qualifyingDays} / {bundleTarget}
+          {qualifyingDays}
+          <span className="text-label font-medium text-muted"> / {bundleTarget}</span>
           {weekOnTrack && <span className="text-green-700"> ✓</span>}
         </>
       }

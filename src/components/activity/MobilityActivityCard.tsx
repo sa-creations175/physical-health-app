@@ -1,3 +1,4 @@
+import type { BodyGoal } from '../../db/types';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useToast } from '../ui/Toast';
@@ -26,9 +27,11 @@ import {
 import type { BundleLog } from '../../db/types';
 
 export default function MobilityActivityCard({
+  goal,
   expanded,
   onToggle,
 }: {
+  goal: BodyGoal; // the weekly goal this card shows: its name and target (days)
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -39,8 +42,7 @@ export default function MobilityActivityCard({
 
   const minMinutes =
     prefs?.bundle_mobility_min_minutes ?? DEFAULT_BUNDLE_CONFIG.mobility_min_minutes;
-  const target =
-    prefs?.bundle_mobility_target ?? DEFAULT_BUNDLE_CONFIG.mobility_target;
+  const target = goal.target;
 
   const byDate = new Map<string, BundleLog>(rows.map((r) => [r.date, r]));
   const weekStart = startOfWeekISODate();
@@ -64,10 +66,11 @@ export default function MobilityActivityCard({
 
   return (
     <SharedActivityCard
-      label="Mobility"
+      label={goal.name}
       badge={
         <>
-          {totals.mobilityQualifyingDays} / {target}
+          {totals.mobilityQualifyingDays}
+          <span className="text-label font-medium text-muted"> / {target}</span>
           {met && <span className="text-green-700"> ✓</span>}
         </>
       }
@@ -108,7 +111,7 @@ export default function MobilityActivityCard({
           met ? 'text-green-700' : 'text-muted'
         }`}
       >
-        Mobility: {totals.mobilityQualifyingDays} / {target} days
+        {goal.name}: {totals.mobilityQualifyingDays} / {target} days
         {met ? ' ✓' : ''}
       </p>
     </SharedActivityCard>

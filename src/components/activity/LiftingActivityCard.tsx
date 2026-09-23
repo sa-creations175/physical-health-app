@@ -3,40 +3,27 @@ import { useNavigate } from 'react-router-dom';
 import SharedActivityCard from './SharedActivityCard';
 import { LowerBodyIcon, UpperBodyIcon, FullBodyIcon } from './activityIcons';
 import { getLiftingSummary, type LiftingType } from '../../lib/dashboardQueries';
-import { getUserPreferences } from '../../lib/userPreferences';
-import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
+import type { BodyGoal } from '../../db/types';
 import { liftingDots } from '../../lib/dotHelpers';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { fillFraction } from '../../lib/progress';
 import { pillarCallout } from '../../lib/pillarNarrative';
 
-const TARGET_FIELD: Record<LiftingType, 'lifting_target_lower' | 'lifting_target_upper' | 'lifting_target_full_body'> = {
-  lower: 'lifting_target_lower',
-  upper: 'lifting_target_upper',
-  full_body: 'lifting_target_full_body',
-};
-const TARGET_DEFAULT: Record<LiftingType, number> = {
-  lower: DEFAULT_WEEKLY_LIFTING_TARGETS.lower,
-  upper: DEFAULT_WEEKLY_LIFTING_TARGETS.upper,
-  full_body: DEFAULT_WEEKLY_LIFTING_TARGETS.full_body,
-};
-
 export default function LiftingActivityCard({
   type,
-  label,
+  goal,
   expanded,
   onToggle,
 }: {
   type: LiftingType;
-  label: string;
+  goal: BodyGoal; // the weekly goal this card shows: its name and target
   expanded: boolean;
   onToggle: () => void;
 }) {
   const navigate = useNavigate();
   const summary = useLiveQuery(() => getLiftingSummary(type), [type]);
-  const prefs = useLiveQuery(() => getUserPreferences(), []);
-
-  const target = prefs?.[TARGET_FIELD[type]] ?? TARGET_DEFAULT[type];
+  const label = goal.name;
+  const target = goal.target;
   const count = summary?.thisWeekCount ?? 0;
   const complete = target > 0 && count >= target;
 
@@ -50,17 +37,11 @@ export default function LiftingActivityCard({
     (type === 'lower' || type === 'upper') && target > 0
       ? pillarCallout(type, fillFraction(count, target), todayISODate())
       : undefined;
-  const badge =
-    target === 0 ? (
-      <>
-        {count} <span className="text-hint">optional</span>
-      </>
-    ) : (
-      <>
-        {count} / {target}
-        {complete && <span className="text-green-700"> ✓</span>}
-      </>
-    );
+  const badge = <>
+          {count}
+          <span className="text-label font-medium text-muted"> / {target}</span>
+          {complete && <span className="text-green-700"> ✓</span>}
+        </>;
 
   const icon =
     type === 'lower' ? (

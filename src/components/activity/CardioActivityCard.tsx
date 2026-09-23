@@ -1,3 +1,4 @@
+import type { BodyGoal } from '../../db/types';
 import { Watch } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import SharedActivityCard from './SharedActivityCard';
@@ -6,7 +7,6 @@ import { ProgressBar } from '../ui/primitives';
 import { getCardioSummary } from '../../lib/dashboardQueries';
 import { getUserPreferences } from '../../lib/userPreferences';
 import {
-  DEFAULT_CARDIO_WEEKLY_TARGET,
   DEFAULT_CARDIO_THRESHOLD_MINUTES,
 } from '../../lib/defaults';
 import { cardioDots } from '../../lib/dotHelpers';
@@ -17,14 +17,16 @@ import { fillFraction } from '../../lib/progress';
 import { pillarCallout } from '../../lib/pillarNarrative';
 
 export default function CardioActivityCard({
+  goal,
   expanded,
   onToggle,
 }: {
+  goal: BodyGoal; // the weekly goal this card shows: its name and target
   expanded: boolean;
   onToggle: () => void;
 }) {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
-  const target = prefs?.cardio_target_weekly ?? DEFAULT_CARDIO_WEEKLY_TARGET;
+  const target = goal.target;
   const threshold =
     prefs?.cardio_threshold_minutes ?? DEFAULT_CARDIO_THRESHOLD_MINUTES;
 
@@ -60,10 +62,11 @@ export default function CardioActivityCard({
 
   return (
     <SharedActivityCard
-      label="Cardio"
+      label={goal.name}
       badge={
         <>
-          {qualifying} / {target}
+          {qualifying}
+          <span className="text-label font-medium text-muted"> / {target}</span>
           {complete && <span className="text-green-700"> ✓</span>}
         </>
       }

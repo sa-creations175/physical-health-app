@@ -34,9 +34,9 @@ type ViewMode = 'list' | 'calendar';
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'All' },
-  { key: 'lower', label: 'Lower' },
-  { key: 'upper', label: 'Upper' },
-  { key: 'full_body', label: 'Full' },
+  { key: 'lower', label: 'Lower Body' },
+  { key: 'upper', label: 'Upper Body' },
+  { key: 'full_body', label: 'Full Body' },
   { key: 'cardio', label: 'Cardio' },
 ];
 

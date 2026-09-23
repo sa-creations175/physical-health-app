@@ -87,7 +87,7 @@ export const DEFAULT_DASHBOARD_SECTION_CONFIG: Record<
 
 // Fitness page card visibility (Dexie v15). The Fitness page lets the user
 // show/hide each activity card; the choice persists on user_preferences as a
-// JSON string (Dexie columns are scalar), parsed via useFitnessCardConfig.
+// JSON string (Dexie columns are scalar). No longer read: Fitness cards follow the weekly goals (body_goals).
 // Keys mirror the card order rendered in src/pages/Fitness.tsx. Full Body
 // defaults hidden — it's the optional, usually target-0 lifting card.
 export const FITNESS_CARD_KEYS = [

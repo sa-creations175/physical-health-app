@@ -1,89 +1,76 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import HeaderStrip from '../components/ui/HeaderStrip';
 import LiftingActivityCard from '../components/activity/LiftingActivityCard';
 import CardioActivityCard from '../components/activity/CardioActivityCard';
 import MobilityActivityCard from '../components/activity/MobilityActivityCard';
 import BundleActivityCard from '../components/activity/BundleActivityCard';
+import CustomGoalCard from '../components/activity/CustomGoalCard';
 import AppleWatchActivityCard from '../components/activity/AppleWatchActivityCard';
 import CaloriesBreakdownCard from '../components/activity/CaloriesBreakdownCard';
-import FitnessCardManager from '../components/activity/FitnessCardManager';
 import AutoSavedNotices from '../components/activity/AutoSavedNotices';
-import { useFitnessCardConfig } from '../lib/useFitnessCardConfig';
+import GoalsSheet from '../components/goals/GoalsSheet';
+import { getGoals } from '../lib/goals';
 import { startOfWeekISODate, addDaysISO } from '../lib/dateHelpers';
+import type { BodyGoal, GoalPeriod } from '../db/types';
 
+// The Fitness tab. One card per weekly goal, in the goals' order (edit goals
+// here or on Home and both change), then the Apple Watch.
 export default function Fitness() {
   // Only one card expanded at a time — tapping an open card closes it.
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (key: string) => setOpen((cur) => (cur === key ? null : key));
+  const weekly = useLiveQuery(() => getGoals('week'), [], [] as BodyGoal[]);
 
-  // Per-card show/hide, persisted in user_preferences (Full Body hidden by
-  // default). The manage panel below the chart lets the user toggle any card.
-  const { isVisible } = useFitnessCardConfig();
-  const [managing, setManaging] = useState(false);
+  // The goals sheet edits a snapshot of the goals, loaded before it opens.
+  const [sheet, setSheet] = useState<{ period: GoalPeriod; goals: BodyGoal[] } | null>(null);
+  const openGoals = async (period: GoalPeriod) => setSheet({ period, goals: await getGoals(period) });
+
+  function card(goal: BodyGoal) {
+    const props = { goal, expanded: open === goal.id, onToggle: () => toggle(goal.id) };
+    switch (goal.metric) {
+      case 'bundle':
+        return <BundleActivityCard key={goal.id} {...props} />;
+      case 'cardio':
+        return <CardioActivityCard key={goal.id} {...props} />;
+      case 'lower':
+      case 'upper':
+      case 'full_body':
+        return <LiftingActivityCard key={goal.id} type={goal.metric} {...props} />;
+      case 'mobility':
+        return <MobilityActivityCard key={goal.id} {...props} />;
+      case null:
+        return <CustomGoalCard key={goal.id} {...props} />;
+      default:
+        return null;
+    }
+  }
 
   return (
     <div className="pb-4">
-      <FitnessHeader />
+      <FitnessHeader onEditGoals={() => void openGoals('week')} />
 
       <div className="px-4 mt-4 space-y-3">
         <AutoSavedNotices />
-        <CaloriesBreakdownCard />
+        <CaloriesBreakdownCard onEditGoal={() => void openGoals('day')} />
+        {weekly.filter((g) => g.active && g.target > 0).map(card)}
+        <AppleWatchActivityCard expanded={open === 'watch'} onToggle={() => toggle('watch')} />
       </div>
 
-      {/* Customize affordance — opens an inline panel of per-card toggles. */}
-      <div className="px-4 mt-3 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setManaging((v) => !v)}
-          className={managing ? 'pill pill-soft' : 'pill'}
-          aria-expanded={managing}
-        >
-          <SettingsIcon aria-hidden="true" size={14} strokeWidth={2} />
-          {managing ? 'Done' : 'Customize'}
-        </button>
-      </div>
-
-      {managing && (
-        <div className="px-4 mt-2">
-          <FitnessCardManager />
-        </div>
+      {sheet && (
+        <GoalsSheet
+          key={sheet.period}
+          period={sheet.period}
+          goals={sheet.goals}
+          onClose={() => setSheet(null)}
+        />
       )}
-
-      {/* Default order is the June 5 warm→cool thermal gradient:
-          Bundle → Cardio → Lower → Upper → (Full Body) → Mobility. Full Body
-          rides with the lifting cards; the Apple Watch row is a data source,
-          not a pillar, so it sits last with no color fill. Cards the user has
-          hidden via the Customize panel are skipped. */}
-      <div className="px-4 mt-3 space-y-3">
-        {isVisible('bundle') && (
-          <BundleActivityCard expanded={open === 'bundle'} onToggle={() => toggle('bundle')} />
-        )}
-        {isVisible('cardio') && (
-          <CardioActivityCard expanded={open === 'cardio'} onToggle={() => toggle('cardio')} />
-        )}
-        {isVisible('lower') && (
-          <LiftingActivityCard type="lower" label="Lower Body" expanded={open === 'lower'} onToggle={() => toggle('lower')} />
-        )}
-        {isVisible('upper') && (
-          <LiftingActivityCard type="upper" label="Upper Body" expanded={open === 'upper'} onToggle={() => toggle('upper')} />
-        )}
-        {isVisible('full_body') && (
-          <LiftingActivityCard type="full_body" label="Full Body" expanded={open === 'full_body'} onToggle={() => toggle('full_body')} />
-        )}
-        {isVisible('mobility') && (
-          <MobilityActivityCard expanded={open === 'mobility'} onToggle={() => toggle('mobility')} />
-        )}
-        {isVisible('watch') && (
-          <AppleWatchActivityCard expanded={open === 'watch'} onToggle={() => toggle('watch')} />
-        )}
-      </div>
     </div>
   );
 }
 
-function FitnessHeader() {
+function FitnessHeader({ onEditGoals }: { onEditGoals: () => void }) {
   const navigate = useNavigate();
 
   const weekStartISO = startOfWeekISODate();
@@ -92,29 +79,24 @@ function FitnessHeader() {
   const range = `${start.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
-  })} – ${end.toLocaleDateString('en-US', {
+  })} to ${end.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })}`;
-  const todayStr = new Date().toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
   return (
-    <HeaderStrip
-      eyebrow="Body · Fitness"
-      title="This Week"
-      subtitle={`${range} · ${todayStr}`}
-    >
+    <HeaderStrip eyebrow="Body · Fitness" title="This Week" subtitle={`${range} · ${weekday}`}>
       <div className="mt-3 flex items-center gap-2">
         <button type="button" onClick={() => navigate('/history')} className="pill">
           History
         </button>
         <button type="button" onClick={() => navigate('/library')} className="pill">
           Library
+        </button>
+        <button type="button" onClick={onEditGoals} className="pill pill-soft ml-auto">
+          Edit goals
         </button>
       </div>
     </HeaderStrip>

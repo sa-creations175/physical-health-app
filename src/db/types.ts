@@ -350,7 +350,7 @@ export interface UserPreferences {
   dashboard_section_order: string;
   dashboard_section_config: string;
   // Fitness page card visibility — added v2.12 (Dexie v15). JSON string of
-  // Record<FitnessCardKey, { label, visible }>; parsed by useFitnessCardConfig.
+  // Record<FitnessCardKey, { label, visible }>. No longer read: Fitness cards follow the weekly goals.
   // Lets the user show/hide each Fitness card (Full Body hidden by default).
   fitness_card_config: string;
   // Whether the user has dismissed the one-time DEXA-scan nudge on the Nutrition

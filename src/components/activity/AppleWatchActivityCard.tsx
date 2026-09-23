@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import SharedActivityCard from './SharedActivityCard';
-import { WatchIcon } from './activityIcons';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { getGoals, goalFor } from '../../lib/goals';
 import { DOT_COLOR } from '../../lib/dotHelpers';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { App } from '@capacitor/app';
 import { getHealthSnapshot, type HealthSnapshot } from '../../lib/healthkit';
 import { LAST_IMPORT_KEY } from '../../lib/watchImport';
 
-const STEPS_TARGET = 10000;
-const CALORIE_TARGET = 600;
 
 // HealthKit returns workout types as raw HKWorkoutActivityType identifiers
 // ("stairClimbing", "traditionalStrengthTraining", "running", …). Map the
@@ -75,6 +74,11 @@ export default function AppleWatchActivityCard({
     };
   }, []);
 
+  // Targets are the daily goals; a goal that's removed or unticked isn't judged.
+  const dailyGoals = useLiveQuery(() => getGoals('day'), [], []);
+  const stepsGoal = goalFor(dailyGoals, 'steps')?.target ?? null;
+  const caloriesGoal = goalFor(dailyGoals, 'calories')?.target ?? null;
+
   const connected = !!snapshot;
   const today = todayISODate();
 
@@ -82,7 +86,7 @@ export default function AppleWatchActivityCard({
   // the week stays grey until per-day history is wired up.
   const dots = currentWeekISODates().map((date) => {
     if (date !== today || !snapshot) return { date, color: DOT_COLOR.none };
-    if (snapshot.steps >= STEPS_TARGET) return { date, color: DOT_COLOR.full };
+    if (stepsGoal !== null && snapshot.steps >= stepsGoal) return { date, color: DOT_COLOR.full };
     if (snapshot.steps > 0) return { date, color: DOT_COLOR.light };
     return { date, color: DOT_COLOR.none };
   });
@@ -91,7 +95,7 @@ export default function AppleWatchActivityCard({
     snapshot === undefined ? (
       <span className="text-hint">checking…</span>
     ) : connected ? (
-      <span className="text-green-700">connected</span>
+      <span className="text-label font-bold text-green-700">connected</span>
     ) : (
       <span className="text-hint">not connected</span>
     );
@@ -103,20 +107,19 @@ export default function AppleWatchActivityCard({
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
-      icon={<WatchIcon />}
     >
       <div className="grid grid-cols-3 gap-2">
         <StatTile
           label="Steps"
           value={snapshot ? snapshot.steps.toLocaleString() : null}
-          target={`/ ${(STEPS_TARGET / 1000).toFixed(0)}k`}
-          met={!!snapshot && snapshot.steps >= STEPS_TARGET}
+          target={stepsGoal !== null ? `/ ${(stepsGoal / 1000).toLocaleString()}k` : ''}
+          met={!!snapshot && stepsGoal !== null && snapshot.steps >= stepsGoal}
         />
         <StatTile
           label="Active Cal"
           value={snapshot ? snapshot.activeCalories.toLocaleString() : null}
-          target={`/ ${CALORIE_TARGET.toLocaleString()}`}
-          met={!!snapshot && snapshot.activeCalories >= CALORIE_TARGET}
+          target={caloriesGoal !== null ? `/ ${caloriesGoal.toLocaleString()}` : ''}
+          met={!!snapshot && caloriesGoal !== null && snapshot.activeCalories >= caloriesGoal}
         />
         <StatTile
           label="Workouts"
