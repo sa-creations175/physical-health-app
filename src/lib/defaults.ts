@@ -77,9 +77,9 @@ export const DEFAULT_DASHBOARD_SECTION_CONFIG: Record<
   DashboardSectionKey,
   DashboardSectionMeta
 > = {
-  lifting: { label: 'This Week — Lifting', visible: true },
-  cardio: { label: 'This Week — Cardio', visible: true },
-  nutrition: { label: 'Today — Nutrition', visible: true },
+  lifting: { label: 'This Week: Lifting', visible: true },
+  cardio: { label: 'This Week: Cardio', visible: true },
+  nutrition: { label: 'Today: Nutrition', visible: true },
   delivery_streak: { label: 'No-Delivery Streak', visible: true },
   daily_bundle: { label: 'Daily Bundle', visible: true },
   apple_watch: { label: 'Apple Watch', visible: true },

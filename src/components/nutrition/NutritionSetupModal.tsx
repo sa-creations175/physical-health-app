@@ -253,7 +253,7 @@ export default function NutritionSetupModal({
                   onComplete();
                 } catch (e) {
                   console.error('Nutrition setup save failed:', e);
-                  showToast('Could not save — try again');
+                  showToast('Could not save. Try again');
                 }
               }}
             />
@@ -427,7 +427,7 @@ function BodyFatStep(props: {
     <div className="space-y-3 pt-1">
       <p className="text-label text-ink leading-snug">
         Estimate your body-fat % any of these ways. Lean mass (weight × non-fat)
-        is what your macros are actually built from — so a starting number
+        is what your macros are actually built from, so a starting number
         matters. Do the tape measure every couple of weeks for real tracking.
       </p>
 
@@ -475,7 +475,7 @@ function BodyFatStep(props: {
         <p className="text-label text-ink leading-snug">
           <ClipboardList aria-hidden="true" size={14} strokeWidth={2} className="inline -mt-0.5 mr-1 text-green-700" />
           For the most accurate body fat baseline, consider booking a DEXA
-          scan. It’s the gold standard — and the app accepts manual DEXA entry as
+          scan. It’s the gold standard, and the app accepts manual DEXA entry as
           your highest-priority BF% source.
         </p>
       </div>
@@ -627,7 +627,7 @@ function AiPhotoPanel({
   }
 
   return (
-    <MethodShell title="AI photo estimate" hint="Rough range from a photo — onboarding shortcut">
+    <MethodShell title="AI photo estimate" hint="Rough range from a photo: onboarding shortcut">
       <label className="block">
         <span className="btn-primary w-full cursor-pointer">
           {busy ? 'Estimating…' : 'Choose a photo'}
@@ -659,7 +659,7 @@ function AiPhotoPanel({
       )}
       {error && <p className="mt-2 text-label text-amber">{error}</p>}
       <p className="mt-2 text-label text-muted leading-snug">
-        Rough estimate — do the tape measure bi-weekly for real tracking. Your
+        Rough estimate. Do the tape measure bi-weekly for real tracking. Your
         photo is sent only for this estimate and isn’t stored.
       </p>
     </MethodShell>
@@ -694,7 +694,7 @@ function NavyPanel(props: {
   return (
     <MethodShell
       title="Navy Method (tape measure)"
-      hint="Most accurate at home — do this bi-weekly"
+      hint="Most accurate at home. Do this bi-weekly"
       defaultOpen={props.defaultOpen}
     >
       <div className="space-y-2">
@@ -877,7 +877,7 @@ function GoalStep(props: {
                       {preview.tdee.toLocaleString()}
                     </span>{' '}
                     calories per day to maintain your current weight. This is
-                    your TDEE — total daily energy expenditure.
+                    your TDEE: total daily energy expenditure.
                   </p>
                   {preview.estimatedActivity ? (
                     <p className="mt-1.5 text-label text-muted leading-snug">
@@ -887,8 +887,8 @@ function GoalStep(props: {
                     </p>
                   ) : preview.daysOfData < 90 ? (
                     <p className="mt-1.5 text-label text-muted leading-snug">
-                      Based on {preview.daysOfData} days of Watch data so far —
-                      it keeps refining as more comes in.
+                      Based on {preview.daysOfData} days of Watch data so far.
+                      It keeps refining as more comes in.
                     </p>
                   ) : null}
                   <TdeeExplainer />
@@ -1176,9 +1176,9 @@ function TdeeExplainer() {
           </p>
 
           <div>
-            <Micro>Step 1 — Resting Burn (BMR)</Micro>
+            <Micro>Step 1: Resting Burn (BMR)</Micro>
             <p className="mt-1 text-label text-ink leading-snug">
-              Using the Mifflin-St Jeor formula — the most validated BMR equation
+              Using the Mifflin-St Jeor formula, the most validated BMR equation
               for most adults:
             </p>
             <p className="mt-1 text-label text-ink leading-snug">
@@ -1192,10 +1192,10 @@ function TdeeExplainer() {
           </div>
 
           <div>
-            <Micro>Step 2 — Active Burn (From Apple Watch)</Micro>
+            <Micro>Step 2: Active Burn (From Apple Watch)</Micro>
             <p className="mt-1 text-label text-ink leading-snug">
               Your 90-day rolling average of daily active calories from
-              HealthKit. This is your real movement burn — not a generic activity
+              HealthKit. This is your real movement burn, not a generic activity
               multiplier. If you had a lazy month, your TDEE reflects it. If you
               were crushing it, it reflects that too.
             </p>

@@ -98,7 +98,7 @@ function SetupCard({ onStart }: { onStart: () => void }) {
       <p className="mt-2 text-heading text-ink">Set up your plan</p>
       <p className="mt-1 text-label text-ink leading-snug">
         A few questions about your body and goals generates your daily calorie
-        and macro targets — built on your lean mass and real activity, not a
+        and macro targets, built on your lean mass and real activity, not a
         generic formula.
       </p>
       <button
@@ -156,7 +156,7 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
 
   return (
     <div className="card p-4">
-      <SectionLabel>Today — Macros</SectionLabel>
+      <SectionLabel>Today: Macros</SectionLabel>
       <div className="mt-3 space-y-3">
         {bars.map((b) => (
           <div key={b.key}>
@@ -181,7 +181,7 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
       </div>
 
       <p className="mt-3 text-label text-muted leading-snug">
-        Meal logging arrives next — your targets above are live now.
+        Meal logging arrives next. Your targets above are live now.
       </p>
     </div>
   );

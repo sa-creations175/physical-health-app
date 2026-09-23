@@ -108,10 +108,10 @@ function DayCell({
 
   const aria =
     status === 'clean'
-      ? `Clean day, ${date} — tap to mark ordered`
+      ? `Clean day, ${date}. Tap to mark ordered`
       : status === 'ordered'
-        ? `Ordered day, ${date} — tap to clear`
-        : `Unmarked day, ${date} — tap to mark clean`;
+        ? `Ordered day, ${date}. Tap to clear`
+        : `Unmarked day, ${date}. Tap to mark clean`;
 
   return (
     <button

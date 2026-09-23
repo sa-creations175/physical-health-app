@@ -120,7 +120,7 @@ export default function ExerciseDetail() {
       >
         {!last && !pr ? (
           <p className="text-label text-muted">
-            No sessions yet — log this exercise to start a history.
+            No sessions yet. Log this exercise to start a history.
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-4">

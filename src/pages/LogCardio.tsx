@@ -232,7 +232,7 @@ export default function LogCardio() {
         notes: notes.trim() === '' ? null : notes.trim(),
       });
       const typeName = selectedType?.name ?? 'session';
-      showToast(`Cardio logged — ${typeName}, ${duration} min`);
+      showToast(`Cardio logged: ${typeName}, ${duration} min`);
       navigate('/');
     } catch (err) {
       console.error('Failed to save cardio log:', err);
@@ -752,7 +752,7 @@ function RetroactiveConfirm({
   return (
     <BottomSheet onClose={onCancel} label="Confirm date">
         <p className="text-body text-ink leading-snug pr-10">
-          Logging from <span className="text-ink font-medium">{dateText}</span> —
+          Logging from <span className="text-ink font-medium">{dateText}</span>,
           that's {daysAgo} days ago. Save anyway?
         </p>
         <div className="flex gap-2 mt-4">

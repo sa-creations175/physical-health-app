@@ -36,7 +36,7 @@ export interface GoalAnswers {
 export const LOOK_OPTIONS: { value: LookAnswer; label: string }[] = [
   { value: 'leaner', label: 'Leaner' },
   { value: 'bigger', label: 'Bigger' },
-  { value: 'both', label: 'Both — lean + muscular' },
+  { value: 'both', label: 'Both: lean + muscular' },
   { value: 'maintain', label: 'Just maintain what I’ve built' },
 ];
 
@@ -157,7 +157,7 @@ export const SEASON_PICKER_OPTIONS: SeasonPickerOption[] = [
     name: 'Aggressive Cut',
     calorieLine: '~500 cal deficit · ~1 lb/week fat loss',
     description:
-      'Fastest path to lean. Higher muscle loss risk — protein stays high to protect your gains.',
+      'Fastest path to lean. Higher muscle loss risk. Protein stays high to protect your gains.',
   },
   {
     seasonType: 'cut_moderate',
@@ -185,14 +185,14 @@ export const SEASON_PICKER_OPTIONS: SeasonPickerOption[] = [
     name: 'Moderate Bulk',
     calorieLine: '+400 cal above TDEE · steady muscle gain',
     description:
-      "Balanced build. Expect some fat alongside the muscle — that's normal.",
+      "Balanced build. Expect some fat alongside the muscle. That's normal.",
   },
   {
     seasonType: 'build_aggressive',
     name: 'Aggressive Bulk',
     calorieLine: '+600 cal above TDEE · fastest muscle gain',
     description:
-      'Eat to grow. Significant fat gain expected — plan a cut after.',
+      'Eat to grow. Significant fat gain expected. Plan a cut after.',
   },
 ];
 
@@ -284,13 +284,13 @@ export const MACRO_STYLE_OPTIONS: MacroStyleOption[] = [
     value: 'balanced',
     name: 'Balanced',
     description:
-      'Standard split — moderate carbs and fat. Best for most people and general performance.',
+      'Standard split: moderate carbs and fat. Best for most people and general performance.',
   },
   {
     value: 'lower_carb',
     name: 'Lower Carb',
     description:
-      'Fewer carbs, more fat. May accelerate fat loss and reduce insulin spikes — works well for carb-sensitive people and during cuts.',
+      'Fewer carbs, more fat. May accelerate fat loss and reduce insulin spikes. Works well for carb-sensitive people and during cuts.',
   },
   {
     value: 'higher_carb',
@@ -302,7 +302,7 @@ export const MACRO_STYLE_OPTIONS: MacroStyleOption[] = [
     value: 'high_protein_cut',
     name: 'High Protein Cut',
     description:
-      'More protein to protect muscle during a cut. Research supports up to 1.2g per lb of lean mass when in a calorie deficit — reduces muscle loss risk at the cost of slightly fewer carbs.',
+      'More protein to protect muscle during a cut. Research supports up to 1.2g per lb of lean mass when in a calorie deficit. It reduces muscle loss risk at the cost of slightly fewer carbs.',
   },
 ];
 
@@ -383,7 +383,7 @@ export function recommendationReasoning(
   targets: GeneratedTargets,
 ): string {
   const m = SEASON_MATH[seasonType];
-  return `Based on your goals, we recommend a ${m.label.toLowerCase()} — ${m.blurb}. That works out to about ${targets.daily_calories_target.toLocaleString()} calories a day with ${targets.protein_target_g}g protein, ${targets.carbs_target_g}g carbs, and ${targets.fat_target_g}g fat.`;
+  return `Based on your goals, we recommend a ${m.label.toLowerCase()}: ${m.blurb}. That works out to about ${targets.daily_calories_target.toLocaleString()} calories a day with ${targets.protein_target_g}g protein, ${targets.carbs_target_g}g carbs, and ${targets.fat_target_g}g fat.`;
 }
 
 // ---- Recommendation explanation copy ----------------------------------------
@@ -392,17 +392,17 @@ export function recommendationReasoning(
 // math means, surfaced under the YOUR BASELINE / TDEE line.
 export const SEASON_EXPLANATION: Record<SeasonType, string> = {
   cut_moderate:
-    "We're targeting a ~350 calorie daily deficit below your TDEE. At this pace, expect roughly 0.5–0.75 lbs of fat loss per week — slow enough to preserve muscle.",
+    "We're targeting a ~350 calorie daily deficit below your TDEE. At this pace, expect roughly 0.5–0.75 lbs of fat loss per week, slow enough to preserve muscle.",
   cut_aggressive:
-    "We're targeting a ~500 calorie daily deficit. Faster fat loss (~1 lb/week) but higher risk of muscle loss — protein stays high to protect your gains.",
+    "We're targeting a ~500 calorie daily deficit. Faster fat loss (~1 lb/week) but higher risk of muscle loss. Protein stays high to protect your gains.",
   maintain:
-    'Eating at your TDEE — no surplus, no deficit. Goal is to hold your current composition while training hard.',
+    'Eating at your TDEE: no surplus, no deficit. Goal is to hold your current composition while training hard.',
   build_lean:
     "We're adding ~250 calories above your TDEE. Slow, controlled muscle building with minimal fat gain.",
   build_moderate:
-    "We're adding ~400 calories above your TDEE. Steady muscle gain — expect some fat alongside it.",
+    "We're adding ~400 calories above your TDEE. Steady muscle gain. Expect some fat alongside it.",
   build_aggressive:
-    "We're adding ~600 calories above your TDEE. Fastest muscle gain, but significant fat gain is expected — plan a cut after.",
+    "We're adding ~600 calories above your TDEE. Fastest muscle gain, but significant fat gain is expected. Plan a cut after.",
 };
 
 // Trade-offs of the chosen season — always shown below the targets. Framed as
@@ -415,7 +415,7 @@ export const SEASON_PROS_CONS: Record<
     pros: [
       'Steady fat loss without crashing energy',
       'High protein preserves muscle through the cut',
-      'Sustainable pace — easy to stick with',
+      'Sustainable pace, easy to stick with',
     ],
     cons: [
       'Slower than an aggressive cut',
@@ -505,7 +505,7 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
     return {
       heading: 'A note on your body composition',
       paragraphs: [
-        'Research from sports scientists like Dr. Mike Israetel and Eric Helms suggests that above ~16% body fat, your body is less efficient at building muscle. Excess body fat impairs insulin sensitivity and hormone optimization — both of which affect how well your body partitions calories toward muscle vs fat storage.',
+        'Research from sports scientists like Dr. Mike Israetel and Eric Helms suggests that above ~16% body fat, your body is less efficient at building muscle. Excess body fat impairs insulin sensitivity and hormone optimization, both of which affect how well your body partitions calories toward muscle vs fat storage.',
         'Most evidence-based coaches recommend cutting to 12–14% body fat first, then transitioning to a lean bulk. You build more muscle per calorie in a leaner state.',
       ],
       prosLabel: 'Pros of Cutting First',
@@ -528,7 +528,7 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
     return {
       heading: "You're in the sweet spot",
       paragraphs: [
-        "At your current body fat percentage, you're in the range where recomposition — losing fat and building muscle simultaneously — is genuinely achievable, especially with your training history. It's slower than a dedicated cut or bulk, but sustainable and effective.",
+        "At your current body fat percentage, you're in the range where recomposition, losing fat and building muscle simultaneously, is genuinely achievable, especially with your training history. It's slower than a dedicated cut or bulk, but sustainable and effective.",
         'If your goal is both leaner and more muscular, a lean build at a small surplus is well-supported by research at this body fat range.',
       ],
       prosLabel: 'Pros of Recomp',
@@ -550,7 +550,7 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
     heading: "You're already lean",
     paragraphs: [
       'Below 12% body fat, your body is primed for muscle building. Research consistently shows better muscle protein synthesis, improved testosterone levels, and superior calorie partitioning at lower body fat percentages.',
-      'A lean bulk is the evidence-based recommendation here — a small surplus maximizes muscle gain while keeping fat gain minimal.',
+      'A lean bulk is the evidence-based recommendation here: a small surplus maximizes muscle gain while keeping fat gain minimal.',
     ],
     prosLabel: 'Pros of Lean Bulk',
     pros: [
@@ -577,7 +577,7 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
 export function bothLookTip(bf: number | null): string | null {
   if (bf === null || bf <= 0) return null;
   if (bf > 15) {
-    return "At your current body fat, cutting first will get you better results. Most coaches recommend reaching ~12% BF before starting a lean bulk — you'll build more muscle per calorie, stay leaner during the bulk, and have more runway before needing to cut again. Consider 'Leaner' now and switch seasons when you get there.";
+    return "At your current body fat, cutting first will get you better results. Most coaches recommend reaching ~12% BF before starting a lean bulk. You'll build more muscle per calorie, stay leaner during the bulk, and have more runway before needing to cut again. Consider 'Leaner' now and switch seasons when you get there.";
   }
   if (bf >= 12) {
     return "You're close to the ideal lean bulk entry point (~12% BF). A recomp approach works here but is slower. If you want to maximize muscle-building efficiency, a short cut to get to 12% first is worth considering before switching to a lean build season.";

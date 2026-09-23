@@ -5,7 +5,7 @@ import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../../lib/defaults';
 import { getUserPreferences } from '../../lib/userPreferences';
 
 export default function NutritionSection({
-  label = 'Today — Nutrition',
+  label = 'Today: Nutrition',
 }: {
   label?: string;
 }) {

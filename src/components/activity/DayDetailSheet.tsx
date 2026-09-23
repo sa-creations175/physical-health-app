@@ -85,7 +85,7 @@ export default function DayDetailSheet({
           )}
           {isFuture && (
             <p className="mt-3 text-label text-muted text-center">
-              Future day — view only.
+              Future day, view only.
             </p>
           )}
         </div>

@@ -62,7 +62,7 @@ export function ExerciseLogRow({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          aria-label={`${label}: ${value} reps today — tap to type`}
+          aria-label={`${label}: ${value} reps today. Tap to type`}
           className="text-ink text-heading tabular-nums w-[64px] h-11 text-center"
         >
           {value}
@@ -177,7 +177,7 @@ export function MobilityRow({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              aria-label={`Mobility: ${minutes} minutes today — tap to type`}
+              aria-label={`Mobility: ${minutes} minutes today. Tap to type`}
               className="text-ink text-heading tabular-nums h-11"
             >
               {minutes}

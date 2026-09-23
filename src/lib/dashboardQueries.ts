@@ -73,10 +73,10 @@ export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeS
   let lastSession: LastSession | null = null;
   if (lastRaw) {
     const exerciseNames = await getExerciseNamesForSession(lastRaw.id);
-    const namesPart = exerciseNames.length > 0 ? exerciseNames.join(', ') : '—';
+    const namesPart = exerciseNames.length > 0 ? exerciseNames.join(', ') : 'no exercises';
     lastSession = {
       date: lastRaw.date,
-      summary: `${shortDayLabel(lastRaw.date)} — ${namesPart}`,
+      summary: `${shortDayLabel(lastRaw.date)}: ${namesPart}`,
     };
   }
 

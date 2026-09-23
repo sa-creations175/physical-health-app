@@ -65,7 +65,7 @@ export default function Settings() {
       <section className="mt-6">
         <SectionLabel>Daily Nutrition</SectionLabel>
         <p className="text-label text-muted mt-1">
-          Saved now — Phase 3 lights up dashboard tracking.
+          Saved now. Phase 3 lights up dashboard tracking.
         </p>
 
         <NumberRow

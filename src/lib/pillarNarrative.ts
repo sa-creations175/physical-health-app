@@ -28,17 +28,17 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
       'Tree trunks in progress. The foundation is being built.',
       'Leg day royalty. The squats are paying off.',
       "Wheels of steel. Nobody's skipping you on leg day.",
-      'Quads, hams, glutes — all eating this week.',
+      'Quads, hams, glutes: all eating this week.',
       'Building a base most people never touch. Respect.',
     ],
     onTrack: [
       'Wheels coming along nicely. Keep stacking sessions.',
-      "Foundation's solid this week — legs are working.",
+      "Foundation's solid this week, legs are working.",
       'Legs are putting in honest work. Stay on it.',
       'Good leg volume. The trunks are listening.',
     ],
     lagging: [
-      "Don't skip leg day — the whole house sits on this foundation.",
+      "Don't skip leg day. The whole house sits on this foundation.",
       "Legs are quiet this week. One session and you're back.",
       'No foundation, no gains up top. Hit the squat rack.',
       'The wheels need a turn. Get under the bar.',
@@ -47,7 +47,7 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
   upper: {
     crushing: [
       'Boulder shoulders incoming. Arms getting CHISELED.',
-      "Upper body's on fire — the chisel is real.",
+      "Upper body's on fire. The chisel is real.",
       'Delts popping, chest filling out. Keep hammering.',
       "Sleeves are getting tighter. That's the goal.",
       "T-shirt's about to fit different. Keep pressing.",
@@ -60,7 +60,7 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
       'Chest and back getting their reps. Solid.',
     ],
     lagging: [
-      "Those boulder shoulders won't build themselves — get a press in.",
+      "Those boulder shoulders won't build themselves. Get a press in.",
       "Upper body's lagging. Time to pump the chisel.",
       "Arms are hungry. Feed 'em a session.",
       'The chisel needs the hammer. Hit upper soon.',
@@ -71,18 +71,18 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
       "You've REALLY been moving. Heart's getting stronger, leaning right out.",
       "Engine's humming. Fat's on the run this week.",
       'Cardio king. The heart thanks you.',
-      'Conditioning on point — wind for days.',
+      'Conditioning on point, wind for days.',
       'Burning clean this week. The leanout is real.',
       'Ticker’s getting tougher every session.',
     ],
     onTrack: [
-      'Good movement this week — keep the engine warm.',
+      'Good movement this week. Keep the engine warm.',
       "Heart's getting its work. Stay on it.",
       "Cardio's ticking along. Keep the sweat coming.",
       'Steady conditioning. The engine likes routine.',
     ],
     lagging: [
-      "Engine's been idle — a session or two melts fat and feeds the heart.",
+      "Engine's been idle. A session or two melts fat and feeds the heart.",
       "Cardio's low. Get the blood pumping.",
       'The heart wants a workout too. Lace up.',
       'Leanout stalls without the engine. Get moving.',
@@ -90,8 +90,8 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
   },
   bundle: {
     crushing: [
-      'Locked IN. Pushups, core, calves — the basics are dialed.',
-      'Vanity muscles firing daily. Chest, abs, calves — pumped.',
+      'Locked IN. Pushups, core, calves: the basics are dialed.',
+      'Vanity muscles firing daily. Chest, abs, calves: pumped.',
       'Discipline on lock. The little things add up huge.',
       "Every day a little pump. That's how it compounds.",
       'Core tight, calves popping. The details matter.',
@@ -104,7 +104,7 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
       "Daily pump's alive. Keep showing up.",
     ],
     lagging: [
-      "The bundle's the easy win — drop and give me some pushups.",
+      "The bundle's the easy win. Drop and give me some pushups.",
       'Fundamentals slipped. Five minutes locks it back in.',
       'Pushups, core, calves. Two minutes, no excuses.',
       'The daily pump misses you. Knock it out.',
@@ -113,7 +113,7 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
   mobility: {
     crushing: [
       'Limber and pain-free. Future you is grateful.',
-      'Mobility on point — moving like silk.',
+      'Mobility on point, moving like silk.',
       'Staying loose. This is the longevity play.',
       'Joints happy, body open. The smart money move.',
       'Moving like water this week. Beautiful.',
@@ -126,7 +126,7 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
       "Body's thanking you for the stretch. Continue.",
     ],
     lagging: [
-      "Don't forget to stretch — tight muscles, no gains.",
+      "Don't forget to stretch. Tight muscles, no gains.",
       "Mobility's at zero. Five minutes keeps you moving free.",
       'Tight today, sore tomorrow. Roll it out.',
       'The longevity play needs you. Get loose.',
@@ -137,14 +137,14 @@ export const PILLAR_PHRASES: Record<NarrativeKey, Record<Tier, string[]>> = {
 // State 4 — everything lagging, week slipping by. One unified kick.
 export const ALL_LOW_PHRASES = [
   'Get up and do SOMETHING. Your body and mind need it.',
-  "The week's slipping. One move changes the momentum — go.",
+  "The week's slipping. One move changes the momentum. Go.",
   "Nothing logged worth bragging about yet. Let's fix that right now.",
 ];
 
 // State 3 — everything lagging BUT still early in the week. Gentle, no grim
 // Monday scores. (Not in the doc's bank; written to the doc's described tone.)
 export const EARLY_DAYS_PHRASES = [
-  "Early days — plenty of week left to stack wins.",
+  "Early days, plenty of week left to stack wins.",
   "Week's young. One session sets the tone.",
   'Fresh week, clean slate. Go put a mark on the board.',
 ];

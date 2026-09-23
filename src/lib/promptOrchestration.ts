@@ -53,7 +53,7 @@ export type PromptType = keyof typeof PROMPT_TYPES;
 // as each trigger comes online.
 export const PROMPT_COPY: Partial<Record<PromptType, string>> = {
   body_measurement_due:
-    'Time for your bi-weekly body check-in — grab a tape measure and update your measurements.',
+    'Time for your bi-weekly body check-in. Grab a tape measure and update your measurements.',
 };
 
 const MS_PER_DAY = 86_400_000;

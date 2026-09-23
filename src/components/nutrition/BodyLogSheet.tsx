@@ -107,7 +107,7 @@ export default function BodyLogSheet({
       onSaved();
     } catch (e) {
       console.error('Body log save failed:', e);
-      showToast('Could not save — try again');
+      showToast('Could not save. Try again');
     } finally {
       setBusy(false);
     }
@@ -126,7 +126,7 @@ export default function BodyLogSheet({
 
         {needsSetup ? (
           <p className="mt-4 text-label text-ink">
-            Set up your nutrition profile first — it captures your height, age
+            Set up your nutrition profile first. It captures your height, age
             and sex, which these readings build on.
           </p>
         ) : (
@@ -161,7 +161,7 @@ export default function BodyLogSheet({
                   <>
                     <SmallField label="Body fat % from DEXA" value={dexaBf} onChange={setDexaBf} suffix="%" />
                     <p className="text-label text-muted">
-                      DEXA is the gold standard — it overrides other sources as
+                      DEXA is the gold standard: it overrides other sources as
                       your most accurate reading.
                     </p>
                   </>
