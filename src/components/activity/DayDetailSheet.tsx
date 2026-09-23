@@ -24,6 +24,7 @@ import {
   type DetailPillar,
   type ReclassifySource,
 } from '../../lib/dayDetailHelpers';
+import { isSessionComplete } from '../../lib/sessionPlans';
 
 const ALL_PILLARS: DetailPillar[] = [
   'bundle',
@@ -402,7 +403,7 @@ function SessionDay({
         ss.map(async (s) => ({
           id: s.id,
           status:
-            s.feel_rating !== null
+            isSessionComplete(s)
               ? ('done' as const)
               : s.source === 'watch'
                 ? ('watch' as const)

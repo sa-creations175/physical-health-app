@@ -7,6 +7,7 @@ import {
   addDaysISO,
 } from './dateHelpers';
 import type { Intensity } from '../db/types';
+import { isSessionComplete } from './sessionPlans';
 
 export type LiftingType = 'lower' | 'upper' | 'full_body';
 
@@ -56,7 +57,7 @@ export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeS
   // Only completed sessions count toward weekly progress (feel_rating set on save).
   const weekSessions = await db.sessions
     .where('type').equals(type)
-    .filter((s) => s.date >= weekStart && s.feel_rating !== null)
+    .filter((s) => s.date >= weekStart && isSessionComplete(s))
     .toArray();
 
   const dayHasSession = new Set(weekSessions.map((s) => s.date));
@@ -67,7 +68,7 @@ export async function getLiftingSummary(type: LiftingType): Promise<LiftingTypeS
 
   const allOfType = await db.sessions
     .where('type').equals(type)
-    .filter((s) => s.feel_rating !== null)
+    .filter((s) => isSessionComplete(s))
     .sortBy('date');
   const lastRaw = allOfType.length > 0 ? allOfType[allOfType.length - 1] : null;
 
@@ -168,7 +169,7 @@ export async function computeStreak(): Promise<number> {
   const [strengthSessions, cardioLogs] = await Promise.all([
     db.sessions
       .where('type').anyOf('upper', 'lower', 'full_body')
-      .filter((s) => s.feel_rating !== null)
+      .filter((s) => isSessionComplete(s))
       .toArray(),
     db.cardio_logs.toArray(),
   ]);

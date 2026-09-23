@@ -2,6 +2,7 @@ import { db } from './database';
 import { syncedBulkPut, syncedBulkDelete } from './syncedWrite';
 import { LOCAL_USER_ID } from '../lib/constants';
 import { getUserPreferences } from '../lib/userPreferences';
+import { seedSessionPlansIfMissing } from '../lib/sessionPlans';
 import { STARTER_EXERCISES } from './starterExercises';
 import { STARTER_CARDIO_TYPES } from '../lib/defaults';
 import type { Exercise, CardioType } from './types';
@@ -25,6 +26,9 @@ export async function runSeedersIfNeeded(): Promise<void> {
     // dashboard live queries don't have to render a defaults-fallback frame
     // before the row exists.
     await getUserPreferences();
+    // Each strength type's standing exercise list, seeded from its most
+    // recent completed session.
+    await seedSessionPlansIfMissing();
   })();
   return inflight;
 }

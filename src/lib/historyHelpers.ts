@@ -1,6 +1,7 @@
 import { db } from '../db/database';
 import type { FeelRating, Intensity, SetEntry } from '../db/types';
 import type { LiftingType } from './dashboardQueries';
+import { isSessionComplete } from './sessionPlans';
 
 // Unified history feed: completed strength sessions + cardio logs, merged and
 // sorted most-recent-first. Read-only view layer over Dexie.
@@ -43,7 +44,7 @@ export async function getHistoryItems(): Promise<HistoryItem[]> {
   const [sessions, links, sets, exercises, cardioLogs, cardioTypes] =
     await Promise.all([
       db.sessions
-        .filter((s) => s.feel_rating !== null || s.source === 'watch')
+        .filter((s) => isSessionComplete(s) || s.source === 'watch')
         .toArray(),
       db.session_exercises.toArray(),
       db.sets.toArray(),
@@ -70,7 +71,7 @@ export async function getHistoryItems(): Promise<HistoryItem[]> {
   for (const s of sessions) {
     // Completed sessions, plus Watch-imported incomplete ones (feel_rating
     // null) so auto-imported strength still surfaces in History.
-    if (s.feel_rating === null && s.source !== 'watch') continue;
+    if (!isSessionComplete(s) && s.source !== 'watch') continue;
     if (s.type !== 'lower' && s.type !== 'upper' && s.type !== 'full_body') {
       continue;
     }

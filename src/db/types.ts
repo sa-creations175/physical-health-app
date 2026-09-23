@@ -32,9 +32,38 @@ export interface Session {
   // into (exercises are yours, duration is the Watch's); 'manual' = logger
   // entry. null on rows that predate the column. Non-indexed.
   source: 'manual' | 'watch' | 'merged' | null;
+  // When the session was finished — added Dexie v19. Completion used to be
+  // signalled by feel_rating being set; the session screen no longer asks for
+  // a feel rating, so this is the flag now. Use isSessionComplete() rather
+  // than reading either field directly: rows from before v19 (or pulled from
+  // a cloud copy that predates the column) only carry feel_rating.
+  completed_at?: string | null;
   created_at: string; // ISO datetime
   updated_at: string;
 }
+
+// The three strength session types that own a standing exercise list.
+export type StrengthType = 'upper' | 'lower' | 'full_body';
+
+// A session TYPE's standing list — added Dexie v19. One row per strength type.
+// A new session INSTANCE copies this list; swapping or adding in a session
+// changes the instance only. The list changes only when the user accepts the
+// "make it part of the usual list" nudge.
+export interface SessionPlan {
+  id: string; // `plan-${type}`
+  user_id: string;
+  type: StrengthType;
+  exercise_ids: string[]; // in order
+  created_at: string;
+  updated_at: string;
+}
+
+// How an exercise got into a session instance.
+//   plan  — copied from the type's standing list
+//   added — "+ Add an exercise", today only
+//   swap  — "Swap exercise", today only; replaced_exercise_id is the standing
+//           exercise it stands in for
+export type SessionExerciseOrigin = 'plan' | 'added' | 'swap';
 
 export interface Exercise {
   id: string;
@@ -52,6 +81,15 @@ export interface SessionExercise {
   exercise_id: string;
   order_index: number;
   notes: string | null;
+  // Instance metadata — added Dexie v19. Optional because rows from before
+  // v19 (and cloud rows that predate the columns) don't carry them.
+  origin?: SessionExerciseOrigin | null;
+  replaced_exercise_id?: string | null;
+  // 1, 2, 3… in the order exercises were finished; null while still open.
+  // Finished exercises fold and sink below open ones in this order.
+  finished_order?: number | null;
+  // The "make it part of the usual list" nudge was answered (either way).
+  nudge_resolved?: boolean | null;
 }
 
 export interface SetEntry {
@@ -291,6 +329,10 @@ export interface UserPreferences {
   // Whether the user has dismissed the one-time DEXA-scan nudge on the Nutrition
   // tab — added Dexie v17 (Phase 3a follow-up). Defaults false; set true on tap.
   dexa_nudge_dismissed: boolean;
+  // "Repeat a set with one tap" — added Dexie v19, default true. On: tapping
+  // the circle on a ghost set row logs it as "same as last time". Off: the
+  // circle refuses until the set has been typed.
+  one_tap_repeat: boolean;
   created_at: string;
   updated_at: string;
 }

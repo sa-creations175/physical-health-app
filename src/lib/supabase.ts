@@ -44,4 +44,5 @@ export const STORE_TO_PH: Record<string, string> = {
   body_stats: 'ph_body_stats',
   body_measurements: 'ph_body_measurements',
   nutrition_seasons: 'ph_nutrition_seasons',
+  session_plans: 'ph_session_plans',
 };

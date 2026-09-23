@@ -16,6 +16,7 @@ import {
 } from './healthkit';
 import { createCardioLog, createCardioType } from './cardioHelpers';
 import type { BundleLog, Session } from '../db/types';
+import { isSessionComplete } from './sessionPlans';
 
 // localStorage marker — the timestamp of the last import run. Retained as a
 // "Last synced" display value and a coarse perf bound (we never scan further
@@ -155,7 +156,7 @@ export async function findMatchingStrengthSession(
   const sessions = await db.sessions.where('date').equals(date).toArray();
   const match = sessions.find(
     (s) =>
-      s.feel_rating !== null &&
+      isSessionComplete(s) &&
       (s.type === 'upper' || s.type === 'lower' || s.type === 'full_body'),
   );
   return match ?? null;

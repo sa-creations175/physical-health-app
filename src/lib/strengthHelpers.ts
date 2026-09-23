@@ -17,7 +17,10 @@ import type {
 } from '../db/types';
 import { todayISODate, startOfWeekISODate } from './dateHelpers';
 import { getUserPreferences } from './userPreferences';
+import { copyPlanIntoSession, isSessionComplete, isStrengthType } from './sessionPlans';
 
+// Start a session INSTANCE. For a strength type it opens as a copy of the
+// type's standing exercise list (see sessionPlans.ts).
 export async function createSession(
   type: SessionType,
   date: string = todayISODate(),
@@ -32,10 +35,12 @@ export async function createSession(
     notes: '',
     feel_rating: null,
     source: 'manual',
+    completed_at: null,
     created_at: now,
     updated_at: now,
   };
   await syncedAdd(db.sessions, session);
+  if (isStrengthType(type)) await copyPlanIntoSession(session.id, type);
   return session.id;
 }
 
@@ -197,10 +202,12 @@ export async function completeSession(
   feel_rating: FeelRating,
   notes: string,
 ): Promise<void> {
+  const now = new Date().toISOString();
   await syncedUpdate(db.sessions, sessionId, {
     feel_rating,
     notes,
-    updated_at: new Date().toISOString(),
+    completed_at: now,
+    updated_at: now,
   });
 }
 
@@ -242,7 +249,7 @@ export async function getPreviousSessionForExercise(
   const sessionIds = [...new Set(links.map((l) => l.session_id))];
   const candidates = await db.sessions
     .where('id').anyOf(sessionIds)
-    .filter((s) => s.feel_rating !== null && s.id !== excludeSessionId)
+    .filter((s) => isSessionComplete(s) && s.id !== excludeSessionId)
     .toArray();
   if (candidates.length === 0) return null;
 
@@ -284,7 +291,7 @@ export async function getDraftSessionByType(
 ): Promise<DraftSessionSummary | null> {
   const sessions = await db.sessions
     .where('type').equals(type)
-    .filter((s) => s.feel_rating === null)
+    .filter((s) => !isSessionComplete(s))
     .toArray();
   if (sessions.length === 0) return null;
   sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -312,7 +319,7 @@ export interface DraftSessionDetail {
 export async function getDraftSessions(): Promise<DraftSessionDetail[]> {
   const drafts = (await db.sessions.toArray()).filter(
     (s) =>
-      s.feel_rating === null &&
+      !isSessionComplete(s) &&
       // Exclude Apple Watch placeholders (incomplete by design, surfaced in
       // History) — only user-abandoned manual drafts are resumable here.
       s.source !== 'watch' &&
@@ -375,7 +382,7 @@ export async function getLastSessionSummaryByType(
 ): Promise<LastSessionSummary | null> {
   const sessions = await db.sessions
     .where('type').equals(type)
-    .filter((s) => s.feel_rating !== null)
+    .filter((s) => isSessionComplete(s))
     .toArray();
   if (sessions.length === 0) return null;
   sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -488,7 +495,7 @@ async function getMostRecentCompletedSession(
 ): Promise<PreviousSessionBundle | null> {
   const sessions = await db.sessions
     .where('type').equals(type)
-    .filter((s) => s.feel_rating !== null)
+    .filter((s) => isSessionComplete(s))
     .toArray();
   if (sessions.length === 0) return null;
   sessions.sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -524,7 +531,7 @@ export async function suggestNextLiftingType(): Promise<'upper' | 'lower' | 'ful
   const [sessions, prefs] = await Promise.all([
     db.sessions
       .where('type').anyOf(types)
-      .filter((s) => s.date >= weekStart && s.feel_rating !== null)
+      .filter((s) => s.date >= weekStart && isSessionComplete(s))
       .toArray(),
     getUserPreferences(),
   ]);

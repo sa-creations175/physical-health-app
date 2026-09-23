@@ -1,5 +1,6 @@
 import { db } from '../db/database';
 import type { Session, SessionExercise, SetEntry, SetType } from '../db/types';
+import { isSessionComplete } from './sessionPlans';
 
 export type PRKind = 'weight' | 'duration' | null;
 
@@ -123,7 +124,7 @@ export function composeExerciseHistory(
 ): ExerciseHistory {
   if (links.length === 0) return { entries: [], personalRecord: null };
 
-  const completed = sessions.filter((s) => s.feel_rating !== null);
+  const completed = sessions.filter((s) => isSessionComplete(s));
   if (completed.length === 0) return { entries: [], personalRecord: null };
 
   const setsByLink = new Map<string, SetEntry[]>();

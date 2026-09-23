@@ -2,6 +2,7 @@ import { db } from '../db/database';
 import { syncedAdd, syncedUpdate } from '../db/syncedWrite';
 import { LOCAL_USER_ID } from './constants';
 import type { PromptPriority, PromptRecord } from '../db/types';
+import { isSessionComplete } from './sessionPlans';
 
 // Phase-1 scaffold for proactive prompts. The prompts table already exists
 // (Dexie v1) — this module is the thin coordinator that future triggers
@@ -66,7 +67,7 @@ async function hasInProgressSession(): Promise<boolean> {
     .where('user_id')
     .equals(LOCAL_USER_ID)
     .toArray();
-  return sessions.some((s) => s.feel_rating === null);
+  return sessions.some((s) => !isSessionComplete(s));
 }
 
 function startOfTodayISO(): string {

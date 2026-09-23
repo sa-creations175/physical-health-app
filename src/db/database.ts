@@ -26,6 +26,7 @@ import type {
   BodyStats,
   BodyMeasurement,
   NutritionSeason,
+  SessionPlan,
 } from './types';
 
 export class PhysicalHealthDB extends Dexie {
@@ -46,6 +47,7 @@ export class PhysicalHealthDB extends Dexie {
   body_stats!: Table<BodyStats, string>;
   body_measurements!: Table<BodyMeasurement, string>;
   nutrition_seasons!: Table<NutritionSeason, string>;
+  session_plans!: Table<SessionPlan, string>;
 
   constructor() {
     super('physical_health_db');
@@ -711,6 +713,71 @@ export class PhysicalHealthDB extends Dexie {
           .toCollection()
           .modify((row: { macro_style?: string }) => {
             if (row.macro_style === undefined) row.macro_style = 'balanced';
+          });
+      });
+
+    // v19: session types and instances. New store session_plans (one standing
+    // exercise list per strength type, seeded by runSeedersIfNeeded). sessions
+    // gain completed_at (backfilled from updated_at where a feel rating marked
+    // the session done); session_exercises gain origin / replaced_exercise_id /
+    // finished_order / nudge_resolved (existing links count as 'plan' and, in
+    // completed sessions, as finished in stored order); user_preferences gains
+    // one_tap_repeat (default on). Existing index lists are unchanged.
+    this.version(19)
+      .stores({
+        sessions: 'id, user_id, type, date, created_at',
+        exercises: 'id, user_id, name, muscle_group, last_used_at',
+        session_exercises: 'id, session_id, exercise_id, order_index',
+        sets: 'id, session_exercise_id, set_number, created_at',
+        cardio_types: 'id, user_id, name, last_used_at',
+        cardio_logs: 'id, user_id, started_at, created_at',
+        delivery_days: 'id, user_id, date',
+        bundle_logs: 'id, user_id, date',
+        nutrition_logs: 'id, user_id, date',
+        supplements: 'id, user_id, active',
+        health_checkins: 'id, user_id, type',
+        goals: 'id, user_id, pillar, parent_goal_id',
+        prompts: 'id, user_id, type, fired_at, dismissed_at',
+        user_preferences: 'id, user_id',
+        body_stats: 'id, user_id, recorded_at',
+        body_measurements: 'id, user_id, recorded_at',
+        nutrition_seasons: 'id, user_id, started_at, ended_at',
+        session_plans: 'id, user_id, type',
+      })
+      .upgrade(async (tx) => {
+        const done = new Set<string>();
+        await tx
+          .table('sessions')
+          .toCollection()
+          .modify((row: { id: string; feel_rating: string | null; updated_at: string; completed_at?: string | null }) => {
+            if (row.completed_at === undefined) {
+              row.completed_at = row.feel_rating !== null ? row.updated_at : null;
+            }
+            if (row.completed_at) done.add(row.id);
+          });
+        await tx
+          .table('session_exercises')
+          .toCollection()
+          .modify((row: {
+            session_id: string;
+            order_index: number;
+            origin?: string | null;
+            replaced_exercise_id?: string | null;
+            finished_order?: number | null;
+            nudge_resolved?: boolean | null;
+          }) => {
+            if (row.origin === undefined) row.origin = 'plan';
+            if (row.replaced_exercise_id === undefined) row.replaced_exercise_id = null;
+            if (row.finished_order === undefined) {
+              row.finished_order = done.has(row.session_id) ? row.order_index + 1 : null;
+            }
+            if (row.nudge_resolved === undefined) row.nudge_resolved = null;
+          });
+        await tx
+          .table('user_preferences')
+          .toCollection()
+          .modify((row: { one_tap_repeat?: boolean }) => {
+            if (row.one_tap_repeat === undefined) row.one_tap_repeat = true;
           });
       });
   }
