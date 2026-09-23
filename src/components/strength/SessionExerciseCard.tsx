@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { Check, ChevronDown, GripVertical, X } from 'lucide-react';
 import LastTimeBlock from './LastTimeBlock';
 import { summarizeSets, type LastTimeEntry } from '../../lib/sessionSets';
 import { updateSessionExerciseNotes } from '../../lib/strengthHelpers';
@@ -35,6 +35,7 @@ export default function SessionExerciseCard({
   nudge,
   typeLabel,
   h,
+  drag,
 }: {
   link: SessionExercise;
   exercise: Exercise;
@@ -45,7 +46,13 @@ export default function SessionExerciseCard({
   nudge: boolean;
   typeLabel: string;
   h: CardHandlers;
+  // Long-press reordering (open exercises only). `offset` is how far the card
+  // is shifted while a drag is in progress; `held` marks the dragged card.
+  drag?: { offset: number; held: boolean; onLongPress: (clientY: number) => void };
 }) {
+  const shift = drag?.offset
+    ? { transform: `translateY(${drag.offset}px)`, transition: drag.held ? 'none' : 'transform 150ms ease' }
+    : { transition: 'transform 150ms ease' };
   const finished = link.finished_order != null;
 
   if (finished) {
@@ -76,25 +83,32 @@ export default function SessionExerciseCard({
   if (!open) {
     const last = lastTimes[0];
     return (
-      <button
-        type="button"
+      <LongPressButton
         id={`ex-${link.id}`}
         onClick={h.onOpen}
-        className="card w-full text-left px-4 py-3.5 mt-3 block"
+        onLongPress={drag?.onLongPress}
+        style={shift}
+        className={`card w-full text-left px-4 py-3.5 mt-3 block select-none ${
+          drag?.held ? 'relative z-10 border-green-700' : ''
+        }`}
       >
         <span className="flex items-center justify-between gap-2">
           <span className="text-heading text-ink">{exercise.name}</span>
-          <ChevronDown aria-hidden="true" size={16} strokeWidth={2} className="text-hint shrink-0" />
+          {drag?.held ? (
+            <GripVertical aria-hidden="true" size={18} strokeWidth={2} className="text-green-700 shrink-0" />
+          ) : (
+            <ChevronDown aria-hidden="true" size={16} strokeWidth={2} className="text-hint shrink-0" />
+          )}
         </span>
         <span className="block text-label text-muted tabular-nums mt-1">
           {last ? `Last time: ${summarizeSets(last.sets)}` : 'No history yet'}
         </span>
-      </button>
+      </LongPressButton>
     );
   }
 
   return (
-    <div id={`ex-${link.id}`} className="card px-4 py-3.5 mt-3">
+    <div id={`ex-${link.id}`} className="card px-4 py-3.5 mt-3" style={shift}>
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
@@ -308,5 +322,60 @@ function NoteField({ linkId, notes }: { linkId: string; notes: string | null }) 
       aria-label="Exercise note"
       className="input mt-1 w-full h-11"
     />
+  );
+}
+
+// A button that also reports a long press (held ~450ms without moving). A
+// finger that moves first is scrolling, so the press is cancelled.
+const LONG_PRESS_MS = 450;
+function LongPressButton({
+  onLongPress,
+  onClick,
+  children,
+  ...rest
+}: {
+  id: string;
+  className: string;
+  style?: React.CSSProperties;
+  onClick: () => void;
+  onLongPress?: (clientY: number) => void;
+  children: React.ReactNode;
+}) {
+  const timer = useRef<number | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const cancel = () => {
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = null;
+  };
+  const press = (x: number, y: number) => {
+    if (!onLongPress) return;
+    start.current = { x, y };
+    cancel();
+    timer.current = window.setTimeout(() => {
+      timer.current = null;
+      onLongPress(y);
+    }, LONG_PRESS_MS);
+  };
+  const moved = (x: number, y: number) => {
+    const s = start.current;
+    if (s && Math.hypot(x - s.x, y - s.y) > 8) cancel();
+  };
+  return (
+    <button
+      type="button"
+      {...rest}
+      onClick={onClick}
+      onContextMenu={(e) => onLongPress && e.preventDefault()}
+      onTouchStart={(e) => press(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchMove={(e) => moved(e.touches[0].clientX, e.touches[0].clientY)}
+      onTouchEnd={cancel}
+      onMouseDown={(e) => press(e.clientX, e.clientY)}
+      onMouseMove={(e) => moved(e.clientX, e.clientY)}
+      onMouseUp={cancel}
+      onMouseLeave={cancel}
+      style={{ ...rest.style, WebkitTouchCallout: 'none' }}
+    >
+      {children}
+    </button>
   );
 }

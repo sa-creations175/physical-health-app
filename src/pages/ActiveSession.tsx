@@ -14,6 +14,7 @@ import {
   isSessionComplete,
   isStrengthType,
   keepSwapInPlan,
+  reorderOpenExercises,
   repeatSwapLinkIds,
   resolveNudge,
   STRENGTH_TYPE_LABEL,
@@ -28,6 +29,7 @@ import {
   type LastTimeEntry,
 } from '../lib/sessionSets';
 import { initialRows, useSetRows } from '../lib/useSetRows';
+import { useDragReorder } from '../lib/useDragReorder';
 import { getUserPreferences } from '../lib/userPreferences';
 import { todayISODate } from '../lib/dateHelpers';
 import type { Exercise, SessionExercise, SetEntry } from '../db/types';
@@ -107,6 +109,21 @@ export default function ActiveSession() {
     }
   }, [links, sets, lastTimes, idsKey, rows, setsByLink, setLinkRows]);
 
+  // A dropped order shows immediately, without waiting for the write. It only
+  // applies while it covers exactly today's open exercises (an add, swap-in,
+  // finish or reopen changes that set and the live order takes over).
+  const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
+  const liveOpenIds = (links ?? []).filter((l) => l.finished_order == null).map((l) => l.id);
+  const openIds =
+    pendingOrder && pendingOrder.length === liveOpenIds.length &&
+    pendingOrder.every((id) => liveOpenIds.includes(id))
+      ? pendingOrder
+      : liveOpenIds;
+  const reorder = useDragReorder(openIds, (order) => {
+    setPendingOrder(order);
+    reorderOpenExercises(sessionId, order).catch(() => setPendingOrder(null));
+  });
+
   if (!session || !links) {
     return <div className="px-4 pt-8 text-muted text-label">Loading session…</div>;
   }
@@ -118,7 +135,9 @@ export default function ActiveSession() {
   const history = (exerciseId: string): LastTimeEntry[] =>
     lastTimes?.map.get(exerciseId) ?? [];
 
-  const openLinks = links.filter((l) => l.finished_order == null);
+  const openLinks = openIds
+    .map((id) => links.find((l) => l.id === id))
+    .filter((l): l is SessionExercise => !!l);
   const doneLinks = links
     .filter((l) => l.finished_order != null)
     .sort((a, b) => (a.finished_order ?? 0) - (b.finished_order ?? 0));
@@ -178,7 +197,10 @@ export default function ActiveSession() {
   function handlersFor(link: SessionExercise, ex: Exercise) {
     const linkSets = setsByLink.get(link.id) ?? new Map<string, SetEntry>();
     return {
-      onOpen: () => setOpenId(link.id),
+      onOpen: () => {
+        if (reorder.suppressClick.current) return;
+        setOpenId(link.id);
+      },
       onClose: () => setOpenId(null),
       onSwap: () => setSheet({ mode: 'swap', linkId: link.id }),
       onType: (key: string, field: 'weight' | 'reps', text: string) =>
@@ -236,6 +258,15 @@ export default function ActiveSession() {
         nudge={repeatSwaps.has(link.id)}
         typeLabel={typeLabel}
         h={handlersFor(link, ex)}
+        drag={
+          link.finished_order == null
+            ? {
+                offset: reorder.offsetFor(link.id),
+                held: reorder.dragId === link.id,
+                onLongPress: (y) => reorder.begin(link.id, y),
+              }
+            : undefined
+        }
       />
     );
   }

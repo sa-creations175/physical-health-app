@@ -211,6 +211,22 @@ export async function swapExerciseInInstance(
   await syncedUpdate(db.exercises, exerciseId, { last_used_at: new Date().toISOString() });
 }
 
+// Reorder today's open exercises (long press and drag). Like a swap, it changes
+// this instance only; the type's standing list keeps its order. Finished
+// exercises keep sinking below open ones whatever their order_index.
+export async function reorderOpenExercises(
+  sessionId: string,
+  openOrder: string[],
+): Promise<void> {
+  const links = await linksFor(sessionId);
+  const finished = links.filter((l) => !openOrder.includes(l.id));
+  const order = [...openOrder, ...finished.map((l) => l.id)];
+  for (const [i, id] of order.entries()) {
+    const link = links.find((l) => l.id === id);
+    if (link && link.order_index !== i) await syncedUpdate(db.session_exercises, id, { order_index: i });
+  }
+}
+
 // The swapped-in exercises in this instance that were ALSO swapped in on the
 // previous instance of the same type. Those get the nudge.
 export async function repeatSwapLinkIds(sessionId: string): Promise<Set<string>> {
