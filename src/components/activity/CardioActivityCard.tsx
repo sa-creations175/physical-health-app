@@ -74,7 +74,7 @@ export default function CardioActivityCard({
       callout={callout}
     >
       <div className="flex items-baseline justify-between">
-        <span className="text-[12px] text-muted">
+        <span className="text-label text-muted">
           {minutes} qualifying min this week
           {shortCount > 0 && <span> · {shortCount} short</span>}
         </span>
@@ -82,7 +82,7 @@ export default function CardioActivityCard({
       <div className="mt-2">
         <ProgressBar value={qualifying} max={target} />
       </div>
-      <p className="text-[11px] mt-2">
+      <p className="text-label mt-2">
         {complete ? (
           <span className="text-green-700">You crushed your week</span>
         ) : (
@@ -90,7 +90,7 @@ export default function CardioActivityCard({
         )}
       </p>
       {watchCount > 0 && (
-        <p className="text-[11px] text-hint mt-2">
+        <p className="text-label text-hint mt-2">
           ⌚ {watchCount} from Apple Watch this week
         </p>
       )}

@@ -45,7 +45,7 @@ export default function CaloriesBreakdownCard() {
   return (
     <div className="bg-white shadow-card rounded-2xl p-4">
       <p
-        className="text-[10px] font-display uppercase tracking-micro"
+        className="eyebrow"
         style={{ color: COLOR.green700 }}
       >
         Calories Burned
@@ -58,7 +58,7 @@ export default function CaloriesBreakdownCard() {
         {perDay && max > 1 && (
           <div className="absolute inset-x-0 top-0 flex items-center gap-1.5">
             <span
-              className="text-[9px] leading-none whitespace-nowrap"
+              className="text-label leading-none whitespace-nowrap"
               style={{ color: COLOR.hint }}
             >
               {max.toLocaleString()} cal
@@ -99,7 +99,7 @@ export default function CaloriesBreakdownCard() {
         {weekDates.map((date, i) => (
           <span
             key={date}
-            className="flex-1 text-center text-[10px]"
+            className="flex-1 text-center text-micro"
             style={{ color: date > today ? COLOR.hint : COLOR.muted }}
           >
             {DAY_INITIALS[i]}
@@ -111,16 +111,16 @@ export default function CaloriesBreakdownCard() {
 
       <div className="mt-3 flex">
         <div className="flex-1 text-center">
-          <p className="text-[15px] font-medium text-ink">
+          <p className="text-body font-medium text-ink">
             {exerciseMin.toLocaleString()}
           </p>
-          <p className="text-[10px] text-muted mt-0.5">avg exercise min/day</p>
+          <p className="text-label text-muted mt-0.5">avg exercise min/day</p>
         </div>
         <div className="flex-1 text-center">
-          <p className="text-[15px] font-medium text-ink">
+          <p className="text-body font-medium text-ink">
             {stepsAvg === null ? '—' : stepsAvg.toLocaleString()}
           </p>
-          <p className="text-[10px] text-muted mt-0.5">avg steps/day</p>
+          <p className="text-label text-muted mt-0.5">avg steps/day</p>
         </div>
       </div>
     </div>

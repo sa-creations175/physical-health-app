@@ -30,7 +30,7 @@ export default function Home() {
 
 function SummaryLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[11px] font-display uppercase tracking-micro text-green-700">
+    <span className="eyebrow">
       {children}
     </span>
   );
@@ -75,8 +75,8 @@ function ScoreBar({ mark }: { mark: ScoreMark }) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] text-muted">{mark.label}</span>
-        <span className="text-[10px] text-ink tabular-nums">
+        <span className="text-label text-muted">{mark.label}</span>
+        <span className="text-label text-ink tabular-nums">
           {mark.actual}/{mark.target}
         </span>
       </div>
@@ -99,8 +99,8 @@ function StripStat({
 }) {
   return (
     <div className="flex-1 text-center">
-      <p className="text-[14px] font-medium text-ink">{value}</p>
-      <p className="text-[10px] text-muted mt-0.5">{label}</p>
+      <p className="text-body font-medium text-ink">{value}</p>
+      <p className="text-label text-muted mt-0.5">{label}</p>
     </div>
   );
 }
@@ -137,7 +137,7 @@ function FitnessSummary() {
         <ScoreDial pct={score?.dialPct ?? 0} />
         <div className="flex-1 space-y-1.5">
           {bars.length === 0 ? (
-            <p className="text-[12px] text-muted">
+            <p className="text-label text-muted">
               Set weekly targets in Settings to see your score.
             </p>
           ) : (
@@ -149,18 +149,18 @@ function FitnessSummary() {
       {narrative && (
         <div className="mt-3 space-y-0.5">
           {narrative.message && (
-            <p className="text-[12px] text-ink leading-snug">{narrative.message}</p>
+            <p className="text-label text-ink leading-snug">{narrative.message}</p>
           )}
           {narrative.win && (
-            <p className="text-[12px] text-ink leading-snug">{narrative.win}</p>
+            <p className="text-label text-ink leading-snug">{narrative.win}</p>
           )}
           {narrative.nudge && (
-            <p className="text-[12px] text-muted leading-snug">
+            <p className="text-label text-muted leading-snug">
               → {narrative.nudge}
             </p>
           )}
           {narrative.allClear && (
-            <p className="text-[12px] text-green-700 leading-snug">
+            <p className="text-label text-green-700 leading-snug">
               {narrative.allClear}
             </p>
           )}
@@ -187,7 +187,7 @@ function FitnessSummary() {
         </div>
       )}
 
-      <span className="mt-3 inline-block bg-green-100 text-green-700 text-[11px] font-medium rounded-full px-2.5 py-1">
+      <span className="mt-3 inline-block bg-green-100 text-green-700 text-label font-medium rounded-full px-2.5 py-1">
         {streak} day{streak === 1 ? '' : 's'} streak
       </span>
     </Link>
@@ -217,7 +217,7 @@ function NutritionSummary() {
         <SummaryLabel>Nutrition</SummaryLabel>
         <LeafIcon />
       </div>
-      <p className="mt-2 text-[13px] text-ink">
+      <p className="mt-2 text-label text-ink">
         Protein {protein}g · Water {water} glasses · {delivery.currentStreak} day delivery streak
       </p>
       <div className="mt-3 grid grid-cols-7">
@@ -254,7 +254,7 @@ function HealthSummary() {
         <SummaryLabel>Health</SummaryLabel>
         <HeartPulseIcon />
       </div>
-      <p className="mt-2 text-[13px] text-hint">No check-ins configured yet</p>
+      <p className="mt-2 text-label text-hint">No check-ins configured yet</p>
     </Link>
   );
 }

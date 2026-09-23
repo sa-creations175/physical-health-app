@@ -24,8 +24,8 @@ export default function Library() {
   return (
     <div className="px-5 pt-8 pb-8">
       <SectionLabel>Exercise Library</SectionLabel>
-      <h1 className="text-[22px] font-medium text-ink mt-1">Library</h1>
-      <p className="text-[12px] text-muted mt-1">
+      <h1 className="text-title text-ink mt-1">Library</h1>
+      <p className="text-label text-muted mt-1">
         {exercises.length} exercise{exercises.length === 1 ? '' : 's'} · tap for history
       </p>
 
@@ -34,12 +34,12 @@ export default function Library() {
         placeholder="Search…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mt-4 w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-[16px]"
+        className="mt-4 w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input"
       />
 
       <div className="mt-3">
         {filtered.length === 0 && (
-          <p className="text-muted text-[13px] text-center mt-6">
+          <p className="text-muted text-label text-center mt-6">
             {term ? 'No matches.' : 'Library is empty.'}
           </p>
         )}
@@ -70,14 +70,14 @@ function ExerciseListItem({
       className="w-full bg-white border border-hairline rounded-xl p-3 mt-2 flex items-center justify-between text-left gap-3 min-h-[48px]"
     >
       <div className="min-w-0">
-        <p className="text-[14px] text-ink truncate">{exercise.name}</p>
+        <p className="text-body text-ink truncate">{exercise.name}</p>
         {exercise.is_compound && (
-          <p className="text-[10px] text-muted mt-0.5 lowercase tracking-micro">
+          <p className="text-label text-muted mt-0.5 lowercase">
             compound
           </p>
         )}
       </div>
-      <span className="text-[10px] tracking-micro uppercase text-green-700 font-semibold whitespace-nowrap">
+      <span className="eyebrow whitespace-nowrap">
         {exercise.muscle_group.replace('_', ' ')}
       </span>
     </button>

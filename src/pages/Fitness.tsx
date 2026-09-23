@@ -34,7 +34,7 @@ export default function Fitness() {
         <button
           type="button"
           onClick={() => setManaging((v) => !v)}
-          className="flex items-center gap-1 text-[12px] font-medium text-muted"
+          className="flex items-center gap-1 text-label font-medium text-muted"
           aria-expanded={managing}
         >
           <span aria-hidden="true">⚙</span>
@@ -121,30 +121,30 @@ function FitnessHeader() {
     >
       <FitnessArcs />
       <div className="relative min-w-0">
-        <p className="text-[10px] font-display uppercase tracking-micro text-white/60">
+        <p className="eyebrow text-white/60">
           Fitness
         </p>
-        <h1 className="text-[22px] font-display font-semibold text-white leading-tight mt-0.5">
+        <h1 className="text-title text-white leading-tight mt-0.5">
           This Week
         </h1>
-        <p className="text-[12px] text-white/70 mt-1">{range}</p>
+        <p className="text-label text-white/70 mt-1">{range}</p>
       </div>
       <div className="relative flex flex-col items-end gap-2">
-        <span className="text-[12px] text-white/70 whitespace-nowrap">
+        <span className="text-label text-white/70 whitespace-nowrap">
           {todayStr}
         </span>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => navigate('/history')}
-            className="border border-white text-white rounded-full px-3 py-1 text-[13px] font-medium"
+            className="border border-white text-white rounded-full px-3 py-1 text-label font-medium"
           >
             History
           </button>
           <button
             type="button"
             onClick={() => navigate('/library')}
-            className="border border-white text-white rounded-full px-3 py-1 text-[13px] font-medium"
+            className="border border-white text-white rounded-full px-3 py-1 text-label font-medium"
           >
             Library
           </button>

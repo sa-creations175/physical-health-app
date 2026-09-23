@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 
 // Every colour points at a CSS variable defined once in src/index.css
-// (PERSONAL_OS_BRAND.md section 2). `colors` replaces Tailwind's default
-// palette outright, so a stray `bg-red-500` or `text-gray-400` simply doesn't
-// exist — the brand set is the only set.
+// (PERSONAL_OS_BRAND.md section 2). `colors` and `fontSize` replace Tailwind's
+// defaults outright, so a stray `bg-red-500` or `text-sm` simply doesn't exist:
+// the brand set and the type ladder (section 3) are the only sets.
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
@@ -30,16 +30,24 @@ export default {
       'hairline-warm': 'var(--hairline-warm)',
       scrim: 'var(--scrim)',
     },
+    fontFamily: {
+      sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+    },
+    // The type ladder. Roles that always carry a weight (and tracking) bake it
+    // in; Body, Label and Input are size only, so reading text stays 400.
+    fontSize: {
+      display: ['30px', { lineHeight: '1.15', fontWeight: '800' }],
+      title: ['22px', { lineHeight: '1.15', letterSpacing: '-0.01em', fontWeight: '800' }],
+      heading: ['17px', { lineHeight: '1.3', fontWeight: '700' }],
+      input: ['16px', { lineHeight: '1.35' }], // phones: 16 so iOS doesn't zoom
+      body: ['15px', { lineHeight: '1.45' }],
+      label: ['13px', { lineHeight: '1.35' }],
+      eyebrow: ['11px', { lineHeight: '1.3', letterSpacing: '0.1em', fontWeight: '700' }],
+      micro: ['10px', { lineHeight: '1.3', letterSpacing: '0.08em', fontWeight: '700' }],
+    },
     extend: {
-      fontFamily: {
-        sans: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
-      },
       boxShadow: {
         card: '0 1px 3px rgba(13, 31, 24, 0.08), 0 1px 2px rgba(13, 31, 24, 0.04)',
-      },
-      letterSpacing: {
-        micro: '0.06em',
       },
     },
   },

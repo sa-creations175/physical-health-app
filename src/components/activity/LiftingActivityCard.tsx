@@ -82,7 +82,7 @@ export default function LiftingActivityCard({
       pillar={type}
       callout={callout}
     >
-      <p className="text-[12px] text-muted">
+      <p className="text-label text-muted">
         {summary?.lastSession
           ? `Last: ${summary.lastSession.summary}`
           : 'No sessions logged yet.'}
@@ -90,7 +90,7 @@ export default function LiftingActivityCard({
       <button
         type="button"
         onClick={() => navigate(`/log/strength?type=${type}`)}
-        className="mt-2 text-green-700 text-[13px] font-medium"
+        className="mt-2 text-green-700 text-label font-medium"
       >
         Log {label} →
       </button>

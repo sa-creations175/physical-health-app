@@ -63,7 +63,7 @@ export default function ExerciseEditor({
 
   if (!exercise) {
     return (
-      <div className="fixed inset-0 bg-paper z-50 flex items-center justify-center text-muted text-[12px]">
+      <div className="fixed inset-0 bg-paper z-50 flex items-center justify-center text-muted text-label">
         Loading…
       </div>
     );
@@ -72,35 +72,35 @@ export default function ExerciseEditor({
   return (
     <div className="fixed inset-0 bg-paper z-50 flex flex-col">
       <header className="px-5 pt-8 pb-4 flex items-center justify-between">
-        <h2 className="text-[19px] font-medium text-ink">Edit Exercise</h2>
+        <h2 className="text-title text-ink">Edit Exercise</h2>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="text-muted text-[28px] w-11 h-11 flex items-center justify-center"
+          className="text-muted text-display w-11 h-11 flex items-center justify-center"
         >
           ×
         </button>
       </header>
 
       <div className="flex-1 px-5 overflow-y-auto pb-6">
-        <label className="block text-[11px] tracking-micro uppercase text-green-700 font-semibold">
+        <label className="block eyebrow">
           Name
         </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-[16px] mt-2"
+          className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input mt-2"
         />
 
-        <label className="block text-[11px] tracking-micro uppercase text-green-700 font-semibold mt-4">
+        <label className="block eyebrow mt-4">
           Muscle group
         </label>
         <select
           value={group}
           onChange={(e) => setGroup(e.target.value as MuscleGroup)}
-          className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-[16px] mt-2"
+          className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input mt-2"
         >
           {MUSCLE_GROUPS.map((g) => (
             <option key={g} value={g}>
@@ -109,7 +109,7 @@ export default function ExerciseEditor({
           ))}
         </select>
 
-        <label className="flex items-center gap-3 mt-5 text-[14px] text-ink">
+        <label className="flex items-center gap-3 mt-5 text-body text-ink">
           <input
             type="checkbox"
             checked={compound}
@@ -123,7 +123,7 @@ export default function ExerciseEditor({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-white border border-hairline text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+            className="flex-1 bg-white border border-hairline text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
           >
             Cancel
           </button>
@@ -131,7 +131,7 @@ export default function ExerciseEditor({
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="flex-1 bg-green-700 text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+            className="flex-1 bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[48px] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

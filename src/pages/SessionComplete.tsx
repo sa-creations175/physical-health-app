@@ -96,7 +96,7 @@ export default function SessionComplete() {
 
   if (!session) {
     return (
-      <div className="px-5 pt-8 text-muted text-[12px]">Loading session…</div>
+      <div className="px-5 pt-8 text-muted text-label">Loading session…</div>
     );
   }
 
@@ -115,8 +115,8 @@ export default function SessionComplete() {
   return (
     <div className="px-5 pt-8 pb-8">
       <SectionLabel>Session Summary</SectionLabel>
-      <h1 className="text-[22px] font-medium text-ink mt-1">How'd it go?</h1>
-      <p className="text-[12px] text-muted mt-1">
+      <h1 className="text-title text-ink mt-1">How'd it go?</h1>
+      <p className="text-label text-muted mt-1">
         {TYPE_LABEL[session.type] ?? session.type}
       </p>
 
@@ -126,29 +126,29 @@ export default function SessionComplete() {
       >
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
+            <p className="text-micro uppercase text-green-700">
               Exercises
             </p>
-            <p className="text-[19px] font-medium text-ink mt-1 leading-none">
+            <p className="text-title text-ink mt-1 leading-none">
               {sessionExercises.length}
             </p>
           </div>
           <div>
-            <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
+            <p className="text-micro uppercase text-green-700">
               Sets
             </p>
-            <p className="text-[19px] font-medium text-ink mt-1 leading-none">
+            <p className="text-title text-ink mt-1 leading-none">
               {totalSets}
             </p>
           </div>
           <div>
-            <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
+            <p className="text-micro uppercase text-green-700">
               Volume
             </p>
-            <p className="text-[19px] font-medium text-ink mt-1 leading-none">
+            <p className="text-title text-ink mt-1 leading-none">
               {Math.round(totalVolume).toLocaleString()}
             </p>
-            <p className="text-[10px] text-muted mt-0.5">lb·reps</p>
+            <p className="text-label text-muted mt-0.5">lb·reps</p>
           </div>
         </div>
       </div>
@@ -158,7 +158,7 @@ export default function SessionComplete() {
           <SectionLabel>Exercise notes</SectionLabel>
           <ul className="mt-2 bg-white border border-hairline rounded-xl p-3 space-y-2">
             {noteRows.map((row) => (
-              <li key={row.id} className="text-[12px] leading-snug">
+              <li key={row.id} className="text-label leading-snug">
                 <span className="text-ink font-medium">{row.name}</span>
                 <span className="text-muted"> — {row.note}</span>
               </li>
@@ -195,8 +195,8 @@ export default function SessionComplete() {
                 feel === opt.value ? 'border-green-700' : 'border-hairline'
               }`}
             >
-              <p className="text-[15px] font-medium text-ink">{opt.label}</p>
-              <p className="text-[11px] text-muted mt-0.5">{opt.description}</p>
+              <p className="text-body font-medium text-ink">{opt.label}</p>
+              <p className="text-label text-muted mt-0.5">{opt.description}</p>
             </button>
           ))}
         </div>
@@ -208,7 +208,7 @@ export default function SessionComplete() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Anything to remember from this session?"
-          className="mt-2 w-full bg-white border border-hairline text-ink rounded-xl px-4 py-3 text-[16px] min-h-[80px] resize-none"
+          className="mt-2 w-full bg-white border border-hairline text-ink rounded-xl px-4 py-3 text-input min-h-[80px] resize-none"
         />
       </div>
 
@@ -216,7 +216,7 @@ export default function SessionComplete() {
         type="button"
         onClick={handleSave}
         disabled={!feel || saving}
-        className="mt-6 w-full bg-green-700 text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+        className="mt-6 w-full bg-green-700 text-white rounded-xl py-3.5 text-label font-medium uppercase min-h-[48px] disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save Session'}
       </button>

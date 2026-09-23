@@ -60,12 +60,12 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-[15px] font-medium text-ink truncate">
+          <h3 className="text-body font-medium text-ink truncate">
             {exercise.name}
           </h3>
         </div>
         <div className="flex items-center gap-2 whitespace-nowrap">
-          <span className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
+          <span className="eyebrow">
             {exercise.muscle_group.replace('_', ' ')}
           </span>
           {/* Remove the whole exercise + its sets. Distinct from the
@@ -75,7 +75,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
             type="button"
             onClick={() => setConfirming(true)}
             aria-label={`Remove ${exercise.name}`}
-            className="text-muted text-[18px] w-8 h-8 flex items-center justify-center -mr-1"
+            className="text-muted text-title w-8 h-8 flex items-center justify-center -mr-1"
           >
             ×
           </button>
@@ -83,14 +83,14 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       </div>
       {confirming && (
         <div className="mt-2 px-3 py-2 bg-paper rounded-lg border border-hairline">
-          <p className="text-[12px] text-ink leading-snug">
+          <p className="text-label text-ink leading-snug">
             Remove {exercise.name} and all its sets?
           </p>
           <div className="flex gap-2 mt-2">
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="flex-1 bg-white border border-hairline text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+              className="flex-1 bg-white border border-hairline text-ink rounded-md py-2 eyebrow min-h-[36px]"
             >
               Cancel
             </button>
@@ -99,7 +99,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
               onClick={() => {
                 void removeExerciseFromSession(link.id);
               }}
-              className="flex-1 bg-white border border-hairline-warm text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+              className="flex-1 bg-white border border-hairline-warm text-ink rounded-md py-2 eyebrow min-h-[36px]"
             >
               Remove
             </button>
@@ -109,13 +109,13 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
 
       {previous && previous.sets.length > 0 && (
         <div className="mt-2 px-3 py-2 bg-paper rounded-lg">
-          <p className="text-[10px] tracking-micro uppercase text-muted font-semibold">
+          <p className="eyebrow text-muted">
             Last · {relativeDateLabel(previous.date)} · {previous.sets.length} set
             {previous.sets.length === 1 ? '' : 's'}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
             {previous.sets.map((s) => (
-              <span key={s.id} className="text-[12px]">
+              <span key={s.id} className="text-label">
                 <span className="text-ink font-medium">
                   {s.weight.toLocaleString()}
                 </span>
@@ -134,7 +134,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       <button
         type="button"
         onClick={handleAddSet}
-        className="mt-2 w-full bg-paper text-muted rounded-lg py-2.5 text-[11px] font-semibold uppercase tracking-micro border border-hairline min-h-[44px]"
+        className="mt-2 w-full bg-paper text-muted rounded-lg py-2.5 eyebrow border border-hairline min-h-[44px]"
       >
         + Add Set
       </button>
@@ -164,7 +164,7 @@ function NoteField({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="mt-2 w-full text-left text-[12px] text-green-700 font-medium py-1.5"
+        className="mt-2 w-full text-left text-label text-green-700 font-medium py-1.5"
       >
         Add note
       </button>
@@ -187,7 +187,7 @@ function NoteField({
       }}
       placeholder="Note for this exercise"
       aria-label="Exercise note"
-      className="mt-2 w-full bg-paper border border-hairline text-ink rounded-lg px-3 py-2 text-[16px] placeholder:text-muted"
+      className="mt-2 w-full bg-paper border border-hairline text-ink rounded-lg px-3 py-2 text-input placeholder:text-muted"
     />
   );
 }

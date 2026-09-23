@@ -68,16 +68,16 @@ export default function DayDetailSheet({
       >
         <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-display uppercase tracking-micro text-green-700">
+            <p className="eyebrow">
               {PILLAR_LABEL[pillar]}
             </p>
-            <p className="text-[15px] font-medium text-ink mt-0.5">{dayLabel}</p>
+            <p className="text-body font-medium text-ink mt-0.5">{dayLabel}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-muted text-[22px] w-9 h-9 flex items-center justify-center -mr-1"
+            className="text-muted text-title w-9 h-9 flex items-center justify-center -mr-1"
           >
             ×
           </button>
@@ -104,7 +104,7 @@ export default function DayDetailSheet({
             />
           )}
           {isFuture && (
-            <p className="mt-3 text-[11px] text-muted text-center">
+            <p className="mt-3 text-label text-muted text-center">
               Future day — view only.
             </p>
           )}
@@ -145,7 +145,7 @@ function ReclassifyControl({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-[11px] text-green-700 font-medium mt-1"
+        className="text-label text-green-700 font-medium mt-1"
       >
         Reclassify ▾
       </button>
@@ -154,7 +154,7 @@ function ReclassifyControl({
 
   return (
     <div className="mt-1.5">
-      <p className="text-[11px] text-muted mb-1">Move to:</p>
+      <p className="text-label text-muted mb-1">Move to:</p>
       <div className="flex flex-wrap gap-1.5">
         {targets.map((t) => (
           <button
@@ -162,7 +162,7 @@ function ReclassifyControl({
             type="button"
             onClick={() => pick(t)}
             disabled={busy}
-            className="text-[12px] px-2.5 h-8 rounded-lg bg-paper border border-hairline text-ink disabled:opacity-50"
+            className="text-label px-2.5 h-8 rounded-lg bg-paper border border-hairline text-ink disabled:opacity-50"
           >
             {PILLAR_LABEL[t]}
           </button>
@@ -170,7 +170,7 @@ function ReclassifyControl({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-[12px] px-2.5 h-8 rounded-lg text-muted"
+          className="text-label px-2.5 h-8 rounded-lg text-muted"
         >
           Cancel
         </button>
@@ -180,7 +180,7 @@ function ReclassifyControl({
 }
 
 const WATCH_BADGE = (
-  <span className="text-[11px] text-hint" title="From Apple Watch">
+  <span className="text-label text-hint" title="From Apple Watch">
     {' '}
     ⌚
   </span>
@@ -209,11 +209,11 @@ function BundleDay({ date, readOnly }: { date: string; readOnly: boolean }) {
     if (row?.calf_raises) lines.push(`Calf raises: ${row.calf_raises}`);
     if (watchMin > 0) lines.push(`⌚ ${watchMin} min strength`);
     return lines.length === 0 ? (
-      <p className="text-[13px] text-muted">Nothing logged this day.</p>
+      <p className="text-label text-muted">Nothing logged this day.</p>
     ) : (
       <div className="space-y-1">
         {lines.map((l) => (
-          <p key={l} className="text-[14px] text-ink">
+          <p key={l} className="text-body text-ink">
             {l}
           </p>
         ))}
@@ -243,7 +243,7 @@ function BundleDay({ date, readOnly }: { date: string; readOnly: boolean }) {
       />
       {watchMin > 0 && row && (
         <div className="pt-2">
-          <p className="text-[12px] text-green-700">
+          <p className="text-label text-green-700">
             ⌚ Apple Watch · {watchMin} min strength
           </p>
           <ReclassifyControl
@@ -276,9 +276,9 @@ function MobilityDay({ date, readOnly }: { date: string; readOnly: boolean }) {
   if (readOnly) {
     const mins = row?.mobility_minutes ?? 0;
     return mins > 0 ? (
-      <p className="text-[14px] text-ink">Mobility: {mins} min</p>
+      <p className="text-body text-ink">Mobility: {mins} min</p>
     ) : (
-      <p className="text-[13px] text-muted">Nothing logged this day.</p>
+      <p className="text-label text-muted">Nothing logged this day.</p>
     );
   }
 
@@ -345,7 +345,7 @@ function CardioDay({
   return (
     <div>
       {logs.length === 0 ? (
-        <p className="text-[13px] text-muted">Nothing logged this day.</p>
+        <p className="text-label text-muted">Nothing logged this day.</p>
       ) : (
         <div className="space-y-2">
           {logs.map((l) => (
@@ -354,7 +354,7 @@ function CardioDay({
               className="bg-paper border border-hairline rounded-lg px-3 py-2"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[14px] text-ink">
+                <span className="text-body text-ink">
                   {l.name} · {l.minutes} min
                   {l.source === 'watch' && WATCH_BADGE}
                 </span>
@@ -362,7 +362,7 @@ function CardioDay({
                   type="button"
                   onClick={() => void syncedDelete(db.cardio_logs, l.id)}
                   aria-label={`Delete ${l.name}`}
-                  className="text-muted text-[18px] w-8 h-8 flex items-center justify-center -mr-1"
+                  className="text-muted text-title w-8 h-8 flex items-center justify-center -mr-1"
                 >
                   ×
                 </button>
@@ -389,7 +389,7 @@ function CardioDay({
             onClose();
             navigate('/log/cardio');
           }}
-          className="mt-3 w-full bg-green-700 text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[44px]"
+          className="mt-3 w-full bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[44px]"
         >
           Log cardio →
         </button>
@@ -449,7 +449,7 @@ function SessionDay({
   return (
     <div>
       {sessions.length === 0 ? (
-        <p className="text-[13px] text-muted">Nothing logged this day.</p>
+        <p className="text-label text-muted">Nothing logged this day.</p>
       ) : (
         <div className="space-y-2">
           {sessions.map((s) => (
@@ -458,7 +458,7 @@ function SessionDay({
               className="bg-paper border border-hairline rounded-lg px-3 py-2"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[14px] text-ink">
+                <span className="text-body text-ink">
                   {s.status === 'done'
                     ? `Completed · ${s.exerciseCount} exercise${s.exerciseCount === 1 ? '' : 's'}`
                     : s.status === 'watch'
@@ -473,7 +473,7 @@ function SessionDay({
                       onClose();
                       navigate(`/log/strength/active/${s.id}`);
                     }}
-                    className="text-[12px] text-green-700 font-medium"
+                    className="text-label text-green-700 font-medium"
                   >
                     {s.status === 'watch' ? 'Open' : 'Resume'}
                   </button>
@@ -493,7 +493,7 @@ function SessionDay({
         <button
           type="button"
           onClick={start}
-          className="mt-3 w-full bg-green-700 text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[44px]"
+          className="mt-3 w-full bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[44px]"
         >
           Start session on this day →
         </button>

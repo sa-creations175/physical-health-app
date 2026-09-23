@@ -52,10 +52,10 @@ export default function DeliveryActivityCard({
       onToggle={onToggle}
     >
       <div className="flex items-baseline justify-between">
-        <span className="text-[12px] text-muted">
+        <span className="text-label text-muted">
           Tap a day to mark clean / ordered
         </span>
-        <span className="text-[12px] text-muted">
+        <span className="text-label text-muted">
           Best: {summary.longestStreak} days
         </span>
       </div>
@@ -88,20 +88,20 @@ function DayCell({
   const status = row?.status ?? null;
   let bg: string = COLOR.stone;
   let content: React.ReactNode = (
-    <span className="text-[12px] text-muted font-medium">{initial}</span>
+    <span className="text-label text-muted font-medium">{initial}</span>
   );
   let border: string | undefined;
   if (status === 'clean') {
     bg = COLOR.green700;
     content = (
-      <span aria-hidden="true" className="text-white text-[16px] leading-none">
+      <span aria-hidden="true" className="text-white text-heading leading-none">
         ✓
       </span>
     );
   } else if (status === 'ordered') {
     bg = COLOR.amber;
     content = (
-      <span aria-hidden="true" className="text-white text-[16px] leading-none">
+      <span aria-hidden="true" className="text-white text-heading leading-none">
         ✗
       </span>
     );

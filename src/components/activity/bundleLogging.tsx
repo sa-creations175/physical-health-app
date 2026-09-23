@@ -40,7 +40,7 @@ export function ExerciseLogRow({
 
   return (
     <div className="flex items-center gap-2 min-h-[44px]">
-      <span className="text-[12px] text-muted flex-1">{label}</span>
+      <span className="text-label text-muted flex-1">{label}</span>
 
       {editing ? (
         <input
@@ -55,14 +55,14 @@ export function ExerciseLogRow({
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           aria-label={`${label} reps today`}
-          className="bg-stone text-ink text-[16px] font-semibold text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+          className="bg-stone text-ink text-input text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
         />
       ) : (
         <button
           type="button"
           onClick={() => setEditing(true)}
           aria-label={`${label}: ${value} reps today — tap to type`}
-          className="text-ink text-[16px] font-bold w-[64px] h-11 text-center"
+          className="text-ink text-heading w-[64px] h-11 text-center"
         >
           {value}
         </button>
@@ -72,7 +72,7 @@ export function ExerciseLogRow({
         type="button"
         onClick={() => bump(-increment)}
         aria-label={`Subtract ${increment} ${label}`}
-        className="text-ink text-[18px] font-medium rounded-md flex items-center justify-center border border-hairline"
+        className="text-ink text-title rounded-md flex items-center justify-center border border-hairline"
         style={{ width: '44px', height: '44px', background: COLOR.stone }}
       >
         −
@@ -81,7 +81,7 @@ export function ExerciseLogRow({
         type="button"
         onClick={() => bump(increment)}
         aria-label={`Add ${increment} ${label}`}
-        className="text-white text-[18px] font-medium rounded-md flex items-center justify-center"
+        className="text-white text-title rounded-md flex items-center justify-center"
         style={{ width: '44px', height: '44px', background: COLOR.green700 }}
       >
         +
@@ -132,11 +132,11 @@ export function MobilityRow({
   return (
     <div className="pt-1">
       <div className="flex items-center justify-between min-h-[28px]">
-        <span className="text-[12px] text-muted">Flex / Mobility</span>
+        <span className="text-label text-muted">Flex / Mobility</span>
         {qualifying ? (
           <span
             aria-label="mobility target met today"
-            className="text-green-700 text-[16px] leading-none"
+            className="text-green-700 text-heading leading-none"
           >
             ✓
           </span>
@@ -154,7 +154,7 @@ export function MobilityRow({
           type="button"
           onClick={() => bump(-5)}
           aria-label="Subtract 5 mobility minutes"
-          className="text-ink text-[15px] font-medium rounded-md flex items-center justify-center border border-hairline"
+          className="text-ink text-body font-medium rounded-md flex items-center justify-center border border-hairline"
           style={{ width: '44px', height: '44px', background: COLOR.stone }}
         >
           −5
@@ -174,26 +174,26 @@ export function MobilityRow({
                 if (e.key === 'Enter') e.currentTarget.blur();
               }}
               aria-label="Mobility minutes today"
-              className="bg-stone text-ink text-[16px] font-semibold text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+              className="bg-stone text-ink text-input text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
             />
           ) : (
             <button
               type="button"
               onClick={() => setEditing(true)}
               aria-label={`Mobility: ${minutes} minutes today — tap to type`}
-              className="text-ink text-[16px] font-bold h-11"
+              className="text-ink text-heading h-11"
             >
               {minutes}
             </button>
           )}
-          <span className="text-[12px] text-muted">min</span>
+          <span className="text-label text-muted">min</span>
         </div>
 
         <button
           type="button"
           onClick={() => bump(5)}
           aria-label="Add 5 mobility minutes"
-          className="text-white text-[15px] font-medium rounded-md flex items-center justify-center"
+          className="text-white text-body font-medium rounded-md flex items-center justify-center"
           style={{ width: '44px', height: '44px', background: COLOR.green700 }}
         >
           +5
@@ -249,7 +249,7 @@ function MobilityLinks({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 text-green-700 text-[12px] font-medium"
+        className="mt-2 text-green-700 text-label font-medium"
       >
         Links ▾
       </button>
@@ -261,7 +261,7 @@ function MobilityLinks({
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="text-green-700 text-[12px] font-medium"
+        className="text-green-700 text-label font-medium"
       >
         Links ▴
       </button>
@@ -273,7 +273,7 @@ function MobilityLinks({
           onClick={() => window.open(DEFAULT_MOBILITY_SEARCH.url, '_blank')}
           className="w-full flex items-center justify-between gap-2 bg-stone rounded-md px-3 py-2 text-left min-h-[40px]"
         >
-          <span className="text-[13px] text-ink truncate">
+          <span className="text-label text-ink truncate">
             🔎 {DEFAULT_MOBILITY_SEARCH.label}
           </span>
           <ExternalLinkIcon />
@@ -286,14 +286,14 @@ function MobilityLinks({
               onClick={() => window.open(link.url, '_blank')}
               className="flex-1 flex items-center justify-between gap-2 bg-stone rounded-md px-3 py-2 text-left min-h-[40px]"
             >
-              <span className="text-[13px] text-ink truncate">{link.label}</span>
+              <span className="text-label text-ink truncate">{link.label}</span>
               <ExternalLinkIcon />
             </button>
             <button
               type="button"
               onClick={() => void onDelete(link.id)}
               aria-label={`Delete ${link.label}`}
-              className="text-muted text-[18px] w-9 h-9 flex items-center justify-center shrink-0"
+              className="text-muted text-title w-9 h-9 flex items-center justify-center shrink-0"
             >
               ×
             </button>
@@ -309,7 +309,7 @@ function MobilityLinks({
               placeholder="e.g. 5 min stretch"
               autoFocus
               aria-label="Link label"
-              className="w-full bg-stone text-ink rounded-md px-3 h-10 text-[16px] placeholder:text-hint focus:outline-none"
+              className="w-full bg-stone text-ink rounded-md px-3 h-10 text-input placeholder:text-hint focus:outline-none"
             />
             <input
               type="url"
@@ -318,7 +318,7 @@ function MobilityLinks({
               onChange={(e) => setUrl(e.target.value)}
               placeholder="YouTube URL"
               aria-label="Link URL"
-              className="w-full bg-stone text-ink rounded-md px-3 h-10 text-[16px] placeholder:text-hint focus:outline-none"
+              className="w-full bg-stone text-ink rounded-md px-3 h-10 text-input placeholder:text-hint focus:outline-none"
             />
             <div className="flex gap-2">
               <button
@@ -326,7 +326,7 @@ function MobilityLinks({
                 onClick={save}
                 disabled={!label.trim() || !url.trim()}
                 aria-label="Save link"
-                className="flex-1 bg-green-700 text-white rounded-md h-10 text-[14px] font-medium disabled:opacity-50"
+                className="flex-1 bg-green-700 text-white rounded-md h-10 text-body font-medium disabled:opacity-50"
               >
                 ✓ Save
               </button>
@@ -334,7 +334,7 @@ function MobilityLinks({
                 type="button"
                 onClick={cancel}
                 aria-label="Cancel"
-                className="flex-1 bg-stone text-ink border border-hairline rounded-md h-10 text-[14px] font-medium"
+                className="flex-1 bg-stone text-ink border border-hairline rounded-md h-10 text-body font-medium"
               >
                 × Cancel
               </button>
@@ -344,7 +344,7 @@ function MobilityLinks({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="text-green-700 text-[12px] font-medium py-1"
+            className="text-green-700 text-label font-medium py-1"
           >
             + Add link
           </button>

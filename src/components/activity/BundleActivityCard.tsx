@@ -131,14 +131,14 @@ export default function BundleActivityCard({
               }}
             >
               <span
-                className="text-[11px] font-medium"
+                className="text-label font-medium"
                 style={{ color: INTENSITY_INITIAL[intensity] }}
               >
                 {DAY_INITIALS[i]}
               </span>
               {hasWatch && (
                 <span
-                  className="absolute top-0.5 right-0.5 text-[8px] leading-none"
+                  className="absolute top-0.5 right-0.5 text-micro leading-none"
                   style={{ color: INTENSITY_INITIAL[intensity] }}
                   title={`Apple Watch · ${log?.watch_duration_minutes} min`}
                 >
@@ -158,7 +158,7 @@ export default function BundleActivityCard({
       </div>
 
       <p
-        className={`mt-2 text-[12px] text-center ${
+        className={`mt-2 text-label text-center ${
           weekOnTrack ? 'text-green-700' : 'text-muted'
         }`}
       >
@@ -167,11 +167,11 @@ export default function BundleActivityCard({
 
       {/* Today's log */}
       <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
-        <p className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
+        <p className="eyebrow">
           Log today
         </p>
         {(todayLog?.watch_duration_minutes ?? 0) > 0 && (
-          <p className="mt-1 text-[12px] text-green-700">
+          <p className="mt-1 text-label text-green-700">
             ⌚ Apple Watch · {todayLog?.watch_duration_minutes} min strength
           </p>
         )}
@@ -212,10 +212,10 @@ function WeeklyBar({
   return (
     <div>
       <div className="flex justify-between items-baseline">
-        <span className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
+        <span className="eyebrow">
           {label}
         </span>
-        <span className="text-[11px] text-ink">
+        <span className="text-label text-ink">
           {total.toLocaleString()} / {weeklyTarget.toLocaleString()}
         </span>
       </div>

@@ -69,7 +69,7 @@ export default function History() {
   return (
     <div className="px-5 pt-8 pb-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-[22px] font-medium text-ink">History</h1>
+        <h1 className="text-title text-ink">History</h1>
         <div className="flex items-center gap-1">
           <ViewButton active={view === 'list'} onClick={() => setView('list')} label="List view">
             <List size={18} strokeWidth={1.9} />
@@ -89,7 +89,7 @@ export default function History() {
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`px-3 py-1 rounded-full text-[13px] font-medium border ${
+              className={`px-3 py-1 rounded-full text-label font-medium border ${
                 active
                   ? 'bg-green-700 text-white border-green-700'
                   : 'bg-white text-muted border-hairline'
@@ -104,7 +104,7 @@ export default function History() {
       {view === 'list' ? (
         <div className="mt-4 space-y-1.5">
           {filtered.length === 0 ? (
-            <p className="text-center text-hint text-[13px] mt-10">
+            <p className="text-center text-hint text-label mt-10">
               No sessions logged yet
             </p>
           ) : (
@@ -174,12 +174,12 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         <span className="shrink-0 flex items-center">
           <Icon />
         </span>
-        <span className="text-[11px] font-display uppercase tracking-micro text-green-700 shrink-0">
+        <span className="eyebrow shrink-0">
           {label}
         </span>
         {(item.source === 'watch' || item.source === 'merged') && (
           <span
-            className="text-[11px] shrink-0"
+            className="text-label shrink-0"
             title={
               item.source === 'merged'
                 ? 'Apple Watch duration merged'
@@ -194,16 +194,16 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             ⌚
           </span>
         )}
-        <span className="flex-1 text-center text-[12px] text-muted truncate">
+        <span className="flex-1 text-center text-label text-muted truncate">
           {dayLabel(item.date)}
         </span>
-        <span className="text-[12px] text-ink whitespace-nowrap">
+        <span className="text-label text-ink whitespace-nowrap">
           {right}
           {feel && <span className="ml-1">{feel}</span>}
         </span>
         <span
           aria-hidden="true"
-          className={`text-green-700 text-[16px] leading-none transition-transform ${
+          className={`text-green-700 text-heading leading-none transition-transform ${
             open ? 'rotate-180' : ''
           }`}
         >
@@ -232,14 +232,14 @@ function StrengthDetail({
   return (
     <div className="space-y-2">
       {item.exercises.length === 0 ? (
-        <p className="text-[12px] text-muted">No exercises logged.</p>
+        <p className="text-label text-muted">No exercises logged.</p>
       ) : (
         item.exercises.map((ex, i) => (
           <div key={i}>
-            <p className="text-[13px] font-medium text-ink">{ex.name}</p>
+            <p className="text-label font-medium text-ink">{ex.name}</p>
             <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
               {ex.sets.map((s) => (
-                <span key={s.id} className="text-[12px]">
+                <span key={s.id} className="text-label">
                   <span className="text-ink font-medium">
                     {s.weight.toLocaleString()}
                   </span>
@@ -252,14 +252,14 @@ function StrengthDetail({
       )}
 
       {item.notes.trim() !== '' && (
-        <p className="text-[12px] text-muted pt-1">
+        <p className="text-label text-muted pt-1">
           <span className="text-green-700">Notes:</span> {item.notes}
         </p>
       )}
 
       {item.feel_rating && (
         <div className="flex items-center justify-between pt-1">
-          <span className="text-[20px] leading-none" aria-label={item.feel_rating}>
+          <span className="text-title leading-none" aria-label={item.feel_rating}>
             {FEEL_EMOJI[item.feel_rating]}
           </span>
         </div>
@@ -283,14 +283,14 @@ function CardioDetail({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-[13px] text-ink">
+      <p className="text-label text-ink">
         <span className="font-medium">{item.typeName}</span> · {item.duration_minutes} min ·{' '}
         <span className="capitalize">{item.intensity}</span>
         {item.distance_miles !== null && <> · {item.distance_miles.toFixed(1)} mi</>}
       </p>
 
       {item.notes && item.notes.trim() !== '' && (
-        <p className="text-[12px] text-muted">
+        <p className="text-label text-muted">
           <span className="text-green-700">Notes:</span> {item.notes}
         </p>
       )}
@@ -366,18 +366,18 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
           type="button"
           onClick={() => shiftMonth(-1)}
           aria-label="Previous month"
-          className="w-9 h-9 flex items-center justify-center text-green-700 text-[18px]"
+          className="w-9 h-9 flex items-center justify-center text-green-700 text-title"
         >
           ←
         </button>
-        <span className="text-[15px] font-display font-medium text-ink">
+        <span className="text-body font-medium text-ink">
           {monthLabel}
         </span>
         <button
           type="button"
           onClick={() => shiftMonth(1)}
           aria-label="Next month"
-          className="w-9 h-9 flex items-center justify-center text-green-700 text-[18px]"
+          className="w-9 h-9 flex items-center justify-center text-green-700 text-title"
         >
           →
         </button>
@@ -385,7 +385,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
 
       <div className="mt-2 grid grid-cols-7">
         {WEEKDAY_INITIALS.map((w, i) => (
-          <span key={i} className="text-[10px] text-hint text-center py-1">
+          <span key={i} className="text-micro text-hint text-center py-1">
             {w}
           </span>
         ))}
@@ -409,7 +409,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
               } ${dayItems.length === 0 ? 'cursor-default' : ''}`}
             >
               <span
-                className="w-6 h-6 flex items-center justify-center rounded-full text-[13px] text-ink"
+                className="w-6 h-6 flex items-center justify-center rounded-full text-label text-ink"
                 style={{
                   boxShadow: isToday ? `inset 0 0 0 1.5px ${COLOR.green700}` : undefined,
                 }}
@@ -432,7 +432,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
 
       {selected && selectedItems.length > 0 && (
         <div className="mt-4 space-y-1.5">
-          <p className="text-[12px] text-muted">
+          <p className="text-label text-muted">
             {new Date(selected + 'T00:00:00').toLocaleDateString('en-US', {
               weekday: 'long',
               month: 'long',

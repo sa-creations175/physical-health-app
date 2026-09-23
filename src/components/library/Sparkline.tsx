@@ -31,7 +31,7 @@ export default function Sparkline({
   if (series.length < 2) {
     return (
       <div
-        className="text-muted text-[11px] flex items-center justify-center"
+        className="text-muted text-label flex items-center justify-center"
         style={{ height }}
       >
         not enough history yet

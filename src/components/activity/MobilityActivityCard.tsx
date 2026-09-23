@@ -104,7 +104,7 @@ export default function MobilityActivityCard({
         }}
       />
       <p
-        className={`mt-2 text-[11px] text-center ${
+        className={`mt-2 text-label text-center ${
           met ? 'text-green-700' : 'text-muted'
         }`}
       >

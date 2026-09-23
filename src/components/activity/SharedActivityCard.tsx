@@ -81,7 +81,7 @@ export default function SharedActivityCard({
       <div className="mt-2 grid grid-cols-7">{dotEls}</div>
       <div className="mt-1 grid grid-cols-7">
         {DAY_INITIALS.map((letter, i) => (
-          <span key={i} className="text-[8px] text-hint text-center">
+          <span key={i} className="text-micro text-hint text-center">
             {letter}
           </span>
         ))}
@@ -102,15 +102,15 @@ export default function SharedActivityCard({
           {/* Icon + label left-aligned; badge + chevron right-aligned. */}
           <div className="flex items-center gap-2 min-w-0">
             {icon && <span className="shrink-0 flex items-center">{icon}</span>}
-            <span className="text-[11px] font-display uppercase tracking-micro truncate text-green-700">
+            <span className="eyebrow truncate text-green-700">
               {label}
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[12px] text-ink whitespace-nowrap">{badge}</span>
+            <span className="text-label text-ink whitespace-nowrap">{badge}</span>
             <span
               aria-hidden="true"
-              className={`text-green-700 text-[16px] leading-none transition-transform ${
+              className={`text-green-700 text-heading leading-none transition-transform ${
                 expanded ? 'rotate-180' : ''
               }`}
             >
@@ -135,7 +135,7 @@ export default function SharedActivityCard({
       )}
 
       {callout && (
-        <p className="relative mt-2 pl-2 text-[11px] leading-snug text-muted border-l-2 border-green-300">
+        <p className="relative mt-2 pl-2 text-label leading-snug text-muted border-l-2 border-green-300">
           {callout}
         </p>
       )}

@@ -28,10 +28,10 @@ export default function DashboardHeader() {
     >
       <HeroArcs />
       <div className="relative min-w-0">
-        <h1 className="text-[22px] font-medium text-white leading-tight">
+        <h1 className="text-title text-white leading-tight">
           {dayName(now)}
         </h1>
-        <p className="text-[12px] text-green-300 mt-1">
+        <p className="text-label text-green-300 mt-1">
           {dateLabel(now)} · Week {weekNumber(now)}
         </p>
       </div>
@@ -44,7 +44,7 @@ export default function DashboardHeader() {
           <SettingsIcon size={20} strokeWidth={1.75} />
         </Link>
         <div
-          className="bg-white/15 text-white text-[11px] font-medium uppercase tracking-micro rounded-full px-3 py-1.5 whitespace-nowrap"
+          className="bg-white/15 text-white eyebrow rounded-full px-3 py-1.5 whitespace-nowrap"
           title="Consecutive days with at least one strength or cardio session"
         >
           {streak} day{streak === 1 ? '' : 's'}

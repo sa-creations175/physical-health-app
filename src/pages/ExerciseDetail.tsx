@@ -64,7 +64,7 @@ export default function ExerciseDetail() {
 
   if (!exerciseId) {
     return (
-      <div className="px-5 pt-8 text-muted text-[12px]">
+      <div className="px-5 pt-8 text-muted text-label">
         No exercise selected.
       </div>
     );
@@ -72,7 +72,7 @@ export default function ExerciseDetail() {
 
   if (exercise === undefined) {
     return (
-      <div className="px-5 pt-8 text-muted text-[12px]">Loading…</div>
+      <div className="px-5 pt-8 text-muted text-label">Loading…</div>
     );
   }
 
@@ -84,7 +84,7 @@ export default function ExerciseDetail() {
       <button
         type="button"
         onClick={() => navigate('/library')}
-        className="text-[11px] tracking-micro uppercase text-muted font-semibold py-2 -ml-2 px-2 min-h-[44px] flex items-center"
+        className="eyebrow text-muted py-2 -ml-2 px-2 min-h-[44px] flex items-center"
       >
         ← Library
       </button>
@@ -92,10 +92,10 @@ export default function ExerciseDetail() {
       <div className="mt-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <SectionLabel>Exercise</SectionLabel>
-          <h1 className="text-[22px] font-medium text-ink mt-1 leading-tight">
+          <h1 className="text-title text-ink mt-1 leading-tight">
             {exercise.name}
           </h1>
-          <p className="text-[12px] text-muted mt-1">
+          <p className="text-label text-muted mt-1">
             {exercise.muscle_group.replace('_', ' ')}
             {exercise.is_compound ? ' · compound' : ''}
           </p>
@@ -103,7 +103,7 @@ export default function ExerciseDetail() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="text-[11px] tracking-micro uppercase font-semibold text-green-700 border border-hairline bg-white rounded-lg px-4 h-11 min-w-[64px] whitespace-nowrap"
+          className="eyebrow border border-hairline bg-white rounded-lg px-4 h-11 min-w-[64px] whitespace-nowrap"
         >
           Edit
         </button>
@@ -114,7 +114,7 @@ export default function ExerciseDetail() {
         style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
       >
         {!last && !pr ? (
-          <p className="text-[12px] text-muted">
+          <p className="text-label text-muted">
             No sessions yet — log this exercise to start a history.
           </p>
         ) : (
@@ -123,34 +123,34 @@ export default function ExerciseDetail() {
               <SectionLabel>Last set</SectionLabel>
               {last ? (
                 <>
-                  <p className="text-[14px] text-ink mt-1">
+                  <p className="text-body text-ink mt-1">
                     <span className="font-medium">{last.lastSet.weight.toLocaleString()}</span>
                     <span className="text-muted"> × {formatSetMagnitude(last.lastSet)}</span>
                   </p>
-                  <p className="text-[11px] text-muted mt-1">
+                  <p className="text-label text-muted mt-1">
                     {relativeDateLabel(last.date)}
                     {' · '}
                     {last.totalSets} set{last.totalSets === 1 ? '' : 's'}
                   </p>
                 </>
               ) : (
-                <p className="text-[12px] text-muted mt-1">—</p>
+                <p className="text-label text-muted mt-1">—</p>
               )}
             </div>
             <div>
               <SectionLabel>Personal best</SectionLabel>
               {pr ? (
                 <>
-                  <p className="text-[14px] text-ink mt-1">
+                  <p className="text-body text-ink mt-1">
                     <span className="font-medium">{pr.weight.toLocaleString()}</span>
                     <span className="text-muted"> × {formatSetMagnitude(pr)}</span>
                   </p>
-                  <p className="text-[11px] text-muted mt-1">
+                  <p className="text-label text-muted mt-1">
                     {relativeDateLabel(pr.date)}
                   </p>
                 </>
               ) : (
-                <p className="text-[12px] text-muted mt-1">—</p>
+                <p className="text-label text-muted mt-1">—</p>
               )}
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function ExerciseDetail() {
       <div className="mt-5">
         <SectionLabel>History</SectionLabel>
         {history.entries.length === 0 ? (
-          <p className="text-[12px] text-muted mt-2">
+          <p className="text-label text-muted mt-2">
             No completed sessions yet.
           </p>
         ) : (
@@ -181,10 +181,10 @@ export default function ExerciseDetail() {
                   style={{ borderLeftWidth: '2px', borderLeftColor: accent }}
                 >
                   <div className="min-w-0">
-                    <p className="text-[11px] text-muted tracking-micro uppercase">
+                    <p className="text-micro uppercase text-muted">
                       {relativeDateLabel(entry.date)}
                     </p>
-                    <p className="text-[14px] text-ink mt-0.5">
+                    <p className="text-body text-ink mt-0.5">
                       <span className="font-medium">{entry.topSet.weight.toLocaleString()}</span>
                       <span className="text-muted"> × {formatSetMagnitude(entry.topSet)}</span>
                       <span className="text-muted">
@@ -194,7 +194,7 @@ export default function ExerciseDetail() {
                     </p>
                   </div>
                   {entry.isPR && (
-                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-700 border border-green-700 rounded-full px-2 py-0.5 whitespace-nowrap">
+                    <span className="eyebrow border border-green-700 rounded-full px-2 py-0.5 whitespace-nowrap">
                       PR
                     </span>
                   )}

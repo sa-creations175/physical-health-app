@@ -258,10 +258,10 @@ export default function LogStrength() {
   return (
     <div className="px-5 pt-8 pb-8">
       <SectionLabel>Log Session</SectionLabel>
-      <h1 className="text-[22px] font-medium text-ink mt-1">
+      <h1 className="text-title text-ink mt-1">
         What kind of session?
       </h1>
-      <p className="text-[12px] text-muted mt-1">
+      <p className="text-label text-muted mt-1">
         Tap to start logging.
       </p>
 
@@ -343,12 +343,12 @@ export default function LogStrength() {
                   accented ? 'border-green-700' : 'border-hairline'
                 } ${muted ? 'opacity-50' : ''}`}
               >
-                <span className="text-[15px] font-medium text-ink">{opt.label}</span>
+                <span className="text-body font-medium text-ink">{opt.label}</span>
                 {/* Resume badge takes priority over "Due next" — surfacing
                     both would be redundant, and the unfinished work is the
                     more actionable signal. */}
                 {draft ? (
-                  <span className="text-[10px] tracking-micro uppercase font-semibold text-green-700 text-right leading-tight">
+                  <span className="eyebrow text-right leading-tight">
                     Resume
                     <span className="block text-muted normal-case tracking-normal font-normal mt-0.5">
                       started {timeOfDayLabel(draft.created_at)}
@@ -356,7 +356,7 @@ export default function LogStrength() {
                   </span>
                 ) : (
                   opt.value !== 'cardio' && suggested === opt.value && (
-                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-700">
+                    <span className="eyebrow">
                       Due next
                     </span>
                   )
@@ -424,14 +424,14 @@ function StaleDraftCard({
       className="bg-white border border-hairline rounded-xl p-4"
       style={{ borderLeftWidth: '3px', borderLeftColor: COLOR.amber }}
     >
-      <p className="text-[10px] tracking-micro uppercase font-semibold text-amber-text">
+      <p className="eyebrow text-amber-text">
         Unfinished session
       </p>
-      <p className="text-[14px] text-ink mt-1 leading-snug">
+      <p className="text-body text-ink mt-1 leading-snug">
         You have an unfinished <span className="font-semibold">{label}</span>{' '}
         session from {shortDateLabel(draft.date)}.
       </p>
-      <p className="text-[12px] text-muted mt-0.5">
+      <p className="text-label text-muted mt-0.5">
         {draft.exercises.length} exercise
         {draft.exercises.length === 1 ? '' : 's'} · {totalSets} set
         {totalSets === 1 ? '' : 's'}
@@ -440,7 +440,7 @@ function StaleDraftCard({
       <button
         type="button"
         onClick={() => setViewing((v) => !v)}
-        className="mt-2 text-green-700 text-[12px] font-medium"
+        className="mt-2 text-green-700 text-label font-medium"
       >
         {viewing ? 'Hide contents ▴' : 'View contents ▾'}
       </button>
@@ -448,17 +448,17 @@ function StaleDraftCard({
       {viewing && (
         <div className="mt-2 bg-paper border border-hairline rounded-lg p-3 space-y-2">
           {draft.exercises.length === 0 ? (
-            <p className="text-[12px] text-muted">No exercises logged yet.</p>
+            <p className="text-label text-muted">No exercises logged yet.</p>
           ) : (
             draft.exercises.map((ex, i) => (
               <div key={i}>
-                <p className="text-[13px] text-ink font-medium">{ex.name}</p>
+                <p className="text-label text-ink font-medium">{ex.name}</p>
                 {ex.sets.length === 0 ? (
-                  <p className="text-[11px] text-muted">No sets</p>
+                  <p className="text-label text-muted">No sets</p>
                 ) : (
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                     {ex.sets.map((s) => (
-                      <span key={s.id} className="text-[12px]">
+                      <span key={s.id} className="text-label">
                         <span className="text-ink font-medium">
                           {s.weight}
                         </span>
@@ -482,7 +482,7 @@ function StaleDraftCard({
             onClick={() => onResume()}
             disabled={busy}
             style={{ backgroundColor: COLOR.green700 }}
-            className="rounded-xl p-3 text-[14px] font-medium text-white disabled:opacity-50"
+            className="rounded-xl p-3 text-body font-medium text-white disabled:opacity-50"
           >
             Resume
           </button>
@@ -491,7 +491,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => setMode('date')}
               disabled={busy}
-              className="rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
+              className="rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
             >
               Resume + change date
             </button>
@@ -502,7 +502,7 @@ function StaleDraftCard({
                 setMode('discard');
               }}
               disabled={busy}
-              className="rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
+              className="rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
             >
               Discard
             </button>
@@ -524,7 +524,7 @@ function StaleDraftCard({
               onClick={() => onResume(date)}
               disabled={busy}
               style={{ backgroundColor: COLOR.green700 }}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-white disabled:opacity-50"
+              className="flex-1 rounded-xl p-3 text-label font-medium text-white disabled:opacity-50"
             >
               Resume on this date
             </button>
@@ -532,7 +532,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => setMode('idle')}
               disabled={busy}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
+              className="flex-1 rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
             >
               Cancel
             </button>
@@ -542,7 +542,7 @@ function StaleDraftCard({
 
       {mode === 'discard' && (
         <div className="mt-3">
-          <p className="text-[13px] text-ink leading-snug">
+          <p className="text-label text-ink leading-snug">
             Discard this {label} session and all {totalSets} set
             {totalSets === 1 ? '' : 's'} above? This can't be undone.
           </p>
@@ -550,14 +550,14 @@ function StaleDraftCard({
             <button
               type="button"
               onClick={() => setMode('idle')}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline"
+              className="flex-1 rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={onDiscard}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-white border border-hairline-warm"
+              className="flex-1 rounded-xl p-3 text-label font-medium text-ink bg-white border border-hairline-warm"
             >
               Discard
             </button>
@@ -614,7 +614,7 @@ function RepeatPanel({
       }`}
     >
       <div
-        className="text-[12px] mb-3"
+        className="text-label mb-3"
         style={{ color: COLOR.muted }}
       >
         Last {STRENGTH_LABEL[type]} · {shortDateLabel(summary.date)} ·{' '}
@@ -626,7 +626,7 @@ function RepeatPanel({
           onClick={onRepeat}
           disabled={disabled}
           style={{ backgroundColor: COLOR.green700 }}
-          className="rounded-xl p-3 text-[14px] font-medium text-white"
+          className="rounded-xl p-3 text-body font-medium text-white"
         >
           Repeat last session
         </button>
@@ -635,7 +635,7 @@ function RepeatPanel({
           onClick={onStartFresh}
           disabled={disabled}
           style={{ backgroundColor: COLOR.stone }}
-          className="rounded-xl p-3 text-[14px] font-medium text-ink border border-hairline"
+          className="rounded-xl p-3 text-body font-medium text-ink border border-hairline"
         >
           Start fresh
         </button>

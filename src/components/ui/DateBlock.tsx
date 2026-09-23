@@ -25,14 +25,14 @@ export default function DateBlock({
       style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green300 }}
       className="relative bg-stone border border-hairline rounded-xl p-3 min-h-[64px] flex flex-col"
     >
-      <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
+      <p className="eyebrow">
         {label}
       </p>
       <span className="mt-1 flex items-center justify-between gap-2">
-        <span className="text-[15px] text-ink font-medium">
+        <span className="text-body text-ink font-medium">
           {cardioDateLabel(value)}
         </span>
-        <span aria-hidden className="text-muted text-[12px] leading-none">
+        <span aria-hidden className="text-muted text-label leading-none">
           ⌄
         </span>
       </span>

@@ -17,21 +17,21 @@ export default function Settings() {
 
   if (!prefs) {
     return (
-      <div className="px-5 pt-8 text-muted text-[12px]">Loading…</div>
+      <div className="px-5 pt-8 text-muted text-label">Loading…</div>
     );
   }
 
   return (
     <div className="px-5 pt-8 pb-8">
       <SectionLabel>Settings</SectionLabel>
-      <h1 className="text-[22px] font-medium text-ink mt-1">Settings</h1>
-      <p className="text-[12px] text-muted mt-1">
+      <h1 className="text-title text-ink mt-1">Settings</h1>
+      <p className="text-label text-muted mt-1">
         Targets save automatically when you tap away from the field.
       </p>
 
       <section className="mt-6">
         <SectionLabel>Nutrition season</SectionLabel>
-        <p className="text-[11px] text-muted mt-1">
+        <p className="text-label text-muted mt-1">
           {season
             ? `Current: ${seasonLabel(season.season_type)}. Re-runs the goal questions and shows a before/after before switching.`
             : 'Set up your macro targets from your body and goals.'}
@@ -39,7 +39,7 @@ export default function Settings() {
         <button
           type="button"
           onClick={() => setSeasonSetup(true)}
-          className="mt-2 rounded-xl py-2.5 px-4 text-[13px] font-medium text-white bg-green-700 min-h-[44px]"
+          className="mt-2 rounded-xl py-2.5 px-4 text-label font-medium text-white bg-green-700 min-h-[44px]"
         >
           {season ? 'Change season' : 'Set up nutrition'}
         </button>
@@ -47,7 +47,7 @@ export default function Settings() {
 
       <section className="mt-6">
         <SectionLabel>Weekly targets</SectionLabel>
-        <p className="text-[11px] text-muted mt-1">Sessions per week</p>
+        <p className="text-label text-muted mt-1">Sessions per week</p>
 
         <NumberRow
           label="Lower Body"
@@ -90,7 +90,7 @@ export default function Settings() {
 
       <section className="mt-6">
         <SectionLabel>Daily nutrition</SectionLabel>
-        <p className="text-[11px] text-muted mt-1">
+        <p className="text-label text-muted mt-1">
           Saved now — Phase 3 lights up dashboard tracking.
         </p>
 
@@ -128,7 +128,7 @@ export default function Settings() {
 
       <section className="mt-6">
         <SectionLabel>Daily bundle</SectionLabel>
-        <p className="text-[11px] text-muted mt-1">
+        <p className="text-label text-muted mt-1">
           Daily rep targets, and the amount each tap adds on the dashboard card.
         </p>
 
@@ -196,7 +196,7 @@ export default function Settings() {
 
       <section className="mt-6">
         <SectionLabel>Thresholds</SectionLabel>
-        <p className="text-[11px] text-muted mt-1">
+        <p className="text-label text-muted mt-1">
           What counts as a qualifying session, and weekly day targets.
         </p>
 
@@ -242,7 +242,7 @@ export default function Settings() {
 
       <section className="mt-6">
         <SectionLabel>Daily activity</SectionLabel>
-        <p className="text-[11px] text-muted mt-1">
+        <p className="text-label text-muted mt-1">
           Daily-average targets for the Home Fitness Score. Set 0 to drop a
           mark from the score.
         </p>
@@ -360,9 +360,9 @@ function NumberRow({
       style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
     >
       <div className="min-w-0">
-        <p className="text-[14px] text-ink">{label}</p>
+        <p className="text-body text-ink">{label}</p>
         {hint && (
-          <p className="text-[11px] text-muted mt-0.5">{hint}</p>
+          <p className="text-label text-muted mt-0.5">{hint}</p>
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
@@ -373,11 +373,11 @@ function NumberRow({
           onChange={(e) => setText(e.target.value)}
           onBlur={commit}
           aria-label={label}
-          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[72px] h-11 text-[16px] text-center"
+          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[72px] h-11 text-input text-center"
         />
         <span
           aria-hidden={!showCheck}
-          className="text-green-700 text-[16px] leading-none w-3 transition-opacity duration-500"
+          className="text-green-700 text-heading leading-none w-3 transition-opacity duration-500"
           style={{ opacity: showCheck ? 1 : 0 }}
         >
           ✓

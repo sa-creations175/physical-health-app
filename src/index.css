@@ -39,7 +39,9 @@ body,
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Keep page content clear of the notch / home indicator (viewport-fit=cover
@@ -50,8 +52,11 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Display headings use Bricolage Grotesque; body/UI stays DM Sans. */
-h1,
-h2 {
-  font-family: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+
+@layer components {
+  /* Eyebrow: the small line above a title, and card headings. ALL CAPS by
+     styling; the source stays Title Case. */
+  .eyebrow {
+    @apply text-eyebrow uppercase text-green-700;
+  }
 }

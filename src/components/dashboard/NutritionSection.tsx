@@ -49,8 +49,8 @@ function NutritionRow({
   return (
     <div>
       <div className="flex justify-between items-baseline">
-        <span className="text-[12px] text-ink">{label}</span>
-        <span className="text-[11px] text-muted">
+        <span className="text-label text-ink">{label}</span>
+        <span className="text-label text-muted">
           no data yet · target {targetText}
         </span>
       </div>
@@ -64,8 +64,8 @@ function NutritionRow({
 function SupplementsRow() {
   return (
     <div className="flex justify-between items-baseline">
-      <span className="text-[12px] text-ink">Supplements</span>
-      <span className="text-[11px] text-muted">configure in settings</span>
+      <span className="text-label text-ink">Supplements</span>
+      <span className="text-label text-muted">configure in settings</span>
     </div>
   );
 }

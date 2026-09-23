@@ -40,7 +40,7 @@ export default function Nutrition() {
 
   return (
     <div className="pt-8 pb-4">
-      <h1 className="px-5 text-[22px] font-medium text-ink">Nutrition</h1>
+      <h1 className="px-5 text-title text-ink">Nutrition</h1>
 
       <div className="px-5 mt-4 space-y-3">
         {season === undefined ? null : season === null ? (
@@ -94,8 +94,8 @@ function SetupCard({ onStart }: { onStart: () => void }) {
   return (
     <div className="bg-white shadow-card rounded-2xl p-5">
       <SectionLabel>Nutrition</SectionLabel>
-      <p className="mt-2 text-[15px] font-medium text-ink">Set up your plan</p>
-      <p className="mt-1 text-[13px] text-ink leading-snug">
+      <p className="mt-2 text-body font-medium text-ink">Set up your plan</p>
+      <p className="mt-1 text-label text-ink leading-snug">
         A few questions about your body and goals generates your daily calorie
         and macro targets — built on your lean mass and real activity, not a
         generic formula.
@@ -103,7 +103,7 @@ function SetupCard({ onStart }: { onStart: () => void }) {
       <button
         type="button"
         onClick={onStart}
-        className="mt-3 w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-700 min-h-[48px]"
+        className="mt-3 w-full rounded-xl py-3 text-body font-medium text-white bg-green-700 min-h-[48px]"
       >
         Set up nutrition
       </button>
@@ -123,17 +123,17 @@ function SeasonStrip({
   return (
     <div className="bg-white shadow-card rounded-2xl px-4 py-3 flex items-center justify-between">
       <div>
-        <span className="inline-block text-[10px] tracking-micro uppercase font-semibold text-white bg-green-700 rounded-full px-2.5 py-1">
+        <span className="inline-block eyebrow text-white bg-green-700 rounded-full px-2.5 py-1">
           {seasonLabel(season.season_type)}
         </span>
-        <p className="mt-1.5 text-[12px] text-muted">
+        <p className="mt-1.5 text-label text-muted">
           Day {daysInSeason(season)} of this season
         </p>
       </div>
       <button
         type="button"
         onClick={onChange}
-        className="text-[12px] font-medium text-green-700 min-h-[44px] px-1"
+        className="text-label font-medium text-green-700 min-h-[44px] px-1"
       >
         Change season
       </button>
@@ -159,7 +159,7 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
       <div className="mt-3 space-y-3">
         {bars.map((b) => (
           <div key={b.key}>
-            <div className="flex items-center justify-between text-[13px]">
+            <div className="flex items-center justify-between text-label">
               <span className="text-ink">{b.label}</span>
               <span className="text-ink">
                 <span className="font-medium">{b.logged.toLocaleString()}</span>
@@ -179,7 +179,7 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
         <AwarenessRow label="Sugar" guideline={`stay under ${season.sugar_guideline_g}g`} />
       </div>
 
-      <p className="mt-3 text-[11px] text-muted leading-snug">
+      <p className="mt-3 text-label text-muted leading-snug">
         Meal logging arrives next — your targets above are live now.
       </p>
     </div>
@@ -188,7 +188,7 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
 
 function AwarenessRow({ label, guideline }: { label: string; guideline: string }) {
   return (
-    <div className="flex items-center justify-between text-[12px]">
+    <div className="flex items-center justify-between text-label">
       <span className="text-ink">{label}</span>
       <span className="text-muted">{guideline}</span>
     </div>
@@ -214,7 +214,7 @@ function WaterCard({
     <div className="bg-white shadow-card rounded-2xl p-5">
       <div className="flex items-center justify-between">
         <SectionLabel>Water</SectionLabel>
-        <span className="text-[12px] text-muted">
+        <span className="text-label text-muted">
           <span className="text-ink font-medium">{bottles}</span> / {target} bottles
         </span>
       </div>
@@ -231,7 +231,7 @@ function WaterCard({
           );
         })}
       </div>
-      <p className="mt-3 text-[11px] text-muted">
+      <p className="mt-3 text-label text-muted">
         Tap to add a bottle (1000ml). Long-press a full bottle to remove.
       </p>
     </div>
@@ -283,7 +283,7 @@ function BottleButton({
         borderColor: filled ? COLOR.green700 : COLOR.stone,
       }}
     >
-      <span className="text-[16px]" style={{ opacity: filled ? 1 : 0.35 }}>
+      <span className="text-heading" style={{ opacity: filled ? 1 : 0.35 }}>
         💧
       </span>
     </button>
@@ -316,7 +316,7 @@ function BodyStatsCard({
         <Stat label="Lean mass" value={leanMass !== null ? `${leanMass}` : '—'} unit="lbs" />
       </div>
       {bf !== null && bfSource && (
-        <p className="mt-2 text-[11px] text-muted">
+        <p className="mt-2 text-label text-muted">
           Body fat from {SOURCE_LABEL[bfSource] ?? bfSource}.
         </p>
       )}
@@ -324,14 +324,14 @@ function BodyStatsCard({
         <button
           type="button"
           onClick={onWeigh}
-          className="flex-1 rounded-xl py-2.5 text-[13px] font-medium text-ink bg-paper border border-hairline min-h-[44px]"
+          className="flex-1 rounded-xl py-2.5 text-label font-medium text-ink bg-paper border border-hairline min-h-[44px]"
         >
           Log weigh-in
         </button>
         <button
           type="button"
           onClick={onMeasure}
-          className="flex-1 rounded-xl py-2.5 text-[13px] font-medium text-ink bg-paper border border-hairline min-h-[44px]"
+          className="flex-1 rounded-xl py-2.5 text-label font-medium text-ink bg-paper border border-hairline min-h-[44px]"
         >
           Log measurements
         </button>
@@ -350,9 +350,9 @@ const SOURCE_LABEL: Record<string, string> = {
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
     <div className="bg-paper border border-hairline rounded-xl px-3 py-2.5">
-      <span className="block text-[11px] text-muted">{label}</span>
-      <span className="text-[19px] font-medium text-ink">{value}</span>
-      <span className="text-[12px] text-muted"> {unit}</span>
+      <span className="block text-label text-muted">{label}</span>
+      <span className="text-title text-ink">{value}</span>
+      <span className="text-label text-muted"> {unit}</span>
     </div>
   );
 }

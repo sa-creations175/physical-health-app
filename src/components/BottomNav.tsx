@@ -30,7 +30,7 @@ export default function BottomNav() {
               }
             >
               <Icon size={22} strokeWidth={1.75} />
-              <span className="text-[10px] tracking-micro uppercase font-medium">
+              <span className="eyebrow">
                 {label}
               </span>
             </NavLink>

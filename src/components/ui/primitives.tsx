@@ -19,7 +19,7 @@ export function Card({
 export function SectionLabel({ children }: { children: ReactNode }) {
   // All section micro-labels: Green 700, 9px, weight 600, tracked.
   return (
-    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
+    <p className="eyebrow">
       {children}
     </p>
   );
@@ -71,7 +71,7 @@ export function SevenDayDotRow({
               background: d.hadSession ? COLOR.green700 : COLOR.stone,
             }}
           />
-          <span className="text-[9px] text-muted uppercase tracking-micro">
+          <span className="text-micro uppercase text-muted">
             {narrowDayLabel(d.date)}
           </span>
         </div>

@@ -11,7 +11,7 @@ export default function FitnessCardManager() {
   return (
     <div className="bg-white shadow-card rounded-2xl p-4">
       <p
-        className="text-[10px] font-display uppercase tracking-micro"
+        className="eyebrow"
         style={{ color: COLOR.green700 }}
       >
         Show / hide cards
@@ -30,7 +30,7 @@ export default function FitnessCardManager() {
               className="w-full flex items-center justify-between py-2"
             >
               <span
-                className="text-[14px]"
+                className="text-body"
                 style={{ color: visible ? COLOR.ink : COLOR.hint }}
               >
                 {label}
