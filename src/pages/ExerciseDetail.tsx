@@ -6,6 +6,8 @@ import ExerciseEditor from '../components/library/ExerciseEditor';
 import Sparkline from '../components/library/Sparkline';
 import { SectionLabel } from '../components/ui/primitives';
 import { composeExerciseHistory } from '../lib/exerciseHistory';
+import { composeLastTimes } from '../lib/sessionSets';
+import LastTimeBlock from '../components/strength/LastTimeBlock';
 import { formatSetMagnitude } from '../lib/setFormat';
 import { relativeDateLabel } from '../lib/dateHelpers';
 import type { Session, SessionExercise, SetEntry } from '../db/types';
@@ -60,6 +62,11 @@ export default function ExerciseDetail() {
   const history = useMemo(
     () => composeExerciseHistory(links, sessions, sets, 8),
     [links, sessions, sets],
+  );
+  // The same "Last time" block the session screen shows, open here.
+  const lastTimes = useMemo(
+    () => (exerciseId ? composeLastTimes(links, sessions, sets).get(exerciseId) ?? [] : []),
+    [exerciseId, links, sessions, sets],
   );
 
   if (!exerciseId) {
@@ -154,6 +161,8 @@ export default function ExerciseDetail() {
           </div>
         )}
       </div>
+
+      <LastTimeBlock entries={lastTimes} defaultOpen className="card px-4 py-2 mt-3" />
 
       <div className="mt-5">
         <SectionLabel>Last 8 Sessions</SectionLabel>
