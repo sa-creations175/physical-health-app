@@ -9,6 +9,7 @@ import CaloriesBreakdownCard from '../components/activity/CaloriesBreakdownCard'
 import FitnessCardManager from '../components/activity/FitnessCardManager';
 import { useFitnessCardConfig } from '../lib/useFitnessCardConfig';
 import { startOfWeekISODate, addDaysISO } from '../lib/dateHelpers';
+import { COLOR } from '../lib/brand';
 
 export default function Fitness() {
   // Only one card expanded at a time — tapping an open card closes it.
@@ -33,7 +34,7 @@ export default function Fitness() {
         <button
           type="button"
           onClick={() => setManaging((v) => !v)}
-          className="flex items-center gap-1 text-[12px] font-medium text-[#5a7a6e]"
+          className="flex items-center gap-1 text-[12px] font-medium text-muted"
           aria-expanded={managing}
         >
           <span aria-hidden="true">⚙</span>
@@ -114,7 +115,7 @@ function FitnessHeader() {
         // clears the Dynamic Island, then add the eyebrow's own clearance.
         paddingTop:
           'calc(max(env(safe-area-inset-top), 59px) + 2.75rem)',
-        background: '#0f3d2e',
+        background: COLOR.green700,
       }}
       className="relative overflow-hidden px-5 pb-5 flex items-start justify-between gap-3"
     >
@@ -165,7 +166,7 @@ function FitnessArcs() {
       viewBox="0 0 230 230"
       fill="none"
     >
-      <g stroke="#ffffff" strokeOpacity="0.09" fill="none">
+      <g stroke={COLOR.white} strokeOpacity="0.09" fill="none">
         <circle cx="150" cy="115" r="46" strokeWidth="2.5" />
         <circle cx="150" cy="115" r="80" strokeWidth="2.5" />
         <circle cx="150" cy="115" r="114" strokeWidth="2.5" />

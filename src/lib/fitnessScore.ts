@@ -13,7 +13,7 @@ import {
   todayISODate,
 } from './dateHelpers';
 import { getWeeklyHealthAverages, getExerciseMinutesThisWeek } from './healthkit';
-import { PILLAR_COLORS, fillFraction } from './pillarColors';
+import { fillFraction } from './progress';
 
 // The dial + bars cover ONLY the five pillar marks. Calories / steps / exercise
 // minutes are context shown in the daily-average strip — they do NOT affect the
@@ -23,7 +23,6 @@ export type MarkKey = 'bundle' | 'cardio' | 'lower' | 'upper' | 'mobility';
 export interface ScoreMark {
   key: MarkKey;
   label: string;
-  color: string;
   actual: number;
   target: number;
   fraction: number; // clamped 0..1 (0 when target 0)
@@ -93,11 +92,11 @@ export async function getFitnessScore(): Promise<FitnessScore> {
 
   // Only the five pillars feed the dial + bars.
   const marks: ScoreMark[] = [
-    mark('bundle', 'Bundle', PILLAR_COLORS.bundle.fill, bundleQualDays, prefs.bundle_target),
-    mark('cardio', 'Cardio', PILLAR_COLORS.cardio.fill, cardio.qualifyingCount, prefs.cardio_target_weekly),
-    mark('lower', 'Lower', PILLAR_COLORS.lower.fill, lower?.thisWeekCount ?? 0, prefs.lifting_target_lower),
-    mark('upper', 'Upper', PILLAR_COLORS.upper.fill, upper?.thisWeekCount ?? 0, prefs.lifting_target_upper),
-    mark('mobility', 'Mobility', PILLAR_COLORS.mobility.fill, mobTotals.mobilityQualifyingDays, prefs.bundle_mobility_target),
+    mark('bundle', 'Bundle', bundleQualDays, prefs.bundle_target),
+    mark('cardio', 'Cardio', cardio.qualifyingCount, prefs.cardio_target_weekly),
+    mark('lower', 'Lower', lower?.thisWeekCount ?? 0, prefs.lifting_target_lower),
+    mark('upper', 'Upper', upper?.thisWeekCount ?? 0, prefs.lifting_target_upper),
+    mark('mobility', 'Mobility', mobTotals.mobilityQualifyingDays, prefs.bundle_mobility_target),
   ];
 
   const participating = marks.filter((m) => m.participates);
@@ -124,14 +123,12 @@ export async function getFitnessScore(): Promise<FitnessScore> {
 function mark(
   key: MarkKey,
   label: string,
-  color: string,
   actual: number,
   target: number,
 ): ScoreMark {
   return {
     key,
     label,
-    color,
     actual,
     target,
     fraction: fillFraction(actual, target),

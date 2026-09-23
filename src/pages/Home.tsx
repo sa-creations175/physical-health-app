@@ -13,6 +13,7 @@ import {
   todayISODate,
 } from '../lib/dateHelpers';
 import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../lib/defaults';
+import { COLOR } from '../lib/brand';
 
 export default function Home() {
   return (
@@ -29,7 +30,7 @@ export default function Home() {
 
 function SummaryLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[11px] font-display uppercase tracking-micro text-green-mid">
+    <span className="text-[11px] font-display uppercase tracking-micro text-green-700">
       {children}
     </span>
   );
@@ -41,13 +42,13 @@ function ScoreDial({ pct }: { pct: number }) {
   const dash = (Math.max(0, Math.min(pct, 100)) / 100) * 175.9;
   return (
     <svg width="72" height="72" viewBox="0 0 72 72" className="shrink-0">
-      <circle cx="36" cy="36" r="28" fill="none" stroke="#e8ebe8" strokeWidth="7" />
+      <circle cx="36" cy="36" r="28" fill="none" stroke={COLOR.stone} strokeWidth="7" />
       <circle
         cx="36"
         cy="36"
         r="28"
         fill="none"
-        stroke="#0f3d2e"
+        stroke={COLOR.green700}
         strokeWidth="7"
         strokeLinecap="round"
         strokeDasharray={`${dash} 175.9`}
@@ -60,7 +61,7 @@ function ScoreDial({ pct }: { pct: number }) {
         dominantBaseline="central"
         fontSize="18"
         fontWeight="600"
-        fill="#0d1f18"
+        fill={COLOR.ink}
       >
         {pct}%
       </text>
@@ -74,15 +75,15 @@ function ScoreBar({ mark }: { mark: ScoreMark }) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[10px] text-[#5a7a6e]">{mark.label}</span>
+        <span className="text-[10px] text-muted">{mark.label}</span>
         <span className="text-[10px] text-ink tabular-nums">
           {mark.actual}/{mark.target}
         </span>
       </div>
-      <div className="mt-0.5 h-1.5 rounded-full" style={{ background: '#e8ebe8' }}>
+      <div className="mt-0.5 h-1.5 rounded-full" style={{ background: COLOR.stone }}>
         <div
           className="h-full rounded-full"
-          style={{ width: `${width}%`, background: mark.color }}
+          style={{ width: `${width}%`, background: COLOR.green700 }}
         />
       </div>
     </div>
@@ -99,7 +100,7 @@ function StripStat({
   return (
     <div className="flex-1 text-center">
       <p className="text-[14px] font-medium text-ink">{value}</p>
-      <p className="text-[10px] text-[#5a7a6e] mt-0.5">{label}</p>
+      <p className="text-[10px] text-muted mt-0.5">{label}</p>
     </div>
   );
 }
@@ -126,7 +127,7 @@ function FitnessSummary() {
     : null;
 
   return (
-    <Link to="/fitness" className="block bg-card shadow-card rounded-2xl p-4">
+    <Link to="/fitness" className="block bg-white shadow-card rounded-2xl p-4">
       <div className="flex items-center justify-between">
         <SummaryLabel>Fitness Score</SummaryLabel>
         <DumbbellIcon />
@@ -136,7 +137,7 @@ function FitnessSummary() {
         <ScoreDial pct={score?.dialPct ?? 0} />
         <div className="flex-1 space-y-1.5">
           {bars.length === 0 ? (
-            <p className="text-[12px] text-card-mute">
+            <p className="text-[12px] text-muted">
               Set weekly targets in Settings to see your score.
             </p>
           ) : (
@@ -154,12 +155,12 @@ function FitnessSummary() {
             <p className="text-[12px] text-ink leading-snug">{narrative.win}</p>
           )}
           {narrative.nudge && (
-            <p className="text-[12px] text-ink-soft leading-snug">
+            <p className="text-[12px] text-muted leading-snug">
               → {narrative.nudge}
             </p>
           )}
           {narrative.allClear && (
-            <p className="text-[12px] text-green-mid leading-snug">
+            <p className="text-[12px] text-green-700 leading-snug">
               {narrative.allClear}
             </p>
           )}
@@ -169,7 +170,7 @@ function FitnessSummary() {
       {strip && (
         <div
           className="mt-3 pt-3 border-t flex"
-          style={{ borderColor: '#f0f2f0' }}
+          style={{ borderColor: COLOR.hairline }}
         >
           <StripStat
             label="Cal/day"
@@ -186,7 +187,7 @@ function FitnessSummary() {
         </div>
       )}
 
-      <span className="mt-3 inline-block bg-[#edf7f2] text-green-mid text-[11px] font-medium rounded-full px-2.5 py-1">
+      <span className="mt-3 inline-block bg-green-100 text-green-700 text-[11px] font-medium rounded-full px-2.5 py-1">
         {streak} day{streak === 1 ? '' : 's'} streak
       </span>
     </Link>
@@ -205,13 +206,13 @@ function NutritionSummary() {
     prefs?.water_glasses_daily ?? DEFAULT_DAILY_NUTRITION_TARGETS.water_glasses;
 
   // This week's delivery status, Sun→Sat — clean/ordered/unmarked dots that
-  // mirror the delivery card's colors (#0F6E56 clean, #E24B4A ordered).
+  // mirror the delivery card's colors (Green 700 clean, Bronze Amber ordered).
   const weekStart = startOfWeekISODate();
   const deliveryWeek = useLiveQuery(() => getDeliveryWeek(weekStart), [weekStart]);
   const weekDates = currentWeekISODates();
 
   return (
-    <Link to="/nutrition" className="block bg-card shadow-card rounded-2xl p-4">
+    <Link to="/nutrition" className="block bg-white shadow-card rounded-2xl p-4">
       <div className="flex items-center justify-between">
         <SummaryLabel>Nutrition</SummaryLabel>
         <LeafIcon />
@@ -224,10 +225,10 @@ function NutritionSummary() {
           const status = deliveryWeek?.get(date)?.status ?? null;
           const bg =
             status === 'clean'
-              ? '#0F6E56'
+              ? COLOR.green700
               : status === 'ordered'
-                ? '#E24B4A'
-                : '#e0e4e0';
+                ? COLOR.amber
+                : COLOR.stone;
           return (
             <div key={date} className="flex justify-center">
               <span
@@ -247,13 +248,13 @@ function HealthSummary() {
     <Link
       to="/health"
       className="block shadow-card rounded-2xl p-4"
-      style={{ background: '#edf7f2' }}
+      style={{ background: COLOR.green100 }}
     >
       <div className="flex items-center justify-between">
         <SummaryLabel>Health</SummaryLabel>
         <HeartPulseIcon />
       </div>
-      <p className="mt-2 text-[13px] text-dim">No check-ins configured yet</p>
+      <p className="mt-2 text-[13px] text-hint">No check-ins configured yet</p>
     </Link>
   );
 }

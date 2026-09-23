@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { cardioDateLabel } from '../../lib/timeBucket';
+import { COLOR } from '../../lib/brand';
 
 // Date block matching the cardio logger's date field: light recessed
 // surface, mint left accent, mint micro-label, "Today / Yesterday / Mon Apr 28"
@@ -21,17 +22,17 @@ export default function DateBlock({
 
   return (
     <div
-      style={{ borderLeftWidth: '2px', borderLeftColor: '#5DCAA5' }}
-      className="relative bg-[#eef1ef] border border-card-edge rounded-xl p-3 min-h-[64px] flex flex-col"
+      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green300 }}
+      className="relative bg-stone border border-hairline rounded-xl p-3 min-h-[64px] flex flex-col"
     >
-      <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+      <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
         {label}
       </p>
       <span className="mt-1 flex items-center justify-between gap-2">
-        <span className="text-[15px] text-[#0d1f18] font-medium">
+        <span className="text-[15px] text-ink font-medium">
           {cardioDateLabel(value)}
         </span>
-        <span aria-hidden className="text-card-mute text-[12px] leading-none">
+        <span aria-hidden className="text-muted text-[12px] leading-none">
           ⌄
         </span>
       </span>

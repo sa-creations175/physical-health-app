@@ -1,4 +1,5 @@
 import type { ExerciseHistoryEntry } from '../../lib/exerciseHistory';
+import { COLOR } from '../../lib/brand';
 
 // Tiny inline-SVG sparkline of an exercise's last-N session top-set metric.
 // Caller passes entries in most-recent-first order (matches the helper).
@@ -30,7 +31,7 @@ export default function Sparkline({
   if (series.length < 2) {
     return (
       <div
-        className="text-card-mute text-[11px] flex items-center justify-center"
+        className="text-muted text-[11px] flex items-center justify-center"
         style={{ height }}
       >
         not enough history yet
@@ -64,14 +65,16 @@ export default function Sparkline({
       style={{ height }}
       aria-label="last sessions trend"
     >
-      <path d={pathD} fill="none" stroke="#3B6D11" strokeWidth={1.5} />
+      <path d={pathD} fill="none" stroke={COLOR.green700} strokeWidth={1.5} />
       {points.map((p, i) => (
         <circle
           key={i}
           cx={p.x}
           cy={p.y}
           r={p.isPR ? 2.6 : 1.8}
-          fill={p.isPR ? '#5DCAA5' : '#3B6D11'}
+          fill={p.isPR ? COLOR.white : COLOR.green700}
+          stroke={p.isPR ? COLOR.green700 : undefined}
+          strokeWidth={p.isPR ? 1.2 : undefined}
         />
       ))}
     </svg>

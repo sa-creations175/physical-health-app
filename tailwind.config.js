@@ -1,42 +1,41 @@
 /** @type {import('tailwindcss').Config} */
+
+// Every colour points at a CSS variable defined once in src/index.css
+// (PERSONAL_OS_BRAND.md section 2). `colors` replaces Tailwind's default
+// palette outright, so a stray `bg-red-500` or `text-gray-400` simply doesn't
+// exist — the brand set is the only set.
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
+    colors: {
+      transparent: 'transparent',
+      current: 'currentColor',
+      inherit: 'inherit',
+      white: 'var(--white)',
+      'green-900': 'var(--green-900)',
+      'green-700': 'var(--green-700)',
+      'green-500': 'var(--green-500)',
+      'green-300': 'var(--green-300)',
+      'green-100': 'var(--green-100)',
+      amber: 'var(--amber)',
+      'amber-tint': 'var(--amber-tint)',
+      'amber-edge': 'var(--amber-edge)',
+      'amber-text': 'var(--amber-text)',
+      stone: 'var(--stone)',
+      paper: 'var(--paper)',
+      ink: 'var(--ink)',
+      muted: 'var(--muted)',
+      hint: 'var(--hint)',
+      hairline: 'var(--hairline)',
+      'hairline-warm': 'var(--hairline-warm)',
+      scrim: 'var(--scrim)',
+    },
     extend: {
-      colors: {
-        // Surfaces — light theme (matches Finance OS). Was a dark charcoal
-        // base through v2.0; flipped to a near-white ground with white cards.
-        charcoal: '#f5f7f5',         // app base (token name kept for churn-free migration)
-        card: '#ffffff',             // all cards, panels, expandable sections
-        'card-edge': '#e3e8e4',      // subtle light separation between cards
-        divider: '#e7ece8',          // horizontal rules between sections
-        // Text — dark ink on light surfaces
-        ink: '#0d1f18',              // primary stat numbers, headings, day name
-        'ink-body': '#2c3833',       // body labels inside cards
-        'ink-mute': '#5f6b65',       // denominators, "sessions", "no data yet"
-        'ink-soft': '#717c76',       // header date + week number
-        'ink-hint': '#707a73',       // hints on the app background
-        'card-mute': '#5f6b65',      // floor for small hint/secondary text on white cards
-        dim: '#b8c2bc',              // disabled controls (e.g. reorder arrows at list ends)
-        // Greens — single accent family. Deep green stays the primary accent
-        // (CTAs, fills); mint is darkened so 9px section labels stay legible
-        // on white. green-light remains for use ON green/colored surfaces.
-        'green-deep': '#0F6E56',
-        'green-mid': '#1a6b4a',
-        'green-mint': '#157A5C',
-        'green-light': '#9FE1CB',
-        'green-leaf': '#3B6D11',
-        // Other accents — one semantic meaning each
-        'water-blue': '#185FA5',
-        'red-alert': '#E24B4A',
-      },
       fontFamily: {
-        // Body copy + UI → DM Sans; display headings → Bricolage Grotesque.
         sans: ['"DM Sans"', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        // Soft elevation for white cards on the light ground.
         card: '0 1px 3px rgba(13, 31, 24, 0.08), 0 1px 2px rgba(13, 31, 24, 0.04)',
       },
       letterSpacing: {

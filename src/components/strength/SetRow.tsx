@@ -54,7 +54,7 @@ export default function SetRow({
 
   return (
     <div className="flex items-center gap-1.5 py-2">
-      <span className="text-[11px] text-card-mute w-5 text-center font-medium">
+      <span className="text-[11px] text-muted w-5 text-center font-medium">
         {setNumber}
       </span>
       <input
@@ -65,9 +65,9 @@ export default function SetRow({
         onBlur={commitWeight}
         placeholder="lb"
         aria-label="Weight"
-        className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[60px] h-11 text-[16px] text-center"
+        className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[60px] h-11 text-[16px] text-center"
       />
-      <span className="text-[12px] text-card-mute">×</span>
+      <span className="text-[12px] text-muted">×</span>
       {isDuration ? (
         <input
           type="number"
@@ -77,7 +77,7 @@ export default function SetRow({
           onBlur={commitDuration}
           placeholder="sec"
           aria-label="Duration in seconds"
-          className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[56px] h-11 text-[16px] text-center"
+          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[56px] h-11 text-[16px] text-center"
         />
       ) : (
         <input
@@ -88,14 +88,14 @@ export default function SetRow({
           onBlur={commitReps}
           placeholder="reps"
           aria-label="Reps"
-          className="bg-charcoal border border-card-edge text-ink rounded-lg px-2 w-[56px] h-11 text-[16px] text-center"
+          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[56px] h-11 text-[16px] text-center"
         />
       )}
       <button
         type="button"
         onClick={toggleType}
         aria-label={isDuration ? 'Switch to reps' : 'Switch to duration'}
-        className="text-[9px] tracking-micro uppercase text-card-mute font-semibold w-11 h-11 flex items-center justify-center"
+        className="text-[9px] tracking-micro uppercase text-muted font-semibold w-11 h-11 flex items-center justify-center"
       >
         {isDuration ? 'sec' : 'reps'}
       </button>
@@ -105,8 +105,8 @@ export default function SetRow({
         aria-label={set.completed ? 'Mark not done' : 'Mark done'}
         className={`ml-auto rounded-full w-11 h-11 flex items-center justify-center text-[14px] transition-colors ${
           set.completed
-            ? 'bg-green-deep text-green-light'
-            : 'bg-charcoal text-card-mute border border-card-edge'
+            ? 'bg-green-700 text-green-300'
+            : 'bg-paper text-muted border border-hairline'
         }`}
       >
         {set.completed ? '✓' : '○'}
@@ -115,7 +115,7 @@ export default function SetRow({
         type="button"
         onClick={() => deleteSet(set.id)}
         aria-label="Delete set"
-        className="text-card-mute text-[20px] w-11 h-11 flex items-center justify-center"
+        className="text-muted text-[20px] w-11 h-11 flex items-center justify-center"
       >
         ×
       </button>

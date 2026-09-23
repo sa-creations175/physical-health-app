@@ -12,6 +12,7 @@ import {
   todayISODate,
 } from '../../lib/dateHelpers';
 import type { DeliveryDay } from '../../db/types';
+import { COLOR } from '../../lib/brand';
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -51,10 +52,10 @@ export default function DeliveryActivityCard({
       onToggle={onToggle}
     >
       <div className="flex items-baseline justify-between">
-        <span className="text-[12px] text-[#5f6b65]">
+        <span className="text-[12px] text-muted">
           Tap a day to mark clean / ordered
         </span>
-        <span className="text-[12px] text-[#6b756e]">
+        <span className="text-[12px] text-muted">
           Best: {summary.longestStreak} days
         </span>
       </div>
@@ -85,27 +86,27 @@ function DayCell({
   initial: string;
 }) {
   const status = row?.status ?? null;
-  let bg = '#eef1ef';
+  let bg: string = COLOR.stone;
   let content: React.ReactNode = (
-    <span className="text-[12px] text-[#6b756e] font-medium">{initial}</span>
+    <span className="text-[12px] text-muted font-medium">{initial}</span>
   );
   let border: string | undefined;
   if (status === 'clean') {
-    bg = '#0F6E56';
+    bg = COLOR.green700;
     content = (
       <span aria-hidden="true" className="text-white text-[16px] leading-none">
         ✓
       </span>
     );
   } else if (status === 'ordered') {
-    bg = '#E24B4A';
+    bg = COLOR.amber;
     content = (
       <span aria-hidden="true" className="text-white text-[16px] leading-none">
         ✗
       </span>
     );
   } else if (isToday) {
-    border = '2px solid #0F6E56';
+    border = `2px solid ${COLOR.green700}`;
   }
 
   const aria =

@@ -9,6 +9,7 @@ import { composeExerciseHistory } from '../lib/exerciseHistory';
 import { formatSetMagnitude } from '../lib/setFormat';
 import { relativeDateLabel } from '../lib/dateHelpers';
 import type { Session, SessionExercise, SetEntry } from '../db/types';
+import { COLOR } from '../lib/brand';
 
 export default function ExerciseDetail() {
   const { exerciseId } = useParams<{ exerciseId: string }>();
@@ -63,7 +64,7 @@ export default function ExerciseDetail() {
 
   if (!exerciseId) {
     return (
-      <div className="px-5 pt-8 text-card-mute text-[12px]">
+      <div className="px-5 pt-8 text-muted text-[12px]">
         No exercise selected.
       </div>
     );
@@ -71,7 +72,7 @@ export default function ExerciseDetail() {
 
   if (exercise === undefined) {
     return (
-      <div className="px-5 pt-8 text-card-mute text-[12px]">Loading…</div>
+      <div className="px-5 pt-8 text-muted text-[12px]">Loading…</div>
     );
   }
 
@@ -83,7 +84,7 @@ export default function ExerciseDetail() {
       <button
         type="button"
         onClick={() => navigate('/library')}
-        className="text-[11px] tracking-micro uppercase text-card-mute font-semibold py-2 -ml-2 px-2 min-h-[44px] flex items-center"
+        className="text-[11px] tracking-micro uppercase text-muted font-semibold py-2 -ml-2 px-2 min-h-[44px] flex items-center"
       >
         ← Library
       </button>
@@ -94,7 +95,7 @@ export default function ExerciseDetail() {
           <h1 className="text-[22px] font-medium text-ink mt-1 leading-tight">
             {exercise.name}
           </h1>
-          <p className="text-[12px] text-ink-soft mt-1">
+          <p className="text-[12px] text-muted mt-1">
             {exercise.muscle_group.replace('_', ' ')}
             {exercise.is_compound ? ' · compound' : ''}
           </p>
@@ -102,18 +103,18 @@ export default function ExerciseDetail() {
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="text-[11px] tracking-micro uppercase font-semibold text-green-mint border border-card-edge bg-card rounded-lg px-4 h-11 min-w-[64px] whitespace-nowrap"
+          className="text-[11px] tracking-micro uppercase font-semibold text-green-700 border border-hairline bg-white rounded-lg px-4 h-11 min-w-[64px] whitespace-nowrap"
         >
           Edit
         </button>
       </div>
 
       <div
-        className="bg-card border border-card-edge rounded-xl p-4 mt-5"
-        style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+        className="bg-white border border-hairline rounded-xl p-4 mt-5"
+        style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
       >
         {!last && !pr ? (
-          <p className="text-[12px] text-card-mute">
+          <p className="text-[12px] text-muted">
             No sessions yet — log this exercise to start a history.
           </p>
         ) : (
@@ -124,16 +125,16 @@ export default function ExerciseDetail() {
                 <>
                   <p className="text-[14px] text-ink mt-1">
                     <span className="font-medium">{last.lastSet.weight.toLocaleString()}</span>
-                    <span className="text-card-mute"> × {formatSetMagnitude(last.lastSet)}</span>
+                    <span className="text-muted"> × {formatSetMagnitude(last.lastSet)}</span>
                   </p>
-                  <p className="text-[11px] text-card-mute mt-1">
+                  <p className="text-[11px] text-muted mt-1">
                     {relativeDateLabel(last.date)}
                     {' · '}
                     {last.totalSets} set{last.totalSets === 1 ? '' : 's'}
                   </p>
                 </>
               ) : (
-                <p className="text-[12px] text-card-mute mt-1">—</p>
+                <p className="text-[12px] text-muted mt-1">—</p>
               )}
             </div>
             <div>
@@ -142,14 +143,14 @@ export default function ExerciseDetail() {
                 <>
                   <p className="text-[14px] text-ink mt-1">
                     <span className="font-medium">{pr.weight.toLocaleString()}</span>
-                    <span className="text-card-mute"> × {formatSetMagnitude(pr)}</span>
+                    <span className="text-muted"> × {formatSetMagnitude(pr)}</span>
                   </p>
-                  <p className="text-[11px] text-card-mute mt-1">
+                  <p className="text-[11px] text-muted mt-1">
                     {relativeDateLabel(pr.date)}
                   </p>
                 </>
               ) : (
-                <p className="text-[12px] text-card-mute mt-1">—</p>
+                <p className="text-[12px] text-muted mt-1">—</p>
               )}
             </div>
           </div>
@@ -158,7 +159,7 @@ export default function ExerciseDetail() {
 
       <div className="mt-5">
         <SectionLabel>Last 8 sessions</SectionLabel>
-        <div className="bg-card border border-card-edge rounded-xl p-4 mt-2">
+        <div className="bg-white border border-hairline rounded-xl p-4 mt-2">
           <Sparkline entries={history.entries} />
         </div>
       </div>
@@ -166,34 +167,34 @@ export default function ExerciseDetail() {
       <div className="mt-5">
         <SectionLabel>History</SectionLabel>
         {history.entries.length === 0 ? (
-          <p className="text-[12px] text-card-mute mt-2">
+          <p className="text-[12px] text-muted mt-2">
             No completed sessions yet.
           </p>
         ) : (
           <div className="mt-2">
             {history.entries.map((entry) => {
-              const accent = entry.isPR ? '#5DCAA5' : '#0F6E56';
+              const accent = COLOR.green700;
               return (
                 <div
                   key={entry.sessionId}
-                  className="bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center justify-between gap-3"
+                  className="bg-white border border-hairline rounded-xl p-3 mt-2 flex items-center justify-between gap-3"
                   style={{ borderLeftWidth: '2px', borderLeftColor: accent }}
                 >
                   <div className="min-w-0">
-                    <p className="text-[11px] text-card-mute tracking-micro uppercase">
+                    <p className="text-[11px] text-muted tracking-micro uppercase">
                       {relativeDateLabel(entry.date)}
                     </p>
                     <p className="text-[14px] text-ink mt-0.5">
                       <span className="font-medium">{entry.topSet.weight.toLocaleString()}</span>
-                      <span className="text-card-mute"> × {formatSetMagnitude(entry.topSet)}</span>
-                      <span className="text-card-mute">
+                      <span className="text-muted"> × {formatSetMagnitude(entry.topSet)}</span>
+                      <span className="text-muted">
                         {' · '}
                         {entry.totalSets} set{entry.totalSets === 1 ? '' : 's'}
                       </span>
                     </p>
                   </div>
                   {entry.isPR && (
-                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint border border-green-mint rounded-full px-2 py-0.5 whitespace-nowrap">
+                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-700 border border-green-700 rounded-full px-2 py-0.5 whitespace-nowrap">
                       PR
                     </span>
                   )}

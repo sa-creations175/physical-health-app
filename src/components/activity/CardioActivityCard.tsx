@@ -12,7 +12,7 @@ import { cardioDots } from '../../lib/dotHelpers';
 import { db } from '../../db/database';
 import { LOCAL_USER_ID } from '../../lib/constants';
 import { startOfWeekISODate, todayISODate } from '../../lib/dateHelpers';
-import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { fillFraction } from '../../lib/progress';
 import { pillarCallout } from '../../lib/pillarNarrative';
 
 export default function CardioActivityCard({
@@ -52,13 +52,9 @@ export default function CardioActivityCard({
       ).length;
     }, [], 0) ?? 0;
 
-  const pillar = PILLAR_COLORS.cardio;
   const callout =
     target > 0
-      ? {
-          text: pillarCallout('cardio', fillFraction(qualifying, target), todayISODate()),
-          color: pillar.fill,
-        }
+      ? pillarCallout('cardio', fillFraction(qualifying, target), todayISODate())
       : undefined;
 
   return (
@@ -67,45 +63,34 @@ export default function CardioActivityCard({
       badge={
         <>
           {qualifying} / {target}
-          {complete && <span style={{ color: pillar.text }}> ✓</span>}
+          {complete && <span className="text-green-700"> ✓</span>}
         </>
       }
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
       icon={<CardioIcon />}
-      fill={{
-        color: pillar.fill,
-        fraction: fillFraction(qualifying, target),
-        complete,
-        accent: pillar.text,
-      }}
-      pillar={{ key: 'cardio', color: pillar.fill }}
+      pillar="cardio"
       callout={callout}
     >
       <div className="flex items-baseline justify-between">
-        <span className="text-[12px] text-[#5f6b65]">
+        <span className="text-[12px] text-muted">
           {minutes} qualifying min this week
           {shortCount > 0 && <span> · {shortCount} short</span>}
         </span>
       </div>
       <div className="mt-2">
-        <ProgressBar
-          value={qualifying}
-          max={target}
-          color={complete ? 'green-light' : 'green-deep'}
-          trackColor="#e7ece8"
-        />
+        <ProgressBar value={qualifying} max={target} />
       </div>
       <p className="text-[11px] mt-2">
         {complete ? (
-          <span className="text-green-mid">You crushed your week</span>
+          <span className="text-green-700">You crushed your week</span>
         ) : (
-          <span className="text-[#5f6b65]">{remaining} more to hit your week</span>
+          <span className="text-muted">{remaining} more to hit your week</span>
         )}
       </p>
       {watchCount > 0 && (
-        <p className="text-[11px] text-dim mt-2">
+        <p className="text-[11px] text-hint mt-2">
           ⌚ {watchCount} from Apple Watch this week
         </p>
       )}

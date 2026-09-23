@@ -7,6 +7,7 @@ import {
   getLatestBodyStats,
 } from '../../lib/bodyComposition';
 import type { BiologicalSex } from '../../db/types';
+import { COLOR } from '../../lib/brand';
 
 // Recurring body-profile logging, opened from the Nutrition tab's Body stats
 // section. 'weigh' = the weekly weigh-in (weight only; height/age/sex carried
@@ -122,11 +123,11 @@ export default function BodyLogSheet({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
+      style={{ background: COLOR.scrim }}
       onClick={onClose}
     >
       <div
-        className="bg-card w-full max-w-md rounded-t-2xl p-5 max-h-[85vh] overflow-auto"
+        className="bg-white w-full max-w-md rounded-t-2xl p-5 max-h-[85vh] overflow-auto"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
@@ -138,14 +139,14 @@ export default function BodyLogSheet({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-card-mute text-[22px] w-9 h-9 flex items-center justify-center -mr-1"
+            className="text-muted text-[22px] w-9 h-9 flex items-center justify-center -mr-1"
           >
             ×
           </button>
         </div>
 
         {needsSetup ? (
-          <p className="mt-4 text-[13px] text-ink-body">
+          <p className="mt-4 text-[13px] text-ink">
             Set up your nutrition profile first — it captures your height, age
             and sex, which these readings build on.
           </p>
@@ -172,7 +173,7 @@ export default function BodyLogSheet({
                       <SmallField label="Hips" value={hips} onChange={setHips} suffix="in" />
                     )}
                     {navyBf !== null && (
-                      <p className="text-[13px] text-green-mint font-medium">
+                      <p className="text-[13px] text-green-700 font-medium">
                         Body fat: {navyBf}%
                       </p>
                     )}
@@ -180,7 +181,7 @@ export default function BodyLogSheet({
                 ) : (
                   <>
                     <SmallField label="Body fat % from DEXA" value={dexaBf} onChange={setDexaBf} suffix="%" />
-                    <p className="text-[11px] text-card-mute">
+                    <p className="text-[11px] text-muted">
                       DEXA is the gold standard — it overrides other sources as
                       your most accurate reading.
                     </p>
@@ -193,7 +194,7 @@ export default function BodyLogSheet({
               type="button"
               disabled={!canSave || busy}
               onClick={save}
-              className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-40"
+              className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-40"
             >
               {busy ? 'Saving…' : 'Save'}
             </button>
@@ -219,8 +220,8 @@ function MethodTab({
       onClick={onClick}
       className={`rounded-xl py-2.5 text-[13px] font-medium border min-h-[44px] ${
         active
-          ? 'bg-green-deep text-white border-green-deep'
-          : 'bg-charcoal text-ink-body border-card-edge'
+          ? 'bg-green-700 text-white border-green-700'
+          : 'bg-paper text-ink border-hairline'
       }`}
     >
       {label}
@@ -243,8 +244,8 @@ function SmallField({
 }) {
   return (
     <label className={`block ${width}`}>
-      <span className="text-[12px] text-card-mute">{label}</span>
-      <div className="mt-1 flex items-center gap-2 bg-charcoal border border-card-edge rounded-xl px-3 h-12">
+      <span className="text-[12px] text-muted">{label}</span>
+      <div className="mt-1 flex items-center gap-2 bg-paper border border-hairline rounded-xl px-3 h-12">
         <input
           type="number"
           inputMode="decimal"
@@ -252,7 +253,7 @@ function SmallField({
           onChange={(e) => onChange(e.target.value)}
           className="w-full bg-transparent text-[16px] text-ink outline-none"
         />
-        {suffix && <span className="text-[13px] text-card-mute">{suffix}</span>}
+        {suffix && <span className="text-[13px] text-muted">{suffix}</span>}
       </div>
     </label>
   );

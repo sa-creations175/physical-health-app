@@ -6,6 +6,7 @@ import { completeSession, updateSessionDate } from '../lib/strengthHelpers';
 import { SectionLabel } from '../components/ui/primitives';
 import DateBlock from '../components/ui/DateBlock';
 import type { FeelRating } from '../db/types';
+import { COLOR } from '../lib/brand';
 
 const FEEL_OPTIONS: {
   value: FeelRating;
@@ -95,7 +96,7 @@ export default function SessionComplete() {
 
   if (!session) {
     return (
-      <div className="px-5 pt-8 text-card-mute text-[12px]">Loading session…</div>
+      <div className="px-5 pt-8 text-muted text-[12px]">Loading session…</div>
     );
   }
 
@@ -115,17 +116,17 @@ export default function SessionComplete() {
     <div className="px-5 pt-8 pb-8">
       <SectionLabel>Session Summary</SectionLabel>
       <h1 className="text-[22px] font-medium text-ink mt-1">How'd it go?</h1>
-      <p className="text-[12px] text-ink-soft mt-1">
+      <p className="text-[12px] text-muted mt-1">
         {TYPE_LABEL[session.type] ?? session.type}
       </p>
 
       <div
-        className="bg-card border border-card-edge rounded-xl p-4 mt-4"
-        style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+        className="bg-white border border-hairline rounded-xl p-4 mt-4"
+        style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
       >
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+            <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
               Exercises
             </p>
             <p className="text-[19px] font-medium text-ink mt-1 leading-none">
@@ -133,7 +134,7 @@ export default function SessionComplete() {
             </p>
           </div>
           <div>
-            <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+            <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
               Sets
             </p>
             <p className="text-[19px] font-medium text-ink mt-1 leading-none">
@@ -141,13 +142,13 @@ export default function SessionComplete() {
             </p>
           </div>
           <div>
-            <p className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+            <p className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
               Volume
             </p>
             <p className="text-[19px] font-medium text-ink mt-1 leading-none">
               {Math.round(totalVolume).toLocaleString()}
             </p>
-            <p className="text-[10px] text-card-mute mt-0.5">lb·reps</p>
+            <p className="text-[10px] text-muted mt-0.5">lb·reps</p>
           </div>
         </div>
       </div>
@@ -155,11 +156,11 @@ export default function SessionComplete() {
       {noteRows.length > 0 && (
         <div className="mt-6">
           <SectionLabel>Exercise notes</SectionLabel>
-          <ul className="mt-2 bg-card border border-card-edge rounded-xl p-3 space-y-2">
+          <ul className="mt-2 bg-white border border-hairline rounded-xl p-3 space-y-2">
             {noteRows.map((row) => (
               <li key={row.id} className="text-[12px] leading-snug">
                 <span className="text-ink font-medium">{row.name}</span>
-                <span className="text-card-mute"> — {row.note}</span>
+                <span className="text-muted"> — {row.note}</span>
               </li>
             ))}
           </ul>
@@ -190,12 +191,12 @@ export default function SessionComplete() {
               key={opt.value}
               type="button"
               onClick={() => setFeel(opt.value)}
-              className={`bg-card border rounded-xl p-3 text-left min-h-[60px] transition-colors ${
-                feel === opt.value ? 'border-green-mint' : 'border-card-edge'
+              className={`bg-white border rounded-xl p-3 text-left min-h-[60px] transition-colors ${
+                feel === opt.value ? 'border-green-700' : 'border-hairline'
               }`}
             >
               <p className="text-[15px] font-medium text-ink">{opt.label}</p>
-              <p className="text-[11px] text-card-mute mt-0.5">{opt.description}</p>
+              <p className="text-[11px] text-muted mt-0.5">{opt.description}</p>
             </button>
           ))}
         </div>
@@ -207,7 +208,7 @@ export default function SessionComplete() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Anything to remember from this session?"
-          className="mt-2 w-full bg-card border border-card-edge text-ink rounded-xl px-4 py-3 text-[16px] min-h-[80px] resize-none"
+          className="mt-2 w-full bg-white border border-hairline text-ink rounded-xl px-4 py-3 text-[16px] min-h-[80px] resize-none"
         />
       </div>
 
@@ -215,7 +216,7 @@ export default function SessionComplete() {
         type="button"
         onClick={handleSave}
         disabled={!feel || saving}
-        className="mt-6 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+        className="mt-6 w-full bg-green-700 text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save Session'}
       </button>

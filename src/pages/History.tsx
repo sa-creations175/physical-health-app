@@ -16,6 +16,7 @@ import {
   getHistoryItems,
   type HistoryItem,
 } from '../lib/historyHelpers';
+import { COLOR } from '../lib/brand';
 
 type FilterKey = 'all' | 'lower' | 'upper' | 'full_body' | 'cardio';
 type ViewMode = 'list' | 'calendar';
@@ -39,17 +40,6 @@ const STRENGTH_META: Record<
 
 const FEEL_EMOJI = { flying: '🚀', cruising: '✈️', crawling: '🐌' } as const;
 
-// Calendar dot colors per type (heart-pulse teal for cardio).
-const TYPE_DOT = {
-  lower: '#0f3d2e',
-  upper: '#1a6b4a',
-  full_body: '#22c37e',
-  cardio: '#14b8a6',
-} as const;
-
-function dotColor(item: HistoryItem): string {
-  return item.kind === 'cardio' ? TYPE_DOT.cardio : TYPE_DOT[item.type];
-}
 
 function dayLabel(dateISO: string): string {
   return new Date(dateISO + 'T00:00:00').toLocaleDateString('en-US', {
@@ -101,8 +91,8 @@ export default function History() {
               onClick={() => setFilter(key)}
               className={`px-3 py-1 rounded-full text-[13px] font-medium border ${
                 active
-                  ? 'bg-green-mid text-white border-green-mid'
-                  : 'bg-card text-ink-mute border-card-edge'
+                  ? 'bg-green-700 text-white border-green-700'
+                  : 'bg-white text-muted border-hairline'
               }`}
             >
               {label}
@@ -114,7 +104,7 @@ export default function History() {
       {view === 'list' ? (
         <div className="mt-4 space-y-1.5">
           {filtered.length === 0 ? (
-            <p className="text-center text-dim text-[13px] mt-10">
+            <p className="text-center text-hint text-[13px] mt-10">
               No sessions logged yet
             </p>
           ) : (
@@ -146,7 +136,7 @@ function ViewButton({
       aria-label={label}
       aria-pressed={active}
       className={`w-9 h-9 flex items-center justify-center rounded-lg ${
-        active ? 'text-green-mid bg-[#e7f2ec]' : 'text-dim'
+        active ? 'text-green-700 bg-green-100' : 'text-hint'
       }`}
     >
       {children}
@@ -174,7 +164,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       : '';
 
   return (
-    <div className="bg-card shadow-card rounded-2xl px-4 py-3">
+    <div className="bg-white shadow-card rounded-2xl px-4 py-3">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -184,7 +174,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         <span className="shrink-0 flex items-center">
           <Icon />
         </span>
-        <span className="text-[11px] font-display uppercase tracking-micro text-green-mid shrink-0">
+        <span className="text-[11px] font-display uppercase tracking-micro text-green-700 shrink-0">
           {label}
         </span>
         {(item.source === 'watch' || item.source === 'merged') && (
@@ -204,7 +194,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
             ⌚
           </span>
         )}
-        <span className="flex-1 text-center text-[12px] text-ink-mute truncate">
+        <span className="flex-1 text-center text-[12px] text-muted truncate">
           {dayLabel(item.date)}
         </span>
         <span className="text-[12px] text-ink whitespace-nowrap">
@@ -213,7 +203,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         </span>
         <span
           aria-hidden="true"
-          className={`text-green-mid text-[16px] leading-none transition-transform ${
+          className={`text-green-700 text-[16px] leading-none transition-transform ${
             open ? 'rotate-180' : ''
           }`}
         >
@@ -222,7 +212,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       </button>
 
       {open && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: '#f0f2f0' }}>
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
           {item.kind === 'strength' ? (
             <StrengthDetail item={item} />
           ) : (
@@ -242,7 +232,7 @@ function StrengthDetail({
   return (
     <div className="space-y-2">
       {item.exercises.length === 0 ? (
-        <p className="text-[12px] text-card-mute">No exercises logged.</p>
+        <p className="text-[12px] text-muted">No exercises logged.</p>
       ) : (
         item.exercises.map((ex, i) => (
           <div key={i}>
@@ -250,10 +240,10 @@ function StrengthDetail({
             <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
               {ex.sets.map((s) => (
                 <span key={s.id} className="text-[12px]">
-                  <span className="text-ink-body font-medium">
+                  <span className="text-ink font-medium">
                     {s.weight.toLocaleString()}
                   </span>
-                  <span className="text-card-mute">×{formatSetMagnitude(s)}</span>
+                  <span className="text-muted">×{formatSetMagnitude(s)}</span>
                 </span>
               ))}
             </div>
@@ -262,8 +252,8 @@ function StrengthDetail({
       )}
 
       {item.notes.trim() !== '' && (
-        <p className="text-[12px] text-card-mute pt-1">
-          <span className="text-green-mid">Notes:</span> {item.notes}
+        <p className="text-[12px] text-muted pt-1">
+          <span className="text-green-700">Notes:</span> {item.notes}
         </p>
       )}
 
@@ -300,8 +290,8 @@ function CardioDetail({
       </p>
 
       {item.notes && item.notes.trim() !== '' && (
-        <p className="text-[12px] text-card-mute">
-          <span className="text-green-mid">Notes:</span> {item.notes}
+        <p className="text-[12px] text-muted">
+          <span className="text-green-700">Notes:</span> {item.notes}
         </p>
       )}
 
@@ -376,7 +366,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
           type="button"
           onClick={() => shiftMonth(-1)}
           aria-label="Previous month"
-          className="w-9 h-9 flex items-center justify-center text-green-mid text-[18px]"
+          className="w-9 h-9 flex items-center justify-center text-green-700 text-[18px]"
         >
           ←
         </button>
@@ -387,7 +377,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
           type="button"
           onClick={() => shiftMonth(1)}
           aria-label="Next month"
-          className="w-9 h-9 flex items-center justify-center text-green-mid text-[18px]"
+          className="w-9 h-9 flex items-center justify-center text-green-700 text-[18px]"
         >
           →
         </button>
@@ -395,7 +385,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
 
       <div className="mt-2 grid grid-cols-7">
         {WEEKDAY_INITIALS.map((w, i) => (
-          <span key={i} className="text-[10px] text-dim text-center py-1">
+          <span key={i} className="text-[10px] text-hint text-center py-1">
             {w}
           </span>
         ))}
@@ -415,23 +405,23 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
               disabled={dayItems.length === 0}
               onClick={() => setSelected(dateISO)}
               className={`aspect-square flex flex-col items-center justify-center rounded-lg ${
-                isSelected ? 'bg-[#e7f2ec]' : ''
+                isSelected ? 'bg-green-100' : ''
               } ${dayItems.length === 0 ? 'cursor-default' : ''}`}
             >
               <span
                 className="w-6 h-6 flex items-center justify-center rounded-full text-[13px] text-ink"
                 style={{
-                  boxShadow: isToday ? 'inset 0 0 0 1.5px #1a6b4a' : undefined,
+                  boxShadow: isToday ? `inset 0 0 0 1.5px ${COLOR.green700}` : undefined,
                 }}
               >
                 {dayNum}
               </span>
               <span className="flex gap-0.5 h-1.5 mt-0.5">
-                {dayItems.slice(0, 4).map((it, j) => (
+                {dayItems.slice(0, 4).map((_, j) => (
                   <span
                     key={j}
                     className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: dotColor(it) }}
+                    style={{ background: COLOR.green700 }}
                   />
                 ))}
               </span>
@@ -442,7 +432,7 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
 
       {selected && selectedItems.length > 0 && (
         <div className="mt-4 space-y-1.5">
-          <p className="text-[12px] text-ink-mute">
+          <p className="text-[12px] text-muted">
             {new Date(selected + 'T00:00:00').toLocaleDateString('en-US', {
               weekday: 'long',
               month: 'long',

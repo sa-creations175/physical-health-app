@@ -7,7 +7,7 @@ import { getUserPreferences } from '../../lib/userPreferences';
 import { DEFAULT_WEEKLY_LIFTING_TARGETS } from '../../lib/defaults';
 import { liftingDots } from '../../lib/dotHelpers';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
-import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { fillFraction } from '../../lib/progress';
 import { pillarCallout } from '../../lib/pillarNarrative';
 
 const TARGET_FIELD: Record<LiftingType, 'lifting_target_lower' | 'lifting_target_upper' | 'lifting_target_full_body'> = {
@@ -44,25 +44,21 @@ export default function LiftingActivityCard({
     currentWeekISODates().map((date) => ({ date, hadSession: false }));
   const dots = liftingDots(weekDots);
 
-  const pillar = PILLAR_COLORS[type];
   // Full Body has no narrative bank (not in the June 5 design) — it stays
   // silent. Lower/Upper get a hype callout when their target is active.
   const callout =
     (type === 'lower' || type === 'upper') && target > 0
-      ? {
-          text: pillarCallout(type, fillFraction(count, target), todayISODate()),
-          color: pillar.fill,
-        }
+      ? pillarCallout(type, fillFraction(count, target), todayISODate())
       : undefined;
   const badge =
     target === 0 ? (
       <>
-        {count} <span className="text-dim">optional</span>
+        {count} <span className="text-hint">optional</span>
       </>
     ) : (
       <>
         {count} / {target}
-        {complete && <span style={{ color: pillar.text }}> ✓</span>}
+        {complete && <span className="text-green-700"> ✓</span>}
       </>
     );
 
@@ -83,16 +79,10 @@ export default function LiftingActivityCard({
       expanded={expanded}
       onToggle={onToggle}
       icon={icon}
-      fill={{
-        color: pillar.fill,
-        fraction: fillFraction(count, target),
-        complete,
-        accent: pillar.text,
-      }}
-      pillar={{ key: type, color: pillar.fill }}
+      pillar={type}
       callout={callout}
     >
-      <p className="text-[12px] text-[#5f6b65]">
+      <p className="text-[12px] text-muted">
         {summary?.lastSession
           ? `Last: ${summary.lastSession.summary}`
           : 'No sessions logged yet.'}
@@ -100,7 +90,7 @@ export default function LiftingActivityCard({
       <button
         type="button"
         onClick={() => navigate(`/log/strength?type=${type}`)}
-        className="mt-2 text-green-mid text-[13px] font-medium"
+        className="mt-2 text-green-700 text-[13px] font-medium"
       >
         Log {label} →
       </button>

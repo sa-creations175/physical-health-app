@@ -16,7 +16,7 @@ import {
   type MobilityLink,
 } from '../../lib/bundleHelpers';
 import { mobilityDots } from '../../lib/dotHelpers';
-import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { fillFraction } from '../../lib/progress';
 import { pillarCallout } from '../../lib/pillarNarrative';
 import {
   startOfWeekISODate,
@@ -53,17 +53,13 @@ export default function MobilityActivityCard({
   const links = parseMobilityLinks(prefs?.bundle_mobility_youtube_links);
   const todayMinutes = byDate.get(today)?.mobility_minutes ?? 0;
   const met = target > 0 && totals.mobilityQualifyingDays >= target;
-  const pillar = PILLAR_COLORS.mobility;
   const callout =
     target > 0
-      ? {
-          text: pillarCallout(
+      ? pillarCallout(
             'mobility',
             fillFraction(totals.mobilityQualifyingDays, target),
             today,
-          ),
-          color: pillar.fill,
-        }
+          )
       : undefined;
 
   return (
@@ -72,20 +68,14 @@ export default function MobilityActivityCard({
       badge={
         <>
           {totals.mobilityQualifyingDays} / {target}
-          {met && <span style={{ color: pillar.text }}> ✓</span>}
+          {met && <span className="text-green-700"> ✓</span>}
         </>
       }
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
       icon={<MobilityIcon />}
-      fill={{
-        color: pillar.fill,
-        fraction: fillFraction(totals.mobilityQualifyingDays, target),
-        complete: met,
-        accent: pillar.text,
-      }}
-      pillar={{ key: 'mobility', color: pillar.fill }}
+      pillar="mobility"
       callout={callout}
     >
       <MobilityRow
@@ -115,7 +105,7 @@ export default function MobilityActivityCard({
       />
       <p
         className={`mt-2 text-[11px] text-center ${
-          met ? 'text-green-mid' : 'text-[#5f6b65]'
+          met ? 'text-green-700' : 'text-muted'
         }`}
       >
         Mobility: {totals.mobilityQualifyingDays} / {target} days

@@ -47,6 +47,7 @@ import type {
   NutritionSeason,
   SeasonType,
 } from '../../db/types';
+import { COLOR } from '../../lib/brand';
 
 // The Nutrition setup flow — a three-page onboarding modal opened on first
 // nutrition setup or via "Change season". Page 1 body stats → Page 2 BF%
@@ -147,18 +148,18 @@ export default function NutritionSetupModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
+      style={{ background: COLOR.scrim }}
       onClick={onClose}
     >
       <div
-        className="bg-charcoal w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-auto"
+        className="bg-paper w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-auto"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {initializing ? (
-          <div className="p-10 text-center text-card-mute text-[13px]">
+          <div className="p-10 text-center text-muted text-[13px]">
             Loading…
           </div>
         ) : (
@@ -270,7 +271,7 @@ export default function NutritionSetupModal({
               <button
                 type="button"
                 onClick={() => setStep((s) => (s - 1) as Step)}
-                className="flex-1 rounded-xl py-3 text-[14px] font-medium text-ink-body bg-card border border-card-edge min-h-[48px]"
+                className="flex-1 rounded-xl py-3 text-[14px] font-medium text-ink bg-white border border-hairline min-h-[48px]"
               >
                 Back
               </button>
@@ -279,7 +280,7 @@ export default function NutritionSetupModal({
               type="button"
               disabled={step === 1 ? !page1Valid : !page2Valid}
               onClick={() => setStep((s) => (s + 1) as Step)}
-              className="flex-1 rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-40"
+              className="flex-1 rounded-xl py-3 text-[14px] font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-40"
             >
               Continue
             </button>
@@ -297,16 +298,16 @@ export default function NutritionSetupModal({
 function Header({ step, onClose }: { step: Step; onClose: () => void }) {
   const titles = ['Your body', 'Body fat estimate', 'Your goals'];
   return (
-    <div className="px-5 pt-5 pb-3 sticky top-0 bg-charcoal z-10">
+    <div className="px-5 pt-5 pb-3 sticky top-0 bg-paper z-10">
       <div className="flex items-center justify-between">
-        <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
+        <p className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
           Set up nutrition · Step {step} of 3
         </p>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="text-card-mute text-[22px] w-9 h-9 flex items-center justify-center -mr-2"
+          className="text-muted text-[22px] w-9 h-9 flex items-center justify-center -mr-2"
         >
           ×
         </button>
@@ -317,7 +318,7 @@ function Header({ step, onClose }: { step: Step; onClose: () => void }) {
           <span
             key={s}
             className="h-1 flex-1 rounded-full"
-            style={{ background: s <= step ? '#0F6E56' : '#d8ded9' }}
+            style={{ background: s <= step ? COLOR.green700 : COLOR.stone }}
           />
         ))}
       </div>
@@ -344,8 +345,8 @@ function Field({
 }) {
   return (
     <label className={`block ${width}`}>
-      <span className="text-[12px] text-card-mute">{label}</span>
-      <div className="mt-1 flex items-center gap-2 bg-card border border-card-edge rounded-xl px-3 h-12">
+      <span className="text-[12px] text-muted">{label}</span>
+      <div className="mt-1 flex items-center gap-2 bg-white border border-hairline rounded-xl px-3 h-12">
         <input
           type="number"
           inputMode="decimal"
@@ -354,7 +355,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           className="w-full bg-transparent text-[16px] text-ink outline-none"
         />
-        {suffix && <span className="text-[13px] text-card-mute">{suffix}</span>}
+        {suffix && <span className="text-[13px] text-muted">{suffix}</span>}
       </div>
     </label>
   );
@@ -376,27 +377,27 @@ function BodyStatsStep(props: {
 }) {
   return (
     <div className="space-y-4 pt-1">
-      <p className="text-[13px] text-ink-body leading-snug">
+      <p className="text-[13px] text-ink leading-snug">
         These anchor every calculation. Weight is your weekly weigh-in; height,
         age and sex change rarely.
       </p>
       <Field label="Weight" value={props.weight} onChange={props.setWeight} suffix="lbs" placeholder="180" />
       <div>
-        <span className="text-[12px] text-card-mute">Height</span>
+        <span className="text-[12px] text-muted">Height</span>
         <div className="mt-1 flex gap-3">
-          <div className="flex-1 flex items-center gap-2 bg-card border border-card-edge rounded-xl px-3 h-12">
+          <div className="flex-1 flex items-center gap-2 bg-white border border-hairline rounded-xl px-3 h-12">
             <input type="number" inputMode="numeric" value={props.heightFt} placeholder="5" onChange={(e) => props.setHeightFt(e.target.value)} className="w-full bg-transparent text-[16px] text-ink outline-none" />
-            <span className="text-[13px] text-card-mute">ft</span>
+            <span className="text-[13px] text-muted">ft</span>
           </div>
-          <div className="flex-1 flex items-center gap-2 bg-card border border-card-edge rounded-xl px-3 h-12">
+          <div className="flex-1 flex items-center gap-2 bg-white border border-hairline rounded-xl px-3 h-12">
             <input type="number" inputMode="numeric" value={props.heightIn} placeholder="10" onChange={(e) => props.setHeightIn(e.target.value)} className="w-full bg-transparent text-[16px] text-ink outline-none" />
-            <span className="text-[13px] text-card-mute">in</span>
+            <span className="text-[13px] text-muted">in</span>
           </div>
         </div>
       </div>
       <Field label="Age" value={props.age} onChange={props.setAge} suffix="yrs" placeholder="30" />
       <div>
-        <span className="text-[12px] text-card-mute">Biological sex</span>
+        <span className="text-[12px] text-muted">Biological sex</span>
         <div className="mt-1 grid grid-cols-2 gap-3">
           {(['male', 'female'] as BiologicalSex[]).map((s) => (
             <button
@@ -405,15 +406,15 @@ function BodyStatsStep(props: {
               onClick={() => props.setSex(s)}
               className={`rounded-xl py-3 text-[14px] font-medium capitalize border min-h-[48px] ${
                 props.sex === s
-                  ? 'bg-green-deep text-white border-green-deep'
-                  : 'bg-card text-ink-body border-card-edge'
+                  ? 'bg-green-700 text-white border-green-700'
+                  : 'bg-white text-ink border-hairline'
               }`}
             >
               {s}
             </button>
           ))}
         </div>
-        <p className="mt-1.5 text-[11px] text-card-mute">
+        <p className="mt-1.5 text-[11px] text-muted">
           Used by the body-fat and metabolic formulas, which are sex-specific.
         </p>
       </div>
@@ -439,7 +440,7 @@ function BodyFatStep(props: {
 }) {
   return (
     <div className="space-y-3 pt-1">
-      <p className="text-[13px] text-ink-body leading-snug">
+      <p className="text-[13px] text-ink leading-snug">
         Estimate your body-fat % any of these ways. Lean mass (weight × non-fat)
         is what your macros are actually built from — so a starting number
         matters. Do the tape measure every couple of weeks for real tracking.
@@ -485,8 +486,8 @@ function BodyFatStep(props: {
       />
 
       {/* DEXA scan tip — persistent, informational (no dismiss) */}
-      <div className="rounded-xl bg-[#edf7f2] px-4 py-3">
-        <p className="text-[12px] text-ink-body leading-snug">
+      <div className="rounded-xl bg-green-100 px-4 py-3">
+        <p className="text-[12px] text-ink leading-snug">
           📋 For the most accurate body fat baseline, consider booking a DEXA
           scan. It’s the gold standard — and the app accepts manual DEXA entry as
           your highest-priority BF% source.
@@ -494,8 +495,8 @@ function BodyFatStep(props: {
       </div>
 
       {/* Confirm / adjust the chosen estimate */}
-      <div className="bg-card border border-card-edge rounded-xl p-4 mt-1">
-        <span className="text-[12px] text-card-mute">
+      <div className="bg-white border border-hairline rounded-xl p-4 mt-1">
+        <span className="text-[12px] text-muted">
           Starting body fat % {props.bfSource && `· from ${SOURCE_LABEL[props.bfSource]}`}
         </span>
         <div className="mt-1 flex items-center gap-2">
@@ -508,11 +509,11 @@ function BodyFatStep(props: {
               props.setBfPercent(e.target.value);
               if (!props.bfSource) props.setBfSource('visual_estimate');
             }}
-            className="w-24 bg-transparent text-[22px] font-medium text-ink outline-none border-b border-card-edge"
+            className="w-24 bg-transparent text-[22px] font-medium text-ink outline-none border-b border-hairline"
           />
-          <span className="text-[15px] text-card-mute">%</span>
+          <span className="text-[15px] text-muted">%</span>
         </div>
-        <p className="mt-2 text-[11px] text-card-mute">
+        <p className="mt-2 text-[11px] text-muted">
           You can adjust this number before continuing.
         </p>
       </div>
@@ -540,7 +541,7 @@ function MethodShell({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-card border border-card-edge rounded-xl overflow-hidden">
+    <div className="bg-white border border-hairline rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -548,9 +549,9 @@ function MethodShell({
       >
         <span>
           <span className="block text-[14px] font-medium text-ink">{title}</span>
-          <span className="block text-[11px] text-card-mute">{hint}</span>
+          <span className="block text-[11px] text-muted">{hint}</span>
         </span>
-        <span className="text-card-mute text-[13px]">{open ? '▴' : '▾'}</span>
+        <span className="text-muted text-[13px]">{open ? '▴' : '▾'}</span>
       </button>
       {open && <div className="px-4 pb-4">{children}</div>}
     </div>
@@ -583,17 +584,17 @@ function VisualReferencePanel({
               onClick={() => onPick(band)}
               className={`text-left rounded-lg border p-3 flex flex-col ${
                 isSel
-                  ? 'border-green-deep bg-[#edf7f2]'
-                  : 'border-card-edge bg-charcoal'
+                  ? 'border-green-700 bg-green-100'
+                  : 'border-hairline bg-paper'
               }`}
             >
               <span className="text-[14px] font-medium text-ink">
                 {band.label}
               </span>
-              <span className="text-[11px] font-medium uppercase tracking-micro text-green-mint">
+              <span className="text-[11px] font-medium uppercase tracking-micro text-green-700">
                 {band.descriptor}
               </span>
-              <span className="mt-1 text-[11px] text-card-mute leading-snug">
+              <span className="mt-1 text-[11px] text-muted leading-snug">
                 {band.description}
               </span>
             </button>
@@ -639,7 +640,7 @@ function AiPhotoPanel({
   return (
     <MethodShell title="AI photo estimate" hint="Rough range from a photo — onboarding shortcut">
       <label className="block">
-        <span className="inline-flex items-center justify-center w-full rounded-lg py-3 text-[13px] font-medium text-white bg-green-deep cursor-pointer min-h-[44px]">
+        <span className="inline-flex items-center justify-center w-full rounded-lg py-3 text-[13px] font-medium text-white bg-green-700 cursor-pointer min-h-[44px]">
           {busy ? 'Estimating…' : 'Choose a photo'}
         </span>
         <input
@@ -654,17 +655,17 @@ function AiPhotoPanel({
         />
       </label>
       {result && (
-        <div className={`mt-2 rounded-lg px-3 py-2 ${active ? 'bg-[#edf7f2]' : 'bg-charcoal'}`}>
+        <div className={`mt-2 rounded-lg px-3 py-2 ${active ? 'bg-green-100' : 'bg-paper'}`}>
           <span className="text-[14px] font-medium text-ink">
             Roughly {result.low}–{result.high}%
           </span>
-          <span className="block text-[11px] text-card-mute leading-snug mt-0.5">
+          <span className="block text-[11px] text-muted leading-snug mt-0.5">
             {result.summary}
           </span>
         </div>
       )}
-      {error && <p className="mt-2 text-[11px] text-red-alert">{error}</p>}
-      <p className="mt-2 text-[11px] text-card-mute leading-snug">
+      {error && <p className="mt-2 text-[11px] text-amber">{error}</p>}
+      <p className="mt-2 text-[11px] text-muted leading-snug">
         Rough estimate — do the tape measure bi-weekly for real tracking. Your
         photo is sent only for this estimate and isn’t stored.
       </p>
@@ -715,12 +716,12 @@ function NavyPanel(props: {
           type="button"
           disabled={computed === null}
           onClick={() => computed !== null && props.onCompute(computed)}
-          className="w-full rounded-lg py-2.5 text-[13px] font-medium text-white bg-green-deep min-h-[44px] disabled:opacity-40"
+          className="w-full rounded-lg py-2.5 text-[13px] font-medium text-white bg-green-700 min-h-[44px] disabled:opacity-40"
         >
           {computed !== null ? `Use ${computed}%` : 'Enter measurements'}
         </button>
         {props.active && computed !== null && (
-          <p className="text-[11px] text-green-mint">Using {computed}% from the tape.</p>
+          <p className="text-[11px] text-green-700">Using {computed}% from the tape.</p>
         )}
       </div>
     </MethodShell>
@@ -809,7 +810,7 @@ function GoalStep(props: {
         <button
           type="button"
           onClick={props.onEditBodyStats}
-          className="text-[12px] font-medium text-green-mint min-h-[44px]"
+          className="text-[12px] font-medium text-green-700 min-h-[44px]"
         >
           Update body stats →
         </button>
@@ -853,7 +854,7 @@ function GoalStep(props: {
           type="button"
           disabled={!ready || computing}
           onClick={buildPreview}
-          className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-40"
+          className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-40"
         >
           {computing ? 'Calculating…' : 'See my targets'}
         </button>
@@ -871,12 +872,12 @@ function GoalStep(props: {
           return (
             <div className="space-y-3">
               {/* STEP 1 — Research briefing (about the recommended season) */}
-              <div className="bg-card border border-card-edge rounded-xl p-4 space-y-4">
+              <div className="bg-white border border-hairline rounded-xl p-4 space-y-4">
                 <Micro>Recommended · {seasonLabel(preview.recommendedType)}</Micro>
 
                 <div>
                   <Micro>Your baseline</Micro>
-                  <p className="mt-1 text-[13px] text-ink-body leading-snug">
+                  <p className="mt-1 text-[13px] text-ink leading-snug">
                     Based on your body stats and Apple Watch data, your body
                     burns approximately{' '}
                     <span className="font-medium text-ink">
@@ -886,13 +887,13 @@ function GoalStep(props: {
                     your TDEE — total daily energy expenditure.
                   </p>
                   {preview.estimatedActivity ? (
-                    <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
+                    <p className="mt-1.5 text-[11px] text-muted leading-snug">
                       No Apple Watch active-calorie history yet, so this uses an
                       estimated activity level. It’ll personalize automatically
                       once Watch data builds up.
                     </p>
                   ) : preview.daysOfData < 90 ? (
-                    <p className="mt-1.5 text-[11px] text-card-mute leading-snug">
+                    <p className="mt-1.5 text-[11px] text-muted leading-snug">
                       Based on {preview.daysOfData} days of Watch data so far —
                       it keeps refining as more comes in.
                     </p>
@@ -902,7 +903,7 @@ function GoalStep(props: {
 
                 <div>
                   <Micro>What we’re doing</Micro>
-                  <p className="mt-1 text-[13px] text-ink-body leading-snug">
+                  <p className="mt-1 text-[13px] text-ink leading-snug">
                     {SEASON_EXPLANATION[preview.recommendedType]}
                   </p>
                 </div>
@@ -943,7 +944,7 @@ function GoalStep(props: {
               {/* STEP 3 — Selected season's targets + pros/cons (live) */}
               <TargetComparison current={current} targets={targets} />
 
-              <div className="bg-card border border-card-edge rounded-xl p-4">
+              <div className="bg-white border border-hairline rounded-xl p-4">
                 <Micro>Pros &amp; cons of this season</Micro>
                 <div className="mt-2">
                   <ProsCons
@@ -963,7 +964,7 @@ function GoalStep(props: {
                   await props.onConfirm(targets, chosen, macroStyle);
                   setSaving(false);
                 }}
-                className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px] disabled:opacity-50"
+                className="w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-50"
               >
                 {saving
                   ? 'Saving…'
@@ -1001,8 +1002,8 @@ function QuestionGroup<T extends string>({
             onClick={() => onChange(o.value)}
             className={`w-full text-left rounded-xl px-3.5 py-3 text-[14px] border min-h-[48px] ${
               value === o.value
-                ? 'border-green-deep bg-[#edf7f2] text-ink font-medium'
-                : 'border-card-edge bg-card text-ink-body'
+                ? 'border-green-700 bg-green-100 text-ink font-medium'
+                : 'border-hairline bg-white text-ink'
             }`}
           >
             {o.label}
@@ -1032,7 +1033,7 @@ function MultiQuestionGroup<T extends string>({
   return (
     <div>
       <p className="text-[13px] font-medium text-ink">{question}</p>
-      <p className="text-[11px] text-card-mute mb-2">{hint}</p>
+      <p className="text-[11px] text-muted mb-2">{hint}</p>
       <div className="space-y-1.5">
         {options.map((o) => {
           const selected = values.includes(o.value);
@@ -1044,12 +1045,12 @@ function MultiQuestionGroup<T extends string>({
               onClick={() => onToggle(o.value)}
               className={`w-full text-left rounded-xl px-3.5 py-3 text-[14px] border min-h-[48px] flex items-center justify-between ${
                 selected
-                  ? 'border-green-deep bg-[#edf7f2] text-ink font-medium'
-                  : 'border-card-edge bg-card text-ink-body'
+                  ? 'border-green-700 bg-green-100 text-ink font-medium'
+                  : 'border-hairline bg-white text-ink'
               }`}
             >
               <span>{o.label}</span>
-              {selected && <span className="text-green-deep text-[15px]">✓</span>}
+              {selected && <span className="text-green-700 text-[15px]">✓</span>}
             </button>
           );
         })}
@@ -1086,12 +1087,12 @@ function SeasonPicker({
             onClick={() => onSelect(opt.seasonType)}
             className={`relative w-full text-left rounded-xl border p-3.5 ${
               isSel
-                ? 'border-green-deep bg-[#edf7f2]'
-                : 'border-card-edge bg-card'
+                ? 'border-green-700 bg-green-100'
+                : 'border-hairline bg-white'
             }`}
           >
             {isRec && (
-              <span className="absolute top-2.5 right-2.5 text-[9px] tracking-micro uppercase font-semibold text-white bg-green-deep rounded-full px-2 py-0.5">
+              <span className="absolute top-2.5 right-2.5 text-[9px] tracking-micro uppercase font-semibold text-white bg-green-700 rounded-full px-2 py-0.5">
                 Recommended
               </span>
             )}
@@ -1101,10 +1102,10 @@ function SeasonPicker({
             <span className="block text-[15px] font-semibold text-ink mt-0.5">
               {cals.toLocaleString()} cal/day
             </span>
-            <span className="block text-[11px] font-medium text-green-mint mt-0.5">
+            <span className="block text-[11px] font-medium text-green-700 mt-0.5">
               {opt.calorieLine}
             </span>
-            <span className="block text-[12px] text-card-mute leading-snug mt-1">
+            <span className="block text-[12px] text-muted leading-snug mt-1">
               {opt.description}
             </span>
           </button>
@@ -1131,9 +1132,9 @@ function MacroStyleSelector({
     (o) => o.value !== 'high_protein_cut' || isCutSeason(seasonType),
   );
   return (
-    <div className="bg-card border border-card-edge rounded-xl p-4">
+    <div className="bg-white border border-hairline rounded-xl p-4">
       <Micro>Macro style</Micro>
-      <p className="mt-1 text-[12px] text-card-mute leading-snug">
+      <p className="mt-1 text-[12px] text-muted leading-snug">
         Protein stays high regardless. Choose how to split the rest.
       </p>
       <div className="mt-2 space-y-2">
@@ -1147,14 +1148,14 @@ function MacroStyleSelector({
               onClick={() => onSelect(opt.value)}
               className={`w-full text-left rounded-lg border p-3 ${
                 isSel
-                  ? 'border-green-deep bg-[#edf7f2]'
-                  : 'border-card-edge bg-charcoal'
+                  ? 'border-green-700 bg-green-100'
+                  : 'border-hairline bg-paper'
               }`}
             >
               <span className="block text-[13px] font-medium text-ink">
                 {opt.name}
               </span>
-              <span className="block text-[11px] text-card-mute leading-snug mt-0.5">
+              <span className="block text-[11px] text-muted leading-snug mt-0.5">
                 {opt.description}
               </span>
             </button>
@@ -1173,35 +1174,35 @@ function TdeeExplainer() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-[12px] font-medium text-green-mint"
+        className="text-[12px] font-medium text-green-700"
       >
         How is this calculated? {open ? '↑' : '↓'}
       </button>
       {open && (
-        <div className="mt-2 rounded-xl bg-charcoal border border-card-edge p-3 space-y-3">
-          <p className="text-[11px] tracking-micro uppercase font-semibold text-green-mint">
+        <div className="mt-2 rounded-xl bg-paper border border-hairline p-3 space-y-3">
+          <p className="text-[11px] tracking-micro uppercase font-semibold text-green-700">
             Your TDEE is calculated in two steps
           </p>
 
           <div>
             <Micro>Step 1 — Resting burn (BMR)</Micro>
-            <p className="mt-1 text-[12px] text-ink-body leading-snug">
+            <p className="mt-1 text-[12px] text-ink leading-snug">
               Using the Mifflin-St Jeor formula — the most validated BMR equation
               for most adults:
             </p>
-            <p className="mt-1 font-mono text-[11px] text-ink-body leading-snug">
+            <p className="mt-1 font-mono text-[11px] text-ink leading-snug">
               Male: (10 × weight kg) + (6.25 × height cm) − (5 × age) + 5
               <br />
               Female: (10 × weight kg) + (6.25 × height cm) − (5 × age) − 161
             </p>
-            <p className="mt-1 text-[12px] text-ink-body leading-snug">
+            <p className="mt-1 text-[12px] text-ink leading-snug">
               This is what your body burns at complete rest, just existing.
             </p>
           </div>
 
           <div>
             <Micro>Step 2 — Active burn (from Apple Watch)</Micro>
-            <p className="mt-1 text-[12px] text-ink-body leading-snug">
+            <p className="mt-1 text-[12px] text-ink leading-snug">
               Your 90-day rolling average of daily active calories from
               HealthKit. This is your real movement burn — not a generic activity
               multiplier. If you had a lazy month, your TDEE reflects it. If you
@@ -1213,7 +1214,7 @@ function TdeeExplainer() {
             TDEE = BMR + avg daily active calories
           </p>
 
-          <p className="text-[11px] text-card-mute leading-snug">
+          <p className="text-[11px] text-muted leading-snug">
             Note: Apple Watch active calories can slightly undercount or overcount
             depending on Watch fit and workout type. It’s still more accurate than
             a self-reported activity level.
@@ -1240,10 +1241,10 @@ function BothLookTip({
   if (!copy) return null;
   return (
     <div
-      className="rounded-xl bg-[#edf7f2] px-3.5 py-3"
-      style={{ borderLeft: '3px solid #0F6E56' }}
+      className="rounded-xl bg-green-100 px-3.5 py-3"
+      style={{ borderLeft: `3px solid ${COLOR.green700}` }}
     >
-      <p className="text-[12px] text-ink-body leading-snug">{copy}</p>
+      <p className="text-[12px] text-ink leading-snug">{copy}</p>
     </div>
   );
 }
@@ -1251,7 +1252,7 @@ function BothLookTip({
 // Green section micro-label, matching the app's SectionLabel treatment.
 function Micro({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
+    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
       {children}
     </p>
   );
@@ -1263,7 +1264,7 @@ function ResearchNote({ bf }: { bf: number | null }) {
   const g = bodyFatGuidance(bf);
   if (!g) {
     return (
-      <p className="mt-1 text-[12px] text-card-mute leading-snug">
+      <p className="mt-1 text-[12px] text-muted leading-snug">
         Complete your body fat estimate on the previous step to get personalized
         research-backed guidance here.
       </p>
@@ -1273,7 +1274,7 @@ function ResearchNote({ bf }: { bf: number | null }) {
     <div className="mt-1">
       <p className="text-[13px] font-medium text-ink">{g.heading}</p>
       {g.paragraphs.map((para, i) => (
-        <p key={i} className="mt-1.5 text-[13px] text-ink-body leading-snug">
+        <p key={i} className="mt-1.5 text-[13px] text-ink leading-snug">
           {para}
         </p>
       ))}
@@ -1305,30 +1306,30 @@ function ProsCons({
   return (
     <div className="grid grid-cols-2 gap-3">
       <div>
-        <p className="text-[10px] tracking-micro uppercase font-semibold text-green-mid">
+        <p className="text-[10px] tracking-micro uppercase font-semibold text-green-700">
           {prosLabel}
         </p>
         <ul className="mt-1 space-y-1">
           {pros.map((p) => (
             <li
               key={p}
-              className="text-[12px] leading-snug text-ink-body flex gap-1.5"
+              className="text-[12px] leading-snug text-ink flex gap-1.5"
             >
-              <span className="text-green-deep">+</span>
+              <span className="text-green-700">+</span>
               <span>{p}</span>
             </li>
           ))}
         </ul>
       </div>
       <div>
-        <p className="text-[10px] tracking-micro uppercase font-semibold text-card-mute">
+        <p className="text-[10px] tracking-micro uppercase font-semibold text-muted">
           {consLabel}
         </p>
         <ul className="mt-1 space-y-1">
           {cons.map((c) => (
             <li
               key={c}
-              className="text-[12px] leading-snug text-card-mute flex gap-1.5"
+              className="text-[12px] leading-snug text-muted flex gap-1.5"
             >
               <span>–</span>
               <span>{c}</span>
@@ -1357,17 +1358,17 @@ function TargetComparison({
     { label: 'Water', from: current?.water_target_bottles ?? null, to: targets.water_target_bottles, unit: ' bottles' },
   ];
   return (
-    <div className="bg-card border border-card-edge rounded-xl p-4">
-      <p className="text-[12px] text-card-mute mb-2">
+    <div className="bg-white border border-hairline rounded-xl p-4">
+      <p className="text-[12px] text-muted mb-2">
         {current ? 'Your targets will change to:' : 'Your daily targets:'}
       </p>
       <div className="space-y-1.5">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between text-[13px]">
-            <span className="text-ink-body">{r.label}</span>
+            <span className="text-ink">{r.label}</span>
             <span className="text-ink font-medium">
               {current && r.from !== null && r.from !== r.to && (
-                <span className="text-card-mute font-normal">
+                <span className="text-muted font-normal">
                   {r.from.toLocaleString()}
                   {r.unit} →{' '}
                 </span>

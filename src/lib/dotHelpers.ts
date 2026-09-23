@@ -1,15 +1,17 @@
 import { currentWeekISODates } from './dateHelpers';
 import { getDayIntensity } from './bundleHelpers';
 import type { BundleLog, UserPreferences } from '../db/types';
+import { COLOR } from './brand';
 
 // Shared palette for the 7-day intensity dot rows on the compact activity
-// cards (Build 2.7). Greens ramp light → full; ordered-delivery is red.
+// cards. One green ramp, light → full (Green 300 → 500 → 700); an ordered
+// delivery day is a miss against your own goal, so it's Bronze Amber.
 export const DOT_COLOR = {
-  none: '#e0e4e0',
-  light: '#a8dfc0',
-  medium: '#4db888',
-  full: '#22c37e',
-  ordered: '#e03b5a',
+  none: COLOR.stone,
+  light: COLOR.green300,
+  medium: COLOR.green500,
+  full: COLOR.green700,
+  ordered: COLOR.amber,
 } as const;
 
 export interface ActivityDot {
@@ -73,7 +75,7 @@ export function bundleDots(
   });
 }
 
-// Delivery — clean = full green, ordered = red, unmarked = grey.
+// Delivery — clean = full green, ordered = amber, unmarked = stone.
 export function deliveryDots(
   byStatus: Map<string, 'clean' | 'ordered'>,
 ): ActivityDot[] {

@@ -19,8 +19,9 @@ import {
   setWaterBottles,
 } from '../lib/nutritionWater';
 import { todayISODate } from '../lib/dateHelpers';
-import { SectionLabel } from '../components/ui/primitives';
+import { SectionLabel, ProgressBar } from '../components/ui/primitives';
 import type { NutritionSeason } from '../db/types';
+import { COLOR } from '../lib/brand';
 
 export default function Nutrition() {
   const today = todayISODate();
@@ -91,10 +92,10 @@ export default function Nutrition() {
 
 function SetupCard({ onStart }: { onStart: () => void }) {
   return (
-    <div className="bg-card shadow-card rounded-2xl p-5">
+    <div className="bg-white shadow-card rounded-2xl p-5">
       <SectionLabel>Nutrition</SectionLabel>
       <p className="mt-2 text-[15px] font-medium text-ink">Set up your plan</p>
-      <p className="mt-1 text-[13px] text-ink-body leading-snug">
+      <p className="mt-1 text-[13px] text-ink leading-snug">
         A few questions about your body and goals generates your daily calorie
         and macro targets — built on your lean mass and real activity, not a
         generic formula.
@@ -102,7 +103,7 @@ function SetupCard({ onStart }: { onStart: () => void }) {
       <button
         type="button"
         onClick={onStart}
-        className="mt-3 w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-deep min-h-[48px]"
+        className="mt-3 w-full rounded-xl py-3 text-[14px] font-medium text-white bg-green-700 min-h-[48px]"
       >
         Set up nutrition
       </button>
@@ -120,19 +121,19 @@ function SeasonStrip({
   onChange: () => void;
 }) {
   return (
-    <div className="bg-card shadow-card rounded-2xl px-4 py-3 flex items-center justify-between">
+    <div className="bg-white shadow-card rounded-2xl px-4 py-3 flex items-center justify-between">
       <div>
-        <span className="inline-block text-[10px] tracking-micro uppercase font-semibold text-white bg-green-deep rounded-full px-2.5 py-1">
+        <span className="inline-block text-[10px] tracking-micro uppercase font-semibold text-white bg-green-700 rounded-full px-2.5 py-1">
           {seasonLabel(season.season_type)}
         </span>
-        <p className="mt-1.5 text-[12px] text-card-mute">
+        <p className="mt-1.5 text-[12px] text-muted">
           Day {daysInSeason(season)} of this season
         </p>
       </div>
       <button
         type="button"
         onClick={onChange}
-        className="text-[12px] font-medium text-green-mint min-h-[44px] px-1"
+        className="text-[12px] font-medium text-green-700 min-h-[44px] px-1"
       >
         Change season
       </button>
@@ -142,56 +143,43 @@ function SeasonStrip({
 
 // ---- Today's macros --------------------------------------------------------
 
-const MACRO_COLORS = {
-  calories: '#0F6E56',
-  protein: '#c25a1d',
-  carbs: '#e8b520',
-  fat: '#378ADD',
-};
-
 function MacrosCard({ season }: { season: NutritionSeason }) {
   // Logged intake is 0 until meal logging lands (Phase 3b); the bars show live
   // targets so the shell is already wired to the season.
   const bars = [
-    { key: 'calories', label: 'Calories', logged: 0, target: season.daily_calories_target, color: MACRO_COLORS.calories, unit: '' },
-    { key: 'protein', label: 'Protein', logged: 0, target: season.protein_target_g, color: MACRO_COLORS.protein, unit: 'g' },
-    { key: 'carbs', label: 'Carbs', logged: 0, target: season.carbs_target_g, color: MACRO_COLORS.carbs, unit: 'g' },
-    { key: 'fat', label: 'Fat', logged: 0, target: season.fat_target_g, color: MACRO_COLORS.fat, unit: 'g' },
+    { key: 'calories', label: 'Calories', logged: 0, target: season.daily_calories_target, unit: '' },
+    { key: 'protein', label: 'Protein', logged: 0, target: season.protein_target_g, unit: 'g' },
+    { key: 'carbs', label: 'Carbs', logged: 0, target: season.carbs_target_g, unit: 'g' },
+    { key: 'fat', label: 'Fat', logged: 0, target: season.fat_target_g, unit: 'g' },
   ];
 
   return (
-    <div className="bg-card shadow-card rounded-2xl p-5">
+    <div className="bg-white shadow-card rounded-2xl p-5">
       <SectionLabel>Today — Macros</SectionLabel>
       <div className="mt-3 space-y-3">
         {bars.map((b) => (
           <div key={b.key}>
             <div className="flex items-center justify-between text-[13px]">
-              <span className="text-ink-body">{b.label}</span>
+              <span className="text-ink">{b.label}</span>
               <span className="text-ink">
                 <span className="font-medium">{b.logged.toLocaleString()}</span>
-                <span className="text-card-mute"> / {b.target.toLocaleString()}{b.unit}</span>
+                <span className="text-muted"> / {b.target.toLocaleString()}{b.unit}</span>
               </span>
             </div>
-            <div className="mt-1 h-2 rounded-full overflow-hidden" style={{ background: '#e7ece8' }}>
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, b.target > 0 ? (b.logged / b.target) * 100 : 0)}%`,
-                  background: b.color,
-                }}
-              />
+            <div className="mt-1">
+              <ProgressBar value={b.logged} max={b.target} height={8} />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-divider space-y-1.5">
+      <div className="mt-4 pt-3 border-t border-hairline space-y-1.5">
         <AwarenessRow label="Fiber" guideline={`aim ≥ ${season.fiber_guideline_g}g`} />
         <AwarenessRow label="Sodium" guideline={`stay under ${season.sodium_guideline_mg.toLocaleString()}mg`} />
         <AwarenessRow label="Sugar" guideline={`stay under ${season.sugar_guideline_g}g`} />
       </div>
 
-      <p className="mt-3 text-[11px] text-card-mute leading-snug">
+      <p className="mt-3 text-[11px] text-muted leading-snug">
         Meal logging arrives next — your targets above are live now.
       </p>
     </div>
@@ -201,8 +189,8 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
 function AwarenessRow({ label, guideline }: { label: string; guideline: string }) {
   return (
     <div className="flex items-center justify-between text-[12px]">
-      <span className="text-ink-body">{label}</span>
-      <span className="text-card-mute">{guideline}</span>
+      <span className="text-ink">{label}</span>
+      <span className="text-muted">{guideline}</span>
     </div>
   );
 }
@@ -223,10 +211,10 @@ function WaterCard({
   // to remove one.
   const slots = Math.max(target, bottles);
   return (
-    <div className="bg-card shadow-card rounded-2xl p-5">
+    <div className="bg-white shadow-card rounded-2xl p-5">
       <div className="flex items-center justify-between">
         <SectionLabel>Water</SectionLabel>
-        <span className="text-[12px] text-card-mute">
+        <span className="text-[12px] text-muted">
           <span className="text-ink font-medium">{bottles}</span> / {target} bottles
         </span>
       </div>
@@ -243,7 +231,7 @@ function WaterCard({
           );
         })}
       </div>
-      <p className="mt-3 text-[11px] text-card-mute">
+      <p className="mt-3 text-[11px] text-muted">
         Tap to add a bottle (1000ml). Long-press a full bottle to remove.
       </p>
     </div>
@@ -291,8 +279,8 @@ function BottleButton({
       }}
       className="w-9 h-12 rounded-md border flex items-center justify-center"
       style={{
-        background: filled ? '#185FA5' : '#eef3f6',
-        borderColor: filled ? '#185FA5' : '#d8ded9',
+        background: filled ? COLOR.green700 : COLOR.stone,
+        borderColor: filled ? COLOR.green700 : COLOR.stone,
       }}
     >
       <span className="text-[16px]" style={{ opacity: filled ? 1 : 0.35 }}>
@@ -320,7 +308,7 @@ function BodyStatsCard({
   onMeasure: () => void;
 }) {
   return (
-    <div className="bg-card shadow-card rounded-2xl p-5">
+    <div className="bg-white shadow-card rounded-2xl p-5">
       <SectionLabel>Body stats</SectionLabel>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <Stat label="Weight" value={weight !== null ? `${weight}` : '—'} unit="lbs" />
@@ -328,7 +316,7 @@ function BodyStatsCard({
         <Stat label="Lean mass" value={leanMass !== null ? `${leanMass}` : '—'} unit="lbs" />
       </div>
       {bf !== null && bfSource && (
-        <p className="mt-2 text-[11px] text-card-mute">
+        <p className="mt-2 text-[11px] text-muted">
           Body fat from {SOURCE_LABEL[bfSource] ?? bfSource}.
         </p>
       )}
@@ -336,14 +324,14 @@ function BodyStatsCard({
         <button
           type="button"
           onClick={onWeigh}
-          className="flex-1 rounded-xl py-2.5 text-[13px] font-medium text-ink-body bg-charcoal border border-card-edge min-h-[44px]"
+          className="flex-1 rounded-xl py-2.5 text-[13px] font-medium text-ink bg-paper border border-hairline min-h-[44px]"
         >
           Log weigh-in
         </button>
         <button
           type="button"
           onClick={onMeasure}
-          className="flex-1 rounded-xl py-2.5 text-[13px] font-medium text-ink-body bg-charcoal border border-card-edge min-h-[44px]"
+          className="flex-1 rounded-xl py-2.5 text-[13px] font-medium text-ink bg-paper border border-hairline min-h-[44px]"
         >
           Log measurements
         </button>
@@ -361,10 +349,10 @@ const SOURCE_LABEL: Record<string, string> = {
 
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
-    <div className="bg-charcoal border border-card-edge rounded-xl px-3 py-2.5">
-      <span className="block text-[11px] text-card-mute">{label}</span>
+    <div className="bg-paper border border-hairline rounded-xl px-3 py-2.5">
+      <span className="block text-[11px] text-muted">{label}</span>
       <span className="text-[19px] font-medium text-ink">{value}</span>
-      <span className="text-[12px] text-card-mute"> {unit}</span>
+      <span className="text-[12px] text-muted"> {unit}</span>
     </div>
   );
 }

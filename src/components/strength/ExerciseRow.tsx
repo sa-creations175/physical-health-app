@@ -11,6 +11,7 @@ import {
 import { relativeDateLabel } from '../../lib/dateHelpers';
 import { formatSetMagnitude } from '../../lib/setFormat';
 import SetRow from './SetRow';
+import { COLOR } from '../../lib/brand';
 
 export default function ExerciseRow({ link }: { link: SessionExercise }) {
   const [confirming, setConfirming] = useState(false);
@@ -54,8 +55,8 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
 
   return (
     <div
-      className="bg-card border border-card-edge rounded-xl p-3 mt-2"
-      style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+      className="bg-white border border-hairline rounded-xl p-3 mt-2"
+      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
@@ -64,7 +65,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
           </h3>
         </div>
         <div className="flex items-center gap-2 whitespace-nowrap">
-          <span className="text-[10px] tracking-micro uppercase text-green-mint font-semibold">
+          <span className="text-[10px] tracking-micro uppercase text-green-700 font-semibold">
             {exercise.muscle_group.replace('_', ' ')}
           </span>
           {/* Remove the whole exercise + its sets. Distinct from the
@@ -74,14 +75,14 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
             type="button"
             onClick={() => setConfirming(true)}
             aria-label={`Remove ${exercise.name}`}
-            className="text-card-mute text-[18px] w-8 h-8 flex items-center justify-center -mr-1"
+            className="text-muted text-[18px] w-8 h-8 flex items-center justify-center -mr-1"
           >
             ×
           </button>
         </div>
       </div>
       {confirming && (
-        <div className="mt-2 px-3 py-2 bg-charcoal rounded-lg border border-card-edge">
+        <div className="mt-2 px-3 py-2 bg-paper rounded-lg border border-hairline">
           <p className="text-[12px] text-ink leading-snug">
             Remove {exercise.name} and all its sets?
           </p>
@@ -89,7 +90,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="flex-1 bg-card border border-card-edge text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+              className="flex-1 bg-white border border-hairline text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
             >
               Cancel
             </button>
@@ -98,8 +99,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
               onClick={() => {
                 void removeExerciseFromSession(link.id);
               }}
-              style={{ background: '#7a2222' }}
-              className="flex-1 text-white rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
+              className="flex-1 bg-white border border-hairline-warm text-ink rounded-md py-2 text-[11px] font-semibold uppercase tracking-micro min-h-[36px]"
             >
               Remove
             </button>
@@ -108,25 +108,25 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       )}
 
       {previous && previous.sets.length > 0 && (
-        <div className="mt-2 px-3 py-2 bg-charcoal rounded-lg">
-          <p className="text-[10px] tracking-micro uppercase text-card-mute font-semibold">
+        <div className="mt-2 px-3 py-2 bg-paper rounded-lg">
+          <p className="text-[10px] tracking-micro uppercase text-muted font-semibold">
             Last · {relativeDateLabel(previous.date)} · {previous.sets.length} set
             {previous.sets.length === 1 ? '' : 's'}
           </p>
           <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
             {previous.sets.map((s) => (
               <span key={s.id} className="text-[12px]">
-                <span className="text-ink-body font-medium">
+                <span className="text-ink font-medium">
                   {s.weight.toLocaleString()}
                 </span>
-                <span className="text-card-mute">×{formatSetMagnitude(s)}</span>
+                <span className="text-muted">×{formatSetMagnitude(s)}</span>
               </span>
             ))}
           </div>
         </div>
       )}
 
-      <div className="mt-1 divide-y divide-divider">
+      <div className="mt-1 divide-y divide-hairline">
         {sets.map((s, i) => (
           <SetRow key={s.id} set={s} setNumber={i + 1} />
         ))}
@@ -134,7 +134,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       <button
         type="button"
         onClick={handleAddSet}
-        className="mt-2 w-full bg-charcoal text-card-mute rounded-lg py-2.5 text-[11px] font-semibold uppercase tracking-micro border border-card-edge min-h-[44px]"
+        className="mt-2 w-full bg-paper text-muted rounded-lg py-2.5 text-[11px] font-semibold uppercase tracking-micro border border-hairline min-h-[44px]"
       >
         + Add Set
       </button>
@@ -164,7 +164,7 @@ function NoteField({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="mt-2 w-full text-left text-[12px] text-green-mint font-medium py-1.5"
+        className="mt-2 w-full text-left text-[12px] text-green-700 font-medium py-1.5"
       >
         Add note
       </button>
@@ -187,7 +187,7 @@ function NoteField({
       }}
       placeholder="Note for this exercise"
       aria-label="Exercise note"
-      className="mt-2 w-full bg-charcoal border border-card-edge text-ink rounded-lg px-3 py-2 text-[16px] placeholder:text-card-mute"
+      className="mt-2 w-full bg-paper border border-hairline text-ink rounded-lg px-3 py-2 text-[16px] placeholder:text-muted"
     />
   );
 }

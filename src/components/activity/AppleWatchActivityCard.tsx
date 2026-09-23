@@ -6,6 +6,7 @@ import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { App } from '@capacitor/app';
 import { getHealthSnapshot, type HealthSnapshot } from '../../lib/healthkit';
 import { LAST_IMPORT_KEY } from '../../lib/watchImport';
+import { COLOR } from '../../lib/brand';
 
 const STEPS_TARGET = 10000;
 const CALORIE_TARGET = 600;
@@ -89,11 +90,11 @@ export default function AppleWatchActivityCard({
 
   const badge =
     snapshot === undefined ? (
-      <span className="text-dim">checking…</span>
+      <span className="text-hint">checking…</span>
     ) : connected ? (
-      <span className="text-green-mid">connected</span>
+      <span className="text-green-700">connected</span>
     ) : (
-      <span className="text-dim">not connected</span>
+      <span className="text-hint">not connected</span>
     );
 
   return (
@@ -127,7 +128,7 @@ export default function AppleWatchActivityCard({
       </div>
 
       {!connected && (
-        <p className="mt-3 text-[11px] text-card-mute">
+        <p className="mt-3 text-[11px] text-muted">
           {snapshot === undefined
             ? 'Reading Apple Health…'
             : 'Open Body Health on your iPhone and allow Apple Health access to see live data here.'}
@@ -135,8 +136,8 @@ export default function AppleWatchActivityCard({
       )}
 
       {connected && snapshot.recentWorkouts.length > 0 && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: '#f0f2f0' }}>
-          <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
+          <p className="text-[9px] tracking-micro uppercase text-green-700 font-semibold">
             Recent workouts
           </p>
           <ul className="mt-1.5 space-y-1">
@@ -146,7 +147,7 @@ export default function AppleWatchActivityCard({
                 className="flex items-center justify-between text-[12px] text-ink"
               >
                 <span className="truncate">{formatWorkoutType(w.workoutType)}</span>
-                <span className="text-card-mute whitespace-nowrap ml-2">
+                <span className="text-muted whitespace-nowrap ml-2">
                   {w.durationMinutes.toLocaleString()} min ·{' '}
                   {w.calories.toLocaleString()} cal
                 </span>
@@ -157,7 +158,7 @@ export default function AppleWatchActivityCard({
       )}
 
       {lastSync && (
-        <p className="mt-3 text-[11px] text-dim">
+        <p className="mt-3 text-[11px] text-hint">
           Last synced:{' '}
           {new Date(lastSync).toLocaleString(undefined, {
             month: 'short',
@@ -183,22 +184,22 @@ function StatTile({
   met: boolean;
 }) {
   return (
-    <div className="bg-[#eef1ef] rounded-xl p-3 min-h-[64px] flex flex-col">
-      <p className="text-[9px] tracking-micro uppercase text-green-mint font-semibold">
+    <div className="bg-stone rounded-xl p-3 min-h-[64px] flex flex-col">
+      <p className="text-[9px] tracking-micro uppercase text-green-700 font-semibold">
         {label}
       </p>
       {value === null ? (
-        <p className="mt-1.5 text-[12px] text-card-mute">no data</p>
+        <p className="mt-1.5 text-[12px] text-muted">no data</p>
       ) : (
         <p className="mt-1.5 leading-none">
           <span
             className={`text-[18px] font-display font-semibold ${
-              met ? 'text-green-mid' : 'text-ink'
+              met ? 'text-green-700' : 'text-ink'
             }`}
           >
             {value}
           </span>{' '}
-          <span className="text-[10px] text-card-mute">{target}</span>
+          <span className="text-[10px] text-muted">{target}</span>
         </p>
       )}
     </div>

@@ -6,6 +6,7 @@ import {
   createNewExercise,
 } from '../../lib/strengthHelpers';
 import type { MuscleGroup } from '../../db/types';
+import { COLOR } from '../../lib/brand';
 
 const MUSCLE_GROUPS: MuscleGroup[] = [
   'chest',
@@ -73,7 +74,7 @@ export default function ExercisePicker({
   }
 
   return (
-    <div className="fixed inset-0 bg-charcoal z-50 flex flex-col">
+    <div className="fixed inset-0 bg-paper z-50 flex flex-col">
       <header className="px-5 pt-8 pb-4 flex items-center justify-between">
         <h2 className="text-[19px] font-medium text-ink">
           {adding ? 'New Exercise' : 'Add Exercise'}
@@ -82,7 +83,7 @@ export default function ExercisePicker({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="text-ink-soft text-[28px] w-11 h-11 flex items-center justify-center"
+          className="text-muted text-[28px] w-11 h-11 flex items-center justify-center"
         >
           ×
         </button>
@@ -96,7 +97,7 @@ export default function ExercisePicker({
               placeholder="Search…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-card border border-card-edge text-ink rounded-xl px-4 h-11 text-[16px]"
+              className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-[16px]"
             />
           </div>
           <div className="flex-1 overflow-y-auto px-5 mt-3 pb-3">
@@ -106,23 +107,23 @@ export default function ExercisePicker({
                 type="button"
                 onClick={() => handlePick(e.id)}
                 disabled={busy}
-                style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-                className="w-full bg-card border border-card-edge rounded-xl p-3 mt-2 flex items-center justify-between text-left disabled:opacity-50 min-h-[48px]"
+                style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
+                className="w-full bg-white border border-hairline rounded-xl p-3 mt-2 flex items-center justify-between text-left disabled:opacity-50 min-h-[48px]"
               >
                 <span className="text-[14px] text-ink">{e.name}</span>
-                <span className="text-[10px] tracking-micro uppercase text-card-mute whitespace-nowrap">
+                <span className="text-[10px] tracking-micro uppercase text-muted whitespace-nowrap">
                   {e.muscle_group.replace('_', ' ')}
                 </span>
               </button>
             ))}
             {filtered.length === 0 && (
-              <p className="text-card-mute text-[13px] text-center mt-6">
+              <p className="text-muted text-[13px] text-center mt-6">
                 No matches. Add it below.
               </p>
             )}
           </div>
           <div
-            className="px-5 py-3 border-t border-divider"
+            className="px-5 py-3 border-t border-hairline"
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
           >
             <button
@@ -131,7 +132,7 @@ export default function ExercisePicker({
                 setAdding(true);
                 setNewName(search);
               }}
-              className="w-full bg-charcoal text-green-mint border border-green-deep rounded-xl py-3 text-[13px] font-semibold uppercase tracking-micro min-h-[48px]"
+              className="w-full bg-paper text-green-700 border border-green-700 rounded-xl py-3 text-[13px] font-semibold uppercase tracking-micro min-h-[48px]"
             >
               + Add new exercise
             </button>
@@ -139,7 +140,7 @@ export default function ExercisePicker({
         </>
       ) : (
         <div className="flex-1 px-5 overflow-y-auto pb-6">
-          <label className="block text-[11px] tracking-micro uppercase text-green-mint font-semibold">
+          <label className="block text-[11px] tracking-micro uppercase text-green-700 font-semibold">
             Name
           </label>
           <input
@@ -147,15 +148,15 @@ export default function ExercisePicker({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             autoFocus
-            className="w-full bg-card border border-card-edge text-ink rounded-xl px-4 h-11 text-[16px] mt-2"
+            className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-[16px] mt-2"
           />
-          <label className="block text-[11px] tracking-micro uppercase text-green-mint font-semibold mt-4">
+          <label className="block text-[11px] tracking-micro uppercase text-green-700 font-semibold mt-4">
             Muscle group
           </label>
           <select
             value={newGroup}
             onChange={(e) => setNewGroup(e.target.value as MuscleGroup)}
-            className="w-full bg-card border border-card-edge text-ink rounded-xl px-4 h-11 text-[16px] mt-2"
+            className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-[16px] mt-2"
           >
             {MUSCLE_GROUPS.map((g) => (
               <option key={g} value={g}>
@@ -168,7 +169,7 @@ export default function ExercisePicker({
               type="checkbox"
               checked={newCompound}
               onChange={(e) => setNewCompound(e.target.checked)}
-              className="w-5 h-5 accent-green-deep"
+              className="w-5 h-5 accent-green-700"
             />
             Compound lift
           </label>
@@ -176,7 +177,7 @@ export default function ExercisePicker({
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="flex-1 bg-card border border-card-edge text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+              className="flex-1 bg-white border border-hairline text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
             >
               Back
             </button>
@@ -184,7 +185,7 @@ export default function ExercisePicker({
               type="button"
               onClick={handleCreateNew}
               disabled={!newName.trim() || busy}
-              className="flex-1 bg-green-deep text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+              className="flex-1 bg-green-700 text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
             >
               Create &amp; Add
             </button>

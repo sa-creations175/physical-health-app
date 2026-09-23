@@ -15,7 +15,7 @@ import {
   type DayIntensity,
 } from '../../lib/bundleHelpers';
 import { bundleDots } from '../../lib/dotHelpers';
-import { PILLAR_COLORS, fillFraction } from '../../lib/pillarColors';
+import { fillFraction } from '../../lib/progress';
 import { pillarCallout } from '../../lib/pillarNarrative';
 import {
   startOfWeekISODate,
@@ -23,20 +23,21 @@ import {
   todayISODate,
 } from '../../lib/dateHelpers';
 import type { BundleLog } from '../../db/types';
+import { COLOR } from '../../lib/brand';
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const INTENSITY_FILL: Record<DayIntensity, string> = {
-  none: '#eef1ef',
-  low: '#d3eee2',
-  medium: '#79caa9',
-  full: '#0F6E56',
+  none: COLOR.stone,
+  low: COLOR.green100,
+  medium: COLOR.green300,
+  full: COLOR.green700,
 };
 const INTENSITY_INITIAL: Record<DayIntensity, string> = {
-  none: '#6b756e',
-  low: '#0F6E56',
-  medium: '#0d3a2c',
-  full: '#ffffff',
+  none: COLOR.muted,
+  low: COLOR.green700,
+  medium: COLOR.green900,
+  full: COLOR.white,
 };
 
 export default function BundleActivityCard({
@@ -85,17 +86,13 @@ export default function BundleActivityCard({
   const totals = getWeeklyTotals(weekLogs, mobilityMin);
   const qualifyingDays = weekLogs.filter(isDayQualifying).length;
   const weekOnTrack = bundleTarget > 0 && qualifyingDays >= bundleTarget;
-  const pillar = PILLAR_COLORS.bundle;
   const callout =
     bundleTarget > 0
-      ? {
-          text: pillarCallout(
+      ? pillarCallout(
             'bundle',
             fillFraction(qualifyingDays, bundleTarget),
             today,
-          ),
-          color: pillar.fill,
-        }
+          )
       : undefined;
   const dots = bundleDots(byDate, prefs);
   const todayLog = byDate.get(today) ?? null;
@@ -106,20 +103,14 @@ export default function BundleActivityCard({
       badge={
         <>
           {qualifyingDays} / {bundleTarget}
-          {weekOnTrack && <span style={{ color: pillar.text }}> ✓</span>}
+          {weekOnTrack && <span className="text-green-700"> ✓</span>}
         </>
       }
       dots={dots}
       expanded={expanded}
       onToggle={onToggle}
       icon={<BundleIcon />}
-      fill={{
-        color: pillar.fill,
-        fraction: fillFraction(qualifyingDays, bundleTarget),
-        complete: weekOnTrack,
-        accent: pillar.text,
-      }}
-      pillar={{ key: 'bundle', color: pillar.fill }}
+      pillar="bundle"
       callout={callout}
     >
       {/* Weekly intensity grid */}
@@ -136,7 +127,7 @@ export default function BundleActivityCard({
               className="relative w-full h-9 rounded-md flex items-center justify-center"
               style={{
                 background: INTENSITY_FILL[intensity],
-                border: showNudge ? '2px solid #0F6E56' : undefined,
+                border: showNudge ? `2px solid ${COLOR.green700}` : undefined,
               }}
             >
               <span
@@ -168,19 +159,19 @@ export default function BundleActivityCard({
 
       <p
         className={`mt-2 text-[12px] text-center ${
-          weekOnTrack ? 'text-green-mid' : 'text-[#5f6b65]'
+          weekOnTrack ? 'text-green-700' : 'text-muted'
         }`}
       >
         {weekOnTrack ? '✓ Week on track' : `${qualifyingDays} of ${bundleTarget} days this week`}
       </p>
 
       {/* Today's log */}
-      <div className="mt-3 pt-3 border-t" style={{ borderColor: '#f0f2f0' }}>
-        <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
+      <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
+        <p className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
           Log today
         </p>
         {(todayLog?.watch_duration_minutes ?? 0) > 0 && (
-          <p className="mt-1 text-[12px] text-[#0F6E56]">
+          <p className="mt-1 text-[12px] text-green-700">
             ⌚ Apple Watch · {todayLog?.watch_duration_minutes} min strength
           </p>
         )}
@@ -221,15 +212,15 @@ function WeeklyBar({
   return (
     <div>
       <div className="flex justify-between items-baseline">
-        <span className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
+        <span className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
           {label}
         </span>
-        <span className="text-[11px] text-[#0d1f18]">
+        <span className="text-[11px] text-ink">
           {total.toLocaleString()} / {weeklyTarget.toLocaleString()}
         </span>
       </div>
       <div className="mt-1">
-        <ProgressBar value={total} max={weeklyTarget} color="green-deep" trackColor="#e7ece8" />
+        <ProgressBar value={total} max={weeklyTarget} />
       </div>
     </div>
   );

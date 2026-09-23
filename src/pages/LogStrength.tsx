@@ -22,6 +22,7 @@ import {
 import { formatSetMagnitude } from '../lib/setFormat';
 import DateBlock from '../components/ui/DateBlock';
 import type { SessionType } from '../db/types';
+import { COLOR } from '../lib/brand';
 
 const STRENGTH_TYPE_LABEL: Record<'upper' | 'lower' | 'full_body', string> = {
   upper: 'Upper Body',
@@ -260,7 +261,7 @@ export default function LogStrength() {
       <h1 className="text-[22px] font-medium text-ink mt-1">
         What kind of session?
       </h1>
-      <p className="text-[12px] text-ink-soft mt-1">
+      <p className="text-[12px] text-muted mt-1">
         Tap to start logging.
       </p>
 
@@ -337,9 +338,9 @@ export default function LogStrength() {
                 type="button"
                 onClick={() => handleTap(opt.value)}
                 disabled={routing !== null}
-                style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-                className={`bg-card border rounded-xl p-4 text-left min-h-[64px] transition-colors flex items-center justify-between ${
-                  accented ? 'border-green-mint' : 'border-card-edge'
+                style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
+                className={`bg-white border rounded-xl p-4 text-left min-h-[64px] transition-colors flex items-center justify-between ${
+                  accented ? 'border-green-700' : 'border-hairline'
                 } ${muted ? 'opacity-50' : ''}`}
               >
                 <span className="text-[15px] font-medium text-ink">{opt.label}</span>
@@ -347,15 +348,15 @@ export default function LogStrength() {
                     both would be redundant, and the unfinished work is the
                     more actionable signal. */}
                 {draft ? (
-                  <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint text-right leading-tight">
+                  <span className="text-[10px] tracking-micro uppercase font-semibold text-green-700 text-right leading-tight">
                     Resume
-                    <span className="block text-card-mute normal-case tracking-normal font-normal mt-0.5">
+                    <span className="block text-muted normal-case tracking-normal font-normal mt-0.5">
                       started {timeOfDayLabel(draft.created_at)}
                     </span>
                   </span>
                 ) : (
                   opt.value !== 'cardio' && suggested === opt.value && (
-                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-mint">
+                    <span className="text-[10px] tracking-micro uppercase font-semibold text-green-700">
                       Due next
                     </span>
                   )
@@ -420,17 +421,17 @@ function StaleDraftCard({
 
   return (
     <div
-      className="bg-card border border-card-edge rounded-xl p-4"
-      style={{ borderLeftWidth: '3px', borderLeftColor: '#d98a2b' }}
+      className="bg-white border border-hairline rounded-xl p-4"
+      style={{ borderLeftWidth: '3px', borderLeftColor: COLOR.amber }}
     >
-      <p className="text-[10px] tracking-micro uppercase font-semibold text-[#b56f1d]">
+      <p className="text-[10px] tracking-micro uppercase font-semibold text-amber-text">
         Unfinished session
       </p>
       <p className="text-[14px] text-ink mt-1 leading-snug">
         You have an unfinished <span className="font-semibold">{label}</span>{' '}
         session from {shortDateLabel(draft.date)}.
       </p>
-      <p className="text-[12px] text-card-mute mt-0.5">
+      <p className="text-[12px] text-muted mt-0.5">
         {draft.exercises.length} exercise
         {draft.exercises.length === 1 ? '' : 's'} · {totalSets} set
         {totalSets === 1 ? '' : 's'}
@@ -439,29 +440,29 @@ function StaleDraftCard({
       <button
         type="button"
         onClick={() => setViewing((v) => !v)}
-        className="mt-2 text-green-mid text-[12px] font-medium"
+        className="mt-2 text-green-700 text-[12px] font-medium"
       >
         {viewing ? 'Hide contents ▴' : 'View contents ▾'}
       </button>
 
       {viewing && (
-        <div className="mt-2 bg-charcoal border border-card-edge rounded-lg p-3 space-y-2">
+        <div className="mt-2 bg-paper border border-hairline rounded-lg p-3 space-y-2">
           {draft.exercises.length === 0 ? (
-            <p className="text-[12px] text-card-mute">No exercises logged yet.</p>
+            <p className="text-[12px] text-muted">No exercises logged yet.</p>
           ) : (
             draft.exercises.map((ex, i) => (
               <div key={i}>
                 <p className="text-[13px] text-ink font-medium">{ex.name}</p>
                 {ex.sets.length === 0 ? (
-                  <p className="text-[11px] text-card-mute">No sets</p>
+                  <p className="text-[11px] text-muted">No sets</p>
                 ) : (
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
                     {ex.sets.map((s) => (
                       <span key={s.id} className="text-[12px]">
-                        <span className="text-ink-body font-medium">
+                        <span className="text-ink font-medium">
                           {s.weight}
                         </span>
-                        <span className="text-card-mute">
+                        <span className="text-muted">
                           ×{formatSetMagnitude(s)}
                         </span>
                       </span>
@@ -480,7 +481,7 @@ function StaleDraftCard({
             type="button"
             onClick={() => onResume()}
             disabled={busy}
-            style={{ backgroundColor: '#0F6E56' }}
+            style={{ backgroundColor: COLOR.green700 }}
             className="rounded-xl p-3 text-[14px] font-medium text-white disabled:opacity-50"
           >
             Resume
@@ -490,7 +491,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => setMode('date')}
               disabled={busy}
-              className="rounded-xl p-3 text-[13px] font-medium text-ink bg-[#eef1ef] border border-card-edge disabled:opacity-50"
+              className="rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
             >
               Resume + change date
             </button>
@@ -501,7 +502,7 @@ function StaleDraftCard({
                 setMode('discard');
               }}
               disabled={busy}
-              className="rounded-xl p-3 text-[13px] font-medium text-[#7a2222] bg-[#eef1ef] border border-card-edge disabled:opacity-50"
+              className="rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
             >
               Discard
             </button>
@@ -522,7 +523,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => onResume(date)}
               disabled={busy}
-              style={{ backgroundColor: '#0F6E56' }}
+              style={{ backgroundColor: COLOR.green700 }}
               className="flex-1 rounded-xl p-3 text-[13px] font-medium text-white disabled:opacity-50"
             >
               Resume on this date
@@ -531,7 +532,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => setMode('idle')}
               disabled={busy}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-[#eef1ef] border border-card-edge disabled:opacity-50"
+              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
             >
               Cancel
             </button>
@@ -549,15 +550,14 @@ function StaleDraftCard({
             <button
               type="button"
               onClick={() => setMode('idle')}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-[#eef1ef] border border-card-edge"
+              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-stone border border-hairline"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={onDiscard}
-              style={{ background: '#7a2222' }}
-              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-white"
+              className="flex-1 rounded-xl p-3 text-[13px] font-medium text-ink bg-white border border-hairline-warm"
             >
               Discard
             </button>
@@ -609,13 +609,13 @@ function RepeatPanel({
   return (
     <div
       ref={ref}
-      className={`bg-card border border-card-edge rounded-xl p-4 transition-[opacity,transform] duration-100 ease-out ${
+      className={`bg-white border border-hairline rounded-xl p-4 transition-[opacity,transform] duration-100 ease-out ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
       }`}
     >
       <div
         className="text-[12px] mb-3"
-        style={{ color: '#6b756e' }}
+        style={{ color: COLOR.muted }}
       >
         Last {STRENGTH_LABEL[type]} · {shortDateLabel(summary.date)} ·{' '}
         {summary.exerciseCount} exercise{summary.exerciseCount === 1 ? '' : 's'}
@@ -625,7 +625,7 @@ function RepeatPanel({
           type="button"
           onClick={onRepeat}
           disabled={disabled}
-          style={{ backgroundColor: '#0F6E56' }}
+          style={{ backgroundColor: COLOR.green700 }}
           className="rounded-xl p-3 text-[14px] font-medium text-white"
         >
           Repeat last session
@@ -634,8 +634,8 @@ function RepeatPanel({
           type="button"
           onClick={onStartFresh}
           disabled={disabled}
-          style={{ backgroundColor: '#eef1ef' }}
-          className="rounded-xl p-3 text-[14px] font-medium text-ink border border-card-edge"
+          style={{ backgroundColor: COLOR.stone }}
+          className="rounded-xl p-3 text-[14px] font-medium text-ink border border-hairline"
         >
           Start fresh
         </button>

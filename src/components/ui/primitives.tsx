@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { narrowDayLabel } from '../../lib/dateHelpers';
+import { COLOR } from '../../lib/brand';
 
 export function Card({
   children,
@@ -9,50 +10,43 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-card border border-card-edge rounded-xl ${className}`}>
+    <div className={`bg-white border border-hairline rounded-xl ${className}`}>
       {children}
     </div>
   );
 }
 
 export function SectionLabel({ children }: { children: ReactNode }) {
-  // All section micro-labels: green (token green-mint #157A5C), 9px, weight 600, tracked.
+  // All section micro-labels: Green 700, 9px, weight 600, tracked.
   return (
-    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-mint">
+    <p className="text-[9px] tracking-micro uppercase font-semibold text-green-700">
       {children}
     </p>
   );
 }
 
-const PROGRESS_COLOR_MAP: Record<string, string> = {
-  'green-deep': '#0F6E56',
-  'green-leaf': '#3B6D11',
-  'green-light': '#9FE1CB',
-  'water-blue': '#185FA5',
-};
-
+// Progress bar. Colour is not a choice: Stone track, Green 700 fill, and
+// Bronze Amber only when the bar shows a miss against the person's own goal.
 export function ProgressBar({
   value,
   max,
-  color = 'green-deep',
-  trackColor = '#e7ece8',
+  miss = false,
   height = 4,
 }: {
   value: number;
   max: number;
-  color?: 'green-deep' | 'green-leaf' | 'green-light' | 'water-blue';
-  trackColor?: string;
+  miss?: boolean;
   height?: number;
 }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
     <div
-      className="rounded-full overflow-hidden w-full"
-      style={{ height, background: trackColor }}
+      className="rounded-full overflow-hidden w-full bg-stone"
+      style={{ height }}
     >
       <div
-        className="h-full rounded-full transition-all"
-        style={{ width: `${pct}%`, background: PROGRESS_COLOR_MAP[color] }}
+        className={`h-full rounded-full transition-all ${miss ? 'bg-amber' : 'bg-green-700'}`}
+        style={{ width: `${pct}%` }}
       />
     </div>
   );
@@ -60,11 +54,9 @@ export function ProgressBar({
 
 export function SevenDayDotRow({
   dots,
-  activeColor = '#0F6E56',
   size = 8,
 }: {
   dots: { date: string; hadSession: boolean }[];
-  activeColor?: string;
   size?: number;
 }) {
   return (
@@ -76,10 +68,10 @@ export function SevenDayDotRow({
             style={{
               width: size,
               height: size,
-              background: d.hadSession ? activeColor : '#d8ded9',
+              background: d.hadSession ? COLOR.green700 : COLOR.stone,
             }}
           />
-          <span className="text-[9px] text-card-mute uppercase tracking-micro">
+          <span className="text-[9px] text-muted uppercase tracking-micro">
             {narrowDayLabel(d.date)}
           </span>
         </div>

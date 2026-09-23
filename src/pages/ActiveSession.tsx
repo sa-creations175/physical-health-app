@@ -12,6 +12,7 @@ import {
   updateSessionDate,
 } from '../lib/strengthHelpers';
 import type { SessionExercise } from '../db/types';
+import { COLOR } from '../lib/brand';
 
 const TYPE_LABEL: Record<string, string> = {
   upper: 'Upper Body',
@@ -68,7 +69,7 @@ export default function ActiveSession() {
 
   if (!session) {
     return (
-      <div className="px-5 pt-8 text-card-mute text-[12px]">Loading session…</div>
+      <div className="px-5 pt-8 text-muted text-[12px]">Loading session…</div>
     );
   }
 
@@ -128,8 +129,8 @@ export default function ActiveSession() {
             aria-pressed={reordering}
             className={`text-[12px] font-medium uppercase tracking-micro min-h-[36px] px-3 rounded-lg border ${
               reordering
-                ? 'bg-green-deep text-white border-green-deep'
-                : 'bg-card text-green-mid border-card-edge'
+                ? 'bg-green-700 text-white border-green-700'
+                : 'bg-white text-green-700 border-hairline'
             }`}
           >
             {reordering ? '✓ Done' : '⇅ Reorder'}
@@ -139,7 +140,7 @@ export default function ActiveSession() {
 
       <div className={orderedExercises.length > 1 ? 'mt-2' : 'mt-4'}>
         {orderedExercises.length === 0 ? (
-          <div className="bg-card border border-card-edge rounded-xl p-5 text-card-mute text-[13px] text-center">
+          <div className="bg-white border border-hairline rounded-xl p-5 text-muted text-[13px] text-center">
             No exercises yet — tap below to add the first one.
           </div>
         ) : reordering ? (
@@ -165,8 +166,8 @@ export default function ActiveSession() {
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
-            className="mt-3 w-full bg-card border border-card-edge text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+            style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
+            className="mt-3 w-full bg-white border border-hairline text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
           >
             + Add Exercise
           </button>
@@ -175,7 +176,7 @@ export default function ActiveSession() {
             <button
               type="button"
               onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
-              className="mt-3 w-full bg-green-deep text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+              className="mt-3 w-full bg-green-700 text-white rounded-xl py-3.5 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
             >
               Finish Session
             </button>
@@ -188,7 +189,7 @@ export default function ActiveSession() {
             <button
               type="button"
               onClick={() => setConfirmDiscard(true)}
-              className="text-[12px] text-card-mute underline decoration-dotted underline-offset-4 min-h-[44px]"
+              className="text-[12px] text-muted underline decoration-dotted underline-offset-4 min-h-[44px]"
             >
               Discard session
             </button>
@@ -263,18 +264,18 @@ function CompactExerciseRow({
   if (!exercise) return null;
 
   const arrow =
-    'w-11 h-11 flex items-center justify-center rounded-lg border border-card-edge bg-charcoal text-ink text-[18px] leading-none disabled:opacity-30';
+    'w-11 h-11 flex items-center justify-center rounded-lg border border-hairline bg-paper text-ink text-[18px] leading-none disabled:opacity-30';
 
   return (
     <div
-      className="bg-card border border-card-edge rounded-xl px-3 py-2 mt-2 flex items-center justify-between gap-2"
-      style={{ borderLeftWidth: '2px', borderLeftColor: '#0F6E56' }}
+      className="bg-white border border-hairline rounded-xl px-3 py-2 mt-2 flex items-center justify-between gap-2"
+      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
     >
       <div className="min-w-0">
         <h3 className="text-[15px] font-medium text-ink truncate">
           {exercise.name}
         </h3>
-        <p className="text-[11px] text-card-mute">
+        <p className="text-[11px] text-muted">
           {setCount} set{setCount === 1 ? '' : 's'}
         </p>
       </div>
@@ -314,10 +315,10 @@ function DiscardConfirm({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center px-5"
-      style={{ background: 'rgba(0,0,0,0.55)' }}
+      style={{ background: COLOR.scrim }}
     >
       <div
-        className="bg-card border border-card-edge rounded-2xl p-5 w-full max-w-md mb-6"
+        className="bg-white border border-hairline rounded-2xl p-5 w-full max-w-md mb-6"
         role="dialog"
         aria-modal="true"
       >
@@ -329,7 +330,7 @@ function DiscardConfirm({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 bg-charcoal border border-card-edge text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
+            className="flex-1 bg-paper border border-hairline text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px]"
           >
             Cancel
           </button>
@@ -337,8 +338,7 @@ function DiscardConfirm({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            style={{ background: '#7a2222' }}
-            className="flex-1 text-white rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
+            className="flex-1 bg-white border border-hairline-warm text-ink rounded-xl py-3 text-[13px] font-medium uppercase tracking-micro min-h-[48px] disabled:opacity-50"
           >
             {busy ? 'Discarding…' : 'Discard'}
           </button>

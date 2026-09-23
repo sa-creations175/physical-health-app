@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Brand colour tokens — PERSONAL_OS_BRAND.md section 2. This block is the one
+   place a colour value is written. Tailwind (tailwind.config.js) and inline
+   styles (src/lib/brand.ts) both read these variables, so changing a value
+   here changes it everywhere. Colour says how you're doing, never which
+   pillar: progress is Green 700, a miss against your own goal is Bronze Amber,
+   nothing else is coloured. */
+:root {
+  --green-900: #1e4936; /* text only: the current thing */
+  --green-700: #2d7d5f; /* the brand green: buttons, fills, eyebrows, links */
+  --green-500: #4a7a62; /* text: done or secondary */
+  --green-300: #9cc7b3; /* lines and rails */
+  --green-100: #e3f0eb; /* Mint: surfaces, header strip */
+  --amber: #bd7a24; /* Bronze Amber: a miss, and only a miss */
+  --amber-tint: #fbf2e3;
+  --amber-edge: #ebdcc2;
+  --amber-text: #b5822c;
+  --stone: #eceae5; /* neutral: empty tracks, disabled */
+  --paper: #fcfcfb; /* the page */
+  --ink: #1c1f1d;
+  --muted: #6d716c;
+  --hint: #8b8f8a;
+  --white: #ffffff;
+  --hairline: #e3e8e4; /* on cards */
+  --hairline-warm: #d9d6cf; /* on warm surfaces */
+  --scrim: rgb(0 0 0 / 0.4);
+}
+
 html,
 body,
 #root {
@@ -10,15 +37,15 @@ body,
 }
 
 body {
-  background: #f5f7f5;
-  color: #0d1f18;
+  background: var(--paper);
+  color: var(--ink);
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Keep page content clear of the notch / home indicator (viewport-fit=cover
-     lets the app draw edge-to-edge). The dashboard header re-bleeds its green
-     up into the top inset with a negative margin so it fills behind the
-     status bar; the fixed bottom nav carries its own bottom inset. */
+     lets the app draw edge-to-edge). The header strip re-bleeds its Mint up
+     into the top inset with a negative margin so it fills behind the status
+     bar; the fixed bottom nav carries its own bottom inset. */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
 }

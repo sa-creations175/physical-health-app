@@ -3,6 +3,7 @@ import { Settings as SettingsIcon } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { computeStreak } from '../../lib/dashboardQueries';
 import { dayName, dateLabel, weekNumber } from '../../lib/dateHelpers';
+import { COLOR } from '../../lib/brand';
 
 export default function DashboardHeader() {
   const streak = useLiveQuery(() => computeStreak(), [], 0) ?? 0;
@@ -21,7 +22,7 @@ export default function DashboardHeader() {
       style={{
         marginTop: 'calc(-1 * env(safe-area-inset-top))',
         paddingTop: 'calc(env(safe-area-inset-top) + 2rem)',
-        background: '#0f3d2e',
+        background: COLOR.green700,
       }}
       className="relative overflow-hidden px-5 pb-5 flex items-start justify-between gap-3"
     >
@@ -30,7 +31,7 @@ export default function DashboardHeader() {
         <h1 className="text-[22px] font-medium text-white leading-tight">
           {dayName(now)}
         </h1>
-        <p className="text-[12px] text-green-light mt-1">
+        <p className="text-[12px] text-green-300 mt-1">
           {dateLabel(now)} · Week {weekNumber(now)}
         </p>
       </div>
@@ -67,7 +68,7 @@ function HeroArcs() {
       viewBox="0 0 230 230"
       fill="none"
     >
-      <g stroke="#ffffff" strokeOpacity="0.09" fill="none">
+      <g stroke={COLOR.white} strokeOpacity="0.09" fill="none">
         <circle cx="150" cy="115" r="46" strokeWidth="2.5" />
         <circle cx="150" cy="115" r="80" strokeWidth="2.5" />
         <circle cx="150" cy="115" r="114" strokeWidth="2.5" />

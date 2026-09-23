@@ -3,9 +3,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { getFitnessScore } from '../../lib/fitnessScore';
 import { getCaloriesByDay } from '../../lib/healthkit';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
+import { COLOR } from '../../lib/brand';
 
 // Per-day calorie breakdown for the Fitness page. A week of calories-burned
-// bars (S–S) in pillar orange, scaled to the week's max, with future/empty
+// bars (S–S) in Green 700, scaled to the week's max, with future/empty
 // days as faint grey stubs; below a hairline, the week's average exercise
 // minutes and steps. All numbers come from the same source as the Home
 // Fitness Score (calories + steps = HealthKit; exercise minutes = the score's
@@ -16,8 +17,7 @@ const BAR_AREA_H = 56; // px — tallest bar; others scale to the week's max
 const STUB_H = 4; // px — faint grey stub for empty / future days
 const SCALE_LABEL_H = 12; // px — headroom above the bars for the max-value cap
 
-const ORANGE = '#e0742f';
-const STUB_GREY = '#e8ebe8';
+const STUB_GREY = COLOR.stone;
 
 export default function CaloriesBreakdownCard() {
   const score = useLiveQuery(() => getFitnessScore(), []);
@@ -43,10 +43,10 @@ export default function CaloriesBreakdownCard() {
   const exerciseMin = score?.strip.exerciseMinutes ?? 0;
 
   return (
-    <div className="bg-card shadow-card rounded-2xl p-4">
+    <div className="bg-white shadow-card rounded-2xl p-4">
       <p
         className="text-[10px] font-display uppercase tracking-micro"
-        style={{ color: '#0f3d2e' }}
+        style={{ color: COLOR.green700 }}
       >
         Calories Burned
       </p>
@@ -59,11 +59,11 @@ export default function CaloriesBreakdownCard() {
           <div className="absolute inset-x-0 top-0 flex items-center gap-1.5">
             <span
               className="text-[9px] leading-none whitespace-nowrap"
-              style={{ color: '#a8b3ad' }}
+              style={{ color: COLOR.hint }}
             >
               {max.toLocaleString()} cal
             </span>
-            <div className="flex-1" style={{ borderTop: '0.5px dashed #e0e4e0' }} />
+            <div className="flex-1" style={{ borderTop: `0.5px dashed ${COLOR.stone}` }} />
           </div>
         )}
         <div className="flex items-end gap-1.5" style={{ height: BAR_AREA_H }}>
@@ -85,7 +85,7 @@ export default function CaloriesBreakdownCard() {
                   width: '68%',
                   height,
                   borderRadius: 3,
-                  background: isStub ? STUB_GREY : ORANGE,
+                  background: isStub ? STUB_GREY : COLOR.green700,
                 }}
               />
             </div>
@@ -100,27 +100,27 @@ export default function CaloriesBreakdownCard() {
           <span
             key={date}
             className="flex-1 text-center text-[10px]"
-            style={{ color: date > today ? '#c2ccc6' : '#5a7a6e' }}
+            style={{ color: date > today ? COLOR.hint : COLOR.muted }}
           >
             {DAY_INITIALS[i]}
           </span>
         ))}
       </div>
 
-      <div className="mt-3" style={{ borderTop: '0.5px solid #e0e4e0' }} />
+      <div className="mt-3" style={{ borderTop: `0.5px solid ${COLOR.stone}` }} />
 
       <div className="mt-3 flex">
         <div className="flex-1 text-center">
           <p className="text-[15px] font-medium text-ink">
             {exerciseMin.toLocaleString()}
           </p>
-          <p className="text-[10px] text-[#5a7a6e] mt-0.5">avg exercise min/day</p>
+          <p className="text-[10px] text-muted mt-0.5">avg exercise min/day</p>
         </div>
         <div className="flex-1 text-center">
           <p className="text-[15px] font-medium text-ink">
             {stepsAvg === null ? '—' : stepsAvg.toLocaleString()}
           </p>
-          <p className="text-[10px] text-[#5a7a6e] mt-0.5">avg steps/day</p>
+          <p className="text-[10px] text-muted mt-0.5">avg steps/day</p>
         </div>
       </div>
     </div>

@@ -14,7 +14,7 @@ const tabs = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 bg-charcoal border-t border-divider"
+      className="fixed bottom-0 inset-x-0 bg-paper border-t border-hairline"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="grid grid-cols-5">
@@ -25,7 +25,7 @@ export default function BottomNav() {
               end={end}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center gap-1 py-3 min-h-[64px] transition-colors ${
-                  isActive ? 'text-green-mint' : 'text-ink-hint'
+                  isActive ? 'text-green-700' : 'text-hint'
                 }`
               }
             >

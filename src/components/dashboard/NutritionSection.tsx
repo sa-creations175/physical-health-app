@@ -24,17 +24,14 @@ export default function NutritionSection({
         <NutritionRow
           label="Protein"
           targetText={`${protein}g`}
-          barColor="green-deep"
         />
         <NutritionRow
           label="Water"
           targetText={`${water} glasses`}
-          barColor="water-blue"
         />
         <NutritionRow
           label="Vegetables"
           targetText={`${veg} servings`}
-          barColor="green-light"
         />
         <SupplementsRow />
       </Card>
@@ -45,22 +42,20 @@ export default function NutritionSection({
 function NutritionRow({
   label,
   targetText,
-  barColor,
 }: {
   label: string;
   targetText: string;
-  barColor: 'green-deep' | 'water-blue' | 'green-light';
 }) {
   return (
     <div>
       <div className="flex justify-between items-baseline">
-        <span className="text-[12px] text-ink-body">{label}</span>
-        <span className="text-[11px] text-card-mute">
+        <span className="text-[12px] text-ink">{label}</span>
+        <span className="text-[11px] text-muted">
           no data yet · target {targetText}
         </span>
       </div>
       <div className="mt-1.5">
-        <ProgressBar value={0} max={1} color={barColor} />
+        <ProgressBar value={0} max={1} />
       </div>
     </div>
   );
@@ -69,8 +64,8 @@ function NutritionRow({
 function SupplementsRow() {
   return (
     <div className="flex justify-between items-baseline">
-      <span className="text-[12px] text-ink-body">Supplements</span>
-      <span className="text-[11px] text-card-mute">configure in settings</span>
+      <span className="text-[12px] text-ink">Supplements</span>
+      <span className="text-[11px] text-muted">configure in settings</span>
     </div>
   );
 }

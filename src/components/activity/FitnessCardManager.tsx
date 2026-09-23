@@ -1,5 +1,6 @@
 import { useFitnessCardConfig } from '../../lib/useFitnessCardConfig';
 import { FITNESS_CARD_KEYS } from '../../lib/defaults';
+import { COLOR } from '../../lib/brand';
 
 // Inline panel of per-card show/hide toggles for the Fitness page. Each toggle
 // writes straight through to user_preferences (via useFitnessCardConfig), so
@@ -8,10 +9,10 @@ export default function FitnessCardManager() {
   const { config, toggle } = useFitnessCardConfig();
 
   return (
-    <div className="bg-card shadow-card rounded-2xl p-4">
+    <div className="bg-white shadow-card rounded-2xl p-4">
       <p
         className="text-[10px] font-display uppercase tracking-micro"
-        style={{ color: '#0f3d2e' }}
+        style={{ color: COLOR.green700 }}
       >
         Show / hide cards
       </p>
@@ -30,7 +31,7 @@ export default function FitnessCardManager() {
             >
               <span
                 className="text-[14px]"
-                style={{ color: visible ? '#1a2a24' : '#9aa8a1' }}
+                style={{ color: visible ? COLOR.ink : COLOR.hint }}
               >
                 {label}
               </span>
@@ -53,7 +54,7 @@ function ToggleTrack({ on }: { on: boolean }) {
       style={{
         width: 38,
         height: 22,
-        background: on ? '#0F6E56' : '#d2dad5',
+        background: on ? COLOR.green700 : COLOR.stone,
       }}
     >
       <span
@@ -62,7 +63,6 @@ function ToggleTrack({ on }: { on: boolean }) {
           width: 18,
           height: 18,
           left: on ? 18 : 2,
-          boxShadow: '0 1px 2px rgba(0,0,0,0.18)',
         }}
       />
     </span>

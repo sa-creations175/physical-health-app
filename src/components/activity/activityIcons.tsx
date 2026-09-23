@@ -1,8 +1,9 @@
 // Small 18px accent icons for each activity card's label row (Build 2.8).
+import { COLOR } from '../../lib/brand';
 // Green-mid, inline SVG — no icon-library dependency. Drawn simply so they
 // stay recognizable at 18px.
 
-const TINT = '#1a6b4a';
+const TINT = COLOR.green700;
 
 function Base({
   children,
@@ -98,7 +99,7 @@ export function BundleIcon() {
         d="M12 22c-3.3 0-6-2.4-6-5.6 0-2 1-3.7 2.4-5C9.2 9.7 9.3 7 8.6 4.4c2.6 1.5 4.1 3.6 4.6 5.7.5-1 .7-2 .5-3.1 2.1 1.7 3.2 4.1 3.2 6.6 0 3.2-2.6 5.6-4.9 5.6z"
       />
       <path
-        fill="#a8dfc0"
+        fill={COLOR.green300}
         d="M12 22c-1.7 0-3-1.3-3-3 0-1.3.7-2.3 1.6-3 .3 1 .8 1.5 1.4 1.9.9-.9 1-2.1 1-2.9 1 1 1.5 2.3 1.5 3.4 0 1.8-1.4 3.6-3.5 3.6z"
       />
     </svg>

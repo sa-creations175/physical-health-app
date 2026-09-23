@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { COLOR } from '../../lib/brand';
 
 // Accent glyphs that sit at the top-right of each dashboard pillar. Rendered
 // in a soft mint at full opacity — present but subtle on the white card /
@@ -7,7 +8,7 @@ import type { ReactNode } from 'react';
 // cleanly at 28px. Decorative only — aria-hidden, since the adjacent section
 // label already names the pillar.
 
-const ICON_TINT = '#5DCAA5';
+const ICON_TINT = COLOR.green700;
 
 function PillarGlyph({
   children,
