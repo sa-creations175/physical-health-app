@@ -7,7 +7,8 @@ import BottomSheet from '../components/ui/BottomSheet';
 import { useToast } from '../components/ui/Toast';
 import SessionExerciseCard from '../components/strength/SessionExerciseCard';
 import ExerciseSheet from '../components/strength/ExerciseSheet';
-import { discardSession } from '../lib/strengthHelpers';
+import { discardSession, updateSessionDate } from '../lib/strengthHelpers';
+import DateBlock from '../components/ui/DateBlock';
 import {
   addExerciseToInstance,
   isSessionComplete,
@@ -45,6 +46,7 @@ export default function ActiveSession() {
   const [sheet, setSheet] = useState<SheetState>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
 
   const session = useLiveQuery(() => db.sessions.get(sessionId), [sessionId]);
   const links = useLiveQuery(
@@ -245,9 +247,19 @@ export default function ActiveSession() {
       <HeaderStrip
         eyebrow={`Body · Fitness · ${typeLabel}`}
         title={title}
-        subtitle={`${dateLabel} · ${doneLinks.length} of ${links.length} exercise${
-          links.length === 1 ? '' : 's'
-        } done`}
+        subtitle={
+          <>
+            <button
+              type="button"
+              onClick={() => setDateOpen(true)}
+              aria-label={`Session date, ${dateLabel}. Change date`}
+              className="underline decoration-dotted underline-offset-4"
+            >
+              {dateLabel}
+            </button>
+            {` · ${doneLinks.length} of ${links.length} exercise${links.length === 1 ? '' : 's'} done`}
+          </>
+        }
       />
 
       <div className="px-4">
@@ -318,6 +330,28 @@ export default function ActiveSession() {
           onPick={(ex) => void pick(ex)}
           onClose={() => setSheet(null)}
         />
+      )}
+
+      {dateOpen && (
+        <BottomSheet onClose={() => setDateOpen(false)} label="Session date">
+          <h2 className="text-heading text-ink pr-10">Session date</h2>
+          <p className="text-label text-muted mt-0.5">
+            For a session logged after the day it happened.
+          </p>
+          <div className="mt-3">
+            <DateBlock
+              value={session.date}
+              onChange={(d) => {
+                if (d && d !== session.date) void updateSessionDate(sessionId, d);
+              }}
+              label="Session Date"
+              ariaLabel="Session date"
+            />
+          </div>
+          <button type="button" onClick={() => setDateOpen(false)} className="btn-primary w-full mt-4">
+            Done
+          </button>
+        </BottomSheet>
       )}
 
       {confirmDiscard && (
