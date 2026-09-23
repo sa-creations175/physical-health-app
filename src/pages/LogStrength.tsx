@@ -6,13 +6,10 @@ import {
   discardSession,
   getDraftSessionByType,
   getDraftSessions,
-  getLastSessionSummaryByType,
-  repeatLastSession,
   suggestNextLiftingType,
   updateSessionDate,
   type DraftSessionDetail,
   type DraftSessionSummary,
-  type LastSessionSummary,
 } from '../lib/strengthHelpers';
 import {
   shortDateLabel,
@@ -30,10 +27,10 @@ const STRENGTH_TYPE_LABEL: Record<'upper' | 'lower' | 'full_body', string> = {
   full_body: 'Full Body',
 };
 
-// Strength tiles: tap-to-route by default. When a completed session of the
-// tapped type exists, the tap instead opens an inline panel beneath the
-// tile offering "Repeat last session" or "Start fresh". Cardio is
-// unaffected — it bypasses the session model and routes immediately.
+// Strength tiles: a tap resumes that type's unfinished session if there is
+// one, otherwise starts a new instance, which opens as a copy of the type's
+// standing exercise list. Cardio bypasses the session model and routes
+// immediately.
 type StrengthValue = 'upper' | 'lower' | 'full_body';
 type TypeValue = StrengthValue | 'cardio';
 
@@ -46,14 +43,6 @@ const TYPE_OPTIONS: { value: TypeValue; label: string }[] = [
 
 const STRENGTH_VALUES: StrengthValue[] = ['upper', 'lower', 'full_body'];
 
-// Friendly label for the panel context line — matches the tile label so
-// the user reads "Last Lower Body · …" not "Last lower · …".
-const STRENGTH_LABEL: Record<StrengthValue, string> = {
-  lower: 'Lower Body',
-  upper: 'Upper Body',
-  full_body: 'Full Body',
-};
-
 export default function LogStrength() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -62,10 +51,6 @@ export default function LogStrength() {
   const [suggested, setSuggested] = useState<SessionType | null>(null);
   const [routing, setRouting] = useState<TypeValue | null>(null);
   // null when no panel; otherwise the strength type currently expanded.
-  const [panelType, setPanelType] = useState<StrengthValue | null>(null);
-  const [lastByType, setLastByType] = useState<
-    Record<StrengthValue, LastSessionSummary | null>
-  >({ upper: null, lower: null, full_body: null });
   const [draftByType, setDraftByType] = useState<
     Record<StrengthValue, DraftSessionSummary | null>
   >({ upper: null, lower: null, full_body: null });
@@ -75,12 +60,8 @@ export default function LogStrength() {
   // banner updates without a refetch.
   const [drafts, setDrafts] = useState<DraftSessionDetail[]>([]);
 
-  const tileRefs = useRef<Partial<Record<StrengthValue, HTMLButtonElement>>>({});
-  const panelRef = useRef<HTMLDivElement | null>(null);
-  // Loaded flags for the two async sets — gate the ?type=X auto-tap so
-  // we don't fire before lastByType / draftByType know what they are.
+  // Gates the ?type=X auto-tap so it doesn't fire before draftByType is known.
   const [draftLoaded, setDraftLoaded] = useState(false);
-  const [lastLoaded, setLastLoaded] = useState(false);
   const autoTappedRef = useRef(false);
 
   useEffect(() => {
@@ -93,27 +74,6 @@ export default function LogStrength() {
       .catch((err) => {
         if (cancelled) return;
         console.error('Failed to suggest type:', err);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Load "last completed session" summary per strength type so the panel
-  // can decide whether to open + render the context line. Refreshes when
-  // we return to this screen (e.g. after a session completes); the
-  // dependency-free effect refires on mount.
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all(STRENGTH_VALUES.map((t) => getLastSessionSummaryByType(t)))
-      .then(([upper, lower, full_body]) => {
-        if (cancelled) return;
-        setLastByType({ upper, lower, full_body });
-        setLastLoaded(true);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('Failed to load last sessions:', err);
       });
     return () => {
       cancelled = true;
@@ -162,62 +122,29 @@ export default function LogStrength() {
   // get tapping the tile by hand. Fires exactly once per mount.
   useEffect(() => {
     if (autoTappedRef.current) return;
-    if (!draftLoaded || !lastLoaded) return;
+    if (!draftLoaded) return;
     const param = searchParams.get('type');
     if (param !== 'upper' && param !== 'lower' && param !== 'full_body') return;
     autoTappedRef.current = true;
     void handleTap(param);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftLoaded, lastLoaded, searchParams]);
-
-  // Outside-click closes the panel. We also dismiss on Escape so keyboard
-  // users aren't trapped.
-  useEffect(() => {
-    if (panelType === null) return;
-    const onPointer = (e: PointerEvent) => {
-      const target = e.target as Node;
-      const tile = tileRefs.current[panelType];
-      if (panelRef.current?.contains(target)) return;
-      if (tile?.contains(target)) return;
-      setPanelType(null);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPanelType(null);
-    };
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [panelType]);
+  }, [draftLoaded, searchParams]);
 
   async function handleTap(value: TypeValue) {
     if (routing) return;
 
     if (value === 'cardio') {
-      setPanelType(null);
       setRouting(value);
       navigate('/log/cardio');
       return;
     }
 
-    // Resume takes priority over both the repeat panel and a fresh
-    // session — a half-finished workout should never get silently
-    // shadowed by a new row.
+    // Resume takes priority over a fresh session — a half-finished workout
+    // should never get silently shadowed by a new row.
     const draft = draftByType[value];
     if (draft) {
-      setPanelType(null);
       setRouting(value);
       navigate(`/log/strength/active/${draft.sessionId}`);
-      return;
-    }
-
-    // Strength tile — open panel iff a completed session of this type
-    // exists. Otherwise route directly with the existing flow.
-    const summary = lastByType[value];
-    if (summary) {
-      setPanelType(value);
       return;
     }
 
@@ -227,30 +154,6 @@ export default function LogStrength() {
       navigate(`/log/strength/active/${id}`);
     } catch (err) {
       console.error('Failed to start session:', err);
-      setRouting(null);
-    }
-  }
-
-  async function handleStartFresh(value: StrengthValue) {
-    if (routing) return;
-    setRouting(value);
-    try {
-      const id = await createSession(value, sessionDate);
-      navigate(`/log/strength/active/${id}`);
-    } catch (err) {
-      console.error('Failed to start fresh session:', err);
-      setRouting(null);
-    }
-  }
-
-  async function handleRepeat(value: StrengthValue) {
-    if (routing) return;
-    setRouting(value);
-    try {
-      const id = await repeatLastSession(value, sessionDate);
-      navigate(`/log/strength/active/${id}`);
-    } catch (err) {
-      console.error('Failed to repeat last session:', err);
       setRouting(null);
     }
   }
@@ -306,17 +209,9 @@ export default function LogStrength() {
       <div className="grid grid-cols-1 gap-2 mt-4">
         {TYPE_OPTIONS.map((opt) => {
           const isInFlight = routing === opt.value;
-          const isPanelOpen = panelType === opt.value;
-          // Dim a tile when ANOTHER tile is in-flight, OR when the panel
-          // is open on a different tile. Both states are "we're focused
-          // somewhere else; this tile is muted background".
-          const muted =
-            (routing !== null && routing !== opt.value) ||
-            (panelType !== null && panelType !== opt.value);
-          // The selected-for-panel tile gets the same mint border treatment
-          // as the in-flight feedback so the user sees a single visual
-          // affordance for "you tapped this one".
-          const accented = isInFlight || isPanelOpen;
+          // Dim the other tiles while one is routing.
+          const muted = routing !== null && routing !== opt.value;
+          const accented = isInFlight;
           const isStrength =
             opt.value === 'upper' ||
             opt.value === 'lower' ||
@@ -329,11 +224,6 @@ export default function LogStrength() {
           return (
             <div key={opt.value} className="contents">
               <button
-                ref={(el) => {
-                  if (isStrength) {
-                    tileRefs.current[opt.value as StrengthValue] = el ?? undefined;
-                  }
-                }}
                 type="button"
                 onClick={() => handleTap(opt.value)}
                 disabled={routing !== null}
@@ -361,24 +251,13 @@ export default function LogStrength() {
                 )}
               </button>
 
-              {isStrength && (
-                <RepeatPanel
-                  open={isPanelOpen}
-                  ref={isPanelOpen ? panelRef : null}
-                  summary={lastByType[opt.value as StrengthValue]}
-                  type={opt.value as StrengthValue}
-                  onRepeat={() => handleRepeat(opt.value as StrengthValue)}
-                  onStartFresh={() => handleStartFresh(opt.value as StrengthValue)}
-                  disabled={routing !== null}
-                />
-              )}
             </div>
           );
         })}
       </div>
 
       {/* Session date — defaults to today, editable for retroactive
-          logging. Threaded into createSession / repeatLastSession so
+          logging. Threaded into createSession so
           the chosen date lands on the row when it's created. A tapped
           tile with an existing draft ignores this field — the draft's
           original date persists; edit it on the completion screen. */}
@@ -563,77 +442,6 @@ function StaleDraftCard({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-interface RepeatPanelProps {
-  open: boolean;
-  summary: LastSessionSummary | null;
-  type: StrengthValue;
-  onRepeat: () => void;
-  onStartFresh: () => void;
-  disabled: boolean;
-  ref: React.Ref<HTMLDivElement> | null;
-}
-
-// Slide-down + fade panel that sits inline beneath the tapped tile. Mounts
-// only when open so the empty state never renders. Animation uses opacity
-// + transform — no spring, no bounce; consistent with the app's flat
-// no-glow aesthetic.
-function RepeatPanel({
-  open,
-  summary,
-  type,
-  onRepeat,
-  onStartFresh,
-  disabled,
-  ref,
-}: RepeatPanelProps) {
-  // Drive the visible state through a one-tick delay so the entrance
-  // transition runs from initial → open. Without this the panel pops in
-  // because the initial render already has the open styles applied.
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    if (!open) {
-      setVisible(false);
-      return;
-    }
-    const id = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(id);
-  }, [open]);
-
-  if (!open || !summary) return null;
-
-  return (
-    <div
-      ref={ref}
-      className={`card p-4 transition-[opacity,transform] duration-100 ease-out ${
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
-      }`}
-    >
-      <div className="text-label text-muted mb-3">
-        Last {STRENGTH_LABEL[type]} · {shortDateLabel(summary.date)} ·{' '}
-        {summary.exerciseCount} exercise{summary.exerciseCount === 1 ? '' : 's'}
-      </div>
-      <div className="grid grid-cols-1 gap-2">
-        <button
-          type="button"
-          onClick={onRepeat}
-          disabled={disabled}
-          className="btn-primary"
-        >
-          Repeat last session
-        </button>
-        <button
-          type="button"
-          onClick={onStartFresh}
-          disabled={disabled}
-          className="btn-secondary"
-        >
-          Start fresh
-        </button>
-      </div>
     </div>
   );
 }

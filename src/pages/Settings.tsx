@@ -10,6 +10,7 @@ import {
 import NutritionSetupModal from '../components/nutrition/NutritionSetupModal';
 import { getActiveSeason, seasonLabel } from '../lib/nutritionSeason';
 import HeaderStrip from '../components/ui/HeaderStrip';
+import Switch from '../components/ui/Switch';
 
 export default function Settings() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
@@ -240,6 +241,26 @@ export default function Settings() {
           max={TARGET_RANGES.weekly_days.max}
           onCommit={(v) => updateUserPreferences({ bundle_target: v })}
         />
+      </section>
+
+      <section className="mt-6">
+        <SectionLabel>Workout Sessions</SectionLabel>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={prefs.one_tap_repeat !== false}
+          onClick={() => updateUserPreferences({ one_tap_repeat: prefs.one_tap_repeat === false })}
+          className="card w-full px-4 py-3 mt-2 flex items-center justify-between gap-3 text-left"
+        >
+          <span className="min-w-0">
+            <span className="block text-body text-ink">Repeat a set with one tap</span>
+            <span className="block text-label text-muted mt-0.5">
+              Tap the circle on a set you haven't typed to log it as the same as
+              last time. Off: type the set first.
+            </span>
+          </span>
+          <Switch on={prefs.one_tap_repeat !== false} />
+        </button>
       </section>
 
       <section className="mt-6">

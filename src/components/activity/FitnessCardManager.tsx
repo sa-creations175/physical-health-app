@@ -1,5 +1,6 @@
 import { useFitnessCardConfig } from '../../lib/useFitnessCardConfig';
 import { FITNESS_CARD_KEYS } from '../../lib/defaults';
+import Switch from '../ui/Switch';
 import { COLOR } from '../../lib/brand';
 
 // Inline panel of per-card show/hide toggles for the Fitness page. Each toggle
@@ -32,36 +33,11 @@ export default function FitnessCardManager() {
               >
                 {label}
               </span>
-              <ToggleTrack on={visible} />
+              <Switch on={visible} />
             </button>
           );
         })}
       </div>
     </div>
-  );
-}
-
-// Pill switch — green when on, grey when off. Purely presentational; the parent
-// button owns the role="switch" semantics and the tap target.
-function ToggleTrack({ on }: { on: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="relative inline-block rounded-full transition-colors"
-      style={{
-        width: 38,
-        height: 22,
-        background: on ? COLOR.green700 : COLOR.stone,
-      }}
-    >
-      <span
-        className="absolute top-0.5 rounded-full bg-white transition-all"
-        style={{
-          width: 18,
-          height: 18,
-          left: on ? 18 : 2,
-        }}
-      />
-    </span>
   );
 }

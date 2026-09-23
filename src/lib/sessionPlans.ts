@@ -83,9 +83,13 @@ export async function seedSessionPlansIfMissing(): Promise<void> {
     const ids: string[] = [];
     if (last) {
       for (const l of await linksFor(last.id)) {
-        if (!ids.includes(l.exercise_id) && (await db.exercises.get(l.exercise_id))) {
-          ids.push(l.exercise_id);
-        }
+        // A today-only swap stands in for its standing exercise; a today-only
+        // addition isn't part of the list at all.
+        const id =
+          l.origin === 'swap' ? l.replaced_exercise_id
+          : l.origin === 'added' ? null
+          : l.exercise_id;
+        if (id && !ids.includes(id) && (await db.exercises.get(id))) ids.push(id);
       }
     }
     const now = new Date().toISOString();
