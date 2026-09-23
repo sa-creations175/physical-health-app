@@ -27,8 +27,9 @@ import {
   getLastTimes,
   reopenExercise,
   type LastTimeEntry,
+  type SetValues,
 } from '../lib/sessionSets';
-import { initialRows, useSetRows } from '../lib/useSetRows';
+import { initialRows, useSetRows, type Row } from '../lib/useSetRows';
 import { useDragReorder } from '../lib/useDragReorder';
 import { getUserPreferences } from '../lib/userPreferences';
 import { todayISODate } from '../lib/dateHelpers';
@@ -194,8 +195,38 @@ export default function ActiveSession() {
     }
   }
 
+  // Calf raises done with squats borrow today's squat load as their
+  // placeholder weight: the latest squat set logged in this session. It stays
+  // a placeholder; nothing is written until the circle is tapped or a number
+  // typed. Without a logged squat, calf raises show their own history as usual.
+  const squatLoad = (() => {
+    let latest: SetEntry | null = null;
+    for (const l of links) {
+      if (!exById.get(l.exercise_id)?.name.toLowerCase().includes('squat')) continue;
+      for (const s of setsByLink.get(l.id)?.values() ?? []) {
+        if (s.set_type === 'reps' && s.weight > 0 && (!latest || s.created_at > latest.created_at)) latest = s;
+      }
+    }
+    return latest;
+  })();
+  function ghostFor(ex: Exercise, row: Row): SetValues | null {
+    if (!squatLoad || !ex.name.toLowerCase().includes('calf raise') || row.setType !== 'reps') {
+      return row.ghost;
+    }
+    return {
+      weight: squatLoad.weight,
+      reps: row.ghost?.reps ?? squatLoad.reps,
+      set_type: 'reps',
+      duration_seconds: null,
+    };
+  }
+
   function handlersFor(link: SessionExercise, ex: Exercise) {
     const linkSets = setsByLink.get(link.id) ?? new Map<string, SetEntry>();
+    const ghostOf = (key: string) => {
+      const row = rowsApi.getRows(link.id).find((r) => r.key === key);
+      return row ? ghostFor(ex, row) : null;
+    };
     return {
       onOpen: () => {
         if (reorder.suppressClick.current) return;
@@ -204,7 +235,7 @@ export default function ActiveSession() {
       onClose: () => setOpenId(null),
       onSwap: () => setSheet({ mode: 'swap', linkId: link.id }),
       onType: (key: string, field: 'weight' | 'reps', text: string) =>
-        rowsApi.type(link.id, key, field, text),
+        rowsApi.type(link.id, key, field, text, ghostOf(key)),
       onCheck: (key: string) => {
         const row = rows[link.id]?.find((r) => r.key === key);
         void rowsApi.check(
@@ -212,6 +243,7 @@ export default function ActiveSession() {
           key,
           row?.setId ? linkSets.get(row.setId) : undefined,
           prefs?.one_tap_repeat ?? true,
+          ghostOf(key),
         );
       },
       onRemove: (key: string) => void rowsApi.remove(link.id, key),
@@ -258,6 +290,7 @@ export default function ActiveSession() {
         nudge={repeatSwaps.has(link.id)}
         typeLabel={typeLabel}
         h={handlersFor(link, ex)}
+        ghostFor={(row) => ghostFor(ex, row)}
         drag={
           link.finished_order == null
             ? {

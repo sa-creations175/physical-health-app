@@ -141,8 +141,10 @@ export function useSetRows(onToast: (msg: string) => void) {
 
   // Typing into a row. A ghost becomes real on the first keystroke, taking
   // last time's value for the field that wasn't typed.
+  // `ghost` overrides the row's own placeholder values when the screen derives
+  // them from something else (calf raises borrowing today's squat load).
   const type = useCallback(
-    (linkId: string, key: string, field: 'weight' | 'reps', text: string) => {
+    (linkId: string, key: string, field: 'weight' | 'reps', text: string, ghost?: SetValues | null) => {
       const { row } = find(linkId, key);
       if (!row) return;
       patchRow(linkId, key, { draft: { ...row.draft, [field]: text }, fromGhost: false });
@@ -152,7 +154,7 @@ export function useSetRows(onToast: (msg: string) => void) {
         const value = num(text);
         const durationRow = r.setType === 'duration';
         if (!r.setId) {
-          const base = r.ghost;
+          const base = ghost ?? r.ghost;
           const values: SetValues = {
             weight: field === 'weight' ? value : (base?.weight ?? 0),
             reps: field === 'reps' && !durationRow ? value : (base?.reps ?? 0),
@@ -177,7 +179,13 @@ export function useSetRows(onToast: (msg: string) => void) {
   // The circle. Checked → unchecked (a "same as last time" row goes back to
   // a ghost). Typed → checked. Ghost → "same as last time", if allowed.
   const check = useCallback(
-    async (linkId: string, key: string, current: SetEntry | undefined, oneTap: boolean) => {
+    async (
+      linkId: string,
+      key: string,
+      current: SetEntry | undefined,
+      oneTap: boolean,
+      ghostOverride?: SetValues | null,
+    ) => {
       const { row } = find(linkId, key);
       if (!row) return;
       if (row.setId && current?.completed) {
@@ -200,11 +208,11 @@ export function useSetRows(onToast: (msg: string) => void) {
         if (again?.setId) await enqueue(key, () => updateSetRow(again.setId as string, { completed: true }));
         return;
       }
-      if (!oneTap || !row.ghost) {
+      const ghost = ghostOverride ?? row.ghost;
+      if (!oneTap || !ghost) {
         onToast('Type the set first');
         return;
       }
-      const ghost = row.ghost;
       await enqueue(key, async () => {
         const { index } = find(linkId, key);
         const id = await createSetRow(linkId, index + 1, { ...ghost, set_type: row.setType }, true);

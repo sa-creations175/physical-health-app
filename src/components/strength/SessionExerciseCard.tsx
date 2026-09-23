@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Check, ChevronDown, GripVertical, X } from 'lucide-react';
 import LastTimeBlock from './LastTimeBlock';
-import { summarizeSets, type LastTimeEntry } from '../../lib/sessionSets';
+import { summarizeSets, type LastTimeEntry, type SetValues } from '../../lib/sessionSets';
 import { updateSessionExerciseNotes } from '../../lib/strengthHelpers';
 import type { Row } from '../../lib/useSetRows';
 import type { Exercise, SessionExercise, SetEntry } from '../../db/types';
@@ -36,6 +36,7 @@ export default function SessionExerciseCard({
   typeLabel,
   h,
   drag,
+  ghostFor,
 }: {
   link: SessionExercise;
   exercise: Exercise;
@@ -49,6 +50,8 @@ export default function SessionExerciseCard({
   // Long-press reordering (open exercises only). `offset` is how far the card
   // is shifted while a drag is in progress; `held` marks the dragged card.
   drag?: { offset: number; held: boolean; onLongPress: (clientY: number) => void };
+  // Placeholder values for a ghost row, when the screen overrides them.
+  ghostFor?: (row: Row) => SetValues | null;
 }) {
   const shift = drag?.offset
     ? { transform: `translateY(${drag.offset}px)`, transition: drag.held ? 'none' : 'transform 150ms ease' }
@@ -131,6 +134,7 @@ export default function SessionExerciseCard({
             key={row.key}
             n={i + 1}
             row={row}
+            ghost={ghostFor ? ghostFor(row) : row.ghost}
             set={row.setId ? setsById.get(row.setId) : undefined}
             onType={(field, text) => h.onType(row.key, field, text)}
             onCheck={() => h.onCheck(row.key)}
@@ -179,6 +183,7 @@ export default function SessionExerciseCard({
 function SetRowView({
   n,
   row,
+  ghost: ghostValues,
   set,
   onType,
   onCheck,
@@ -187,6 +192,7 @@ function SetRowView({
 }: {
   n: number;
   row: Row;
+  ghost: SetValues | null;
   set: SetEntry | undefined;
   onType: (field: 'weight' | 'reps', text: string) => void;
   onCheck: () => void;
@@ -205,9 +211,9 @@ function SetRowView({
   };
   const value = (field: 'weight' | 'reps') => row.draft[field] ?? stored(field);
   const placeholder = (field: 'weight' | 'reps') => {
-    if (!row.ghost) return field === 'weight' ? 'lb' : duration ? 'sec' : 'reps';
-    if (field === 'weight') return String(row.ghost.weight);
-    return String(duration ? (row.ghost.duration_seconds ?? 0) : row.ghost.reps);
+    if (!ghostValues) return field === 'weight' ? 'lb' : duration ? 'sec' : 'reps';
+    if (field === 'weight') return String(ghostValues.weight);
+    return String(duration ? (ghostValues.duration_seconds ?? 0) : ghostValues.reps);
   };
   const checked = !!set?.completed;
 
