@@ -90,7 +90,7 @@ export default function LiftingActivityCard({
       <button
         type="button"
         onClick={() => navigate(`/log/strength?type=${type}`)}
-        className="mt-2 text-green-700 text-label font-medium"
+        className="mt-2 text-green-700 text-label font-bold min-h-[44px]"
       >
         Log {label} →
       </button>

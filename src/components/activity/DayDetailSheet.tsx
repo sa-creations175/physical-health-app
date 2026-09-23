@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BottomSheet from '../ui/BottomSheet';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { ExerciseLogRow, MobilityRow } from './bundleLogging';
@@ -22,7 +23,6 @@ import {
   type DetailPillar,
   type ReclassifySource,
 } from '../../lib/dayDetailHelpers';
-import { COLOR } from '../../lib/brand';
 
 const ALL_PILLARS: DetailPillar[] = [
   'bundle',
@@ -55,32 +55,10 @@ export default function DayDetailSheet({
   const isFuture = date > todayISODate();
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: COLOR.scrim }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full max-w-md rounded-t-2xl p-5 max-h-[80vh] overflow-auto"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="eyebrow">
-              {PILLAR_LABEL[pillar]}
-            </p>
-            <p className="text-body font-medium text-ink mt-0.5">{dayLabel}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="text-muted text-title w-9 h-9 flex items-center justify-center -mr-1"
-          >
-            ×
-          </button>
+    <BottomSheet onClose={onClose} label={`${PILLAR_LABEL[pillar]}, ${dayLabel}`}>
+        <div className="pr-10">
+          <p className="eyebrow">{PILLAR_LABEL[pillar]}</p>
+          <p className="text-heading text-ink mt-0.5">{dayLabel}</p>
         </div>
 
         <div className="mt-4">
@@ -109,8 +87,7 @@ export default function DayDetailSheet({
             </p>
           )}
         </div>
-      </div>
-    </div>
+    </BottomSheet>
   );
 }
 
@@ -145,7 +122,7 @@ function ReclassifyControl({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-label text-green-700 font-medium mt-1"
+        className="text-label text-green-700 font-bold mt-1 min-h-[44px]"
       >
         Reclassify ▾
       </button>
@@ -162,7 +139,7 @@ function ReclassifyControl({
             type="button"
             onClick={() => pick(t)}
             disabled={busy}
-            className="text-label px-2.5 h-8 rounded-lg bg-paper border border-hairline text-ink disabled:opacity-50"
+            className="pill"
           >
             {PILLAR_LABEL[t]}
           </button>
@@ -170,7 +147,7 @@ function ReclassifyControl({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-label px-2.5 h-8 rounded-lg text-muted"
+          className="pill border-transparent bg-transparent text-muted"
         >
           Cancel
         </button>
@@ -351,7 +328,7 @@ function CardioDay({
           {logs.map((l) => (
             <div
               key={l.id}
-              className="bg-paper border border-hairline rounded-lg px-3 py-2"
+              className="card px-3 py-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-body text-ink">
@@ -389,7 +366,7 @@ function CardioDay({
             onClose();
             navigate('/log/cardio');
           }}
-          className="mt-3 w-full bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[44px]"
+          className="btn-primary mt-3 w-full"
         >
           Log cardio →
         </button>
@@ -455,7 +432,7 @@ function SessionDay({
           {sessions.map((s) => (
             <div
               key={s.id}
-              className="bg-paper border border-hairline rounded-lg px-3 py-2"
+              className="card px-3 py-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-body text-ink">
@@ -473,7 +450,7 @@ function SessionDay({
                       onClose();
                       navigate(`/log/strength/active/${s.id}`);
                     }}
-                    className="text-label text-green-700 font-medium"
+                    className="text-label text-green-700 font-bold min-h-[44px]"
                   >
                     {s.status === 'watch' ? 'Open' : 'Resume'}
                   </button>
@@ -493,7 +470,7 @@ function SessionDay({
         <button
           type="button"
           onClick={start}
-          className="mt-3 w-full bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[44px]"
+          className="btn-primary mt-3 w-full"
         >
           Start session on this day →
         </button>

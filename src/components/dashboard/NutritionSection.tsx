@@ -15,7 +15,7 @@ export default function NutritionSection({
   const veg = prefs?.veg_servings_daily ?? DEFAULT_DAILY_NUTRITION_TARGETS.veg_servings;
 
   return (
-    <section className="px-5 mt-6">
+    <section className="px-4 mt-6">
       <div className="flex items-center justify-between gap-2">
         <SectionLabel>{label}</SectionLabel>
         <LeafIcon />

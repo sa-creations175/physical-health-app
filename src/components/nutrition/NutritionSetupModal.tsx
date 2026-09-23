@@ -1,3 +1,5 @@
+import { Check, ChevronDown, ClipboardList } from 'lucide-react';
+import { SheetClose } from '../ui/BottomSheet';
 import { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../ui/Toast';
 import {
@@ -47,7 +49,6 @@ import type {
   NutritionSeason,
   SeasonType,
 } from '../../db/types';
-import { COLOR } from '../../lib/brand';
 
 // The Nutrition setup flow — a three-page onboarding modal opened on first
 // nutrition setup or via "Change season". Page 1 body stats → Page 2 BF%
@@ -146,17 +147,12 @@ export default function NutritionSetupModal({
   const page2Valid = bfNum > 0 && bfNum < 70 && bfSource !== null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: COLOR.scrim }}
-      onClick={onClose}
-    >
+    <div className="sheet-scrim" onClick={onClose}>
       <div
-        className="bg-paper w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-auto"
+        className="sheet-panel px-0 pt-0"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {initializing ? (
           <div className="p-10 text-center text-muted text-label">
@@ -166,7 +162,7 @@ export default function NutritionSetupModal({
           <>
         <Header step={step} onClose={onClose} />
 
-        <div className="px-5 pb-5">
+        <div className="px-4 pb-2">
           {step === 1 && (
             <BodyStatsStep
               weight={weight}
@@ -266,12 +262,12 @@ export default function NutritionSetupModal({
 
         {/* Footer nav — Page 3 has its own confirm button inside GoalStep. */}
         {step !== 3 && (
-          <div className="px-5 pb-5 flex items-center gap-3">
+          <div className="px-4 pt-3 flex items-center gap-3">
             {step > 1 && (
               <button
                 type="button"
                 onClick={() => setStep((s) => (s - 1) as Step)}
-                className="flex-1 rounded-xl py-3 text-body font-medium text-ink bg-white border border-hairline min-h-[48px]"
+                className="btn-secondary flex-1"
               >
                 Back
               </button>
@@ -280,7 +276,7 @@ export default function NutritionSetupModal({
               type="button"
               disabled={step === 1 ? !page1Valid : !page2Valid}
               onClick={() => setStep((s) => (s + 1) as Step)}
-              className="flex-1 rounded-xl py-3 text-body font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-40"
+              className="btn-primary flex-1 disabled:opacity-40"
             >
               Continue
             </button>
@@ -298,27 +294,20 @@ export default function NutritionSetupModal({
 function Header({ step, onClose }: { step: Step; onClose: () => void }) {
   const titles = ['Your body', 'Body fat estimate', 'Your goals'];
   return (
-    <div className="px-5 pt-5 pb-3 sticky top-0 bg-paper z-10">
-      <div className="flex items-center justify-between">
-        <p className="eyebrow">
-          Set up nutrition · Step {step} of 3
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="text-muted text-title w-9 h-9 flex items-center justify-center -mr-2"
-        >
-          ×
-        </button>
-      </div>
+    <div className="px-4 pt-4 pb-3 sticky top-0 bg-white z-10">
+      <SheetClose onClose={onClose} />
+      <p className="eyebrow pr-10">
+        Set up nutrition · Step {step} of 3
+      </p>
       <h2 className="text-title text-ink mt-1">{titles[step - 1]}</h2>
+      {/* Stepper: Green 300 done, Green 700 current, Stone not yet. */}
       <div className="mt-3 flex gap-1.5">
         {[1, 2, 3].map((s) => (
           <span
             key={s}
-            className="h-1 flex-1 rounded-full"
-            style={{ background: s <= step ? COLOR.green700 : COLOR.stone }}
+            className={`h-[5px] flex-1 rounded-full ${
+              s < step ? 'bg-green-300' : s === step ? 'bg-green-700' : 'bg-stone'
+            }`}
           />
         ))}
       </div>
@@ -346,7 +335,7 @@ function Field({
   return (
     <label className={`block ${width}`}>
       <span className="text-label text-muted">{label}</span>
-      <div className="mt-1 flex items-center gap-2 bg-white border border-hairline rounded-xl px-3 h-12">
+      <div className="mt-1 flex items-center gap-2 bg-white border border-hairline rounded-input px-3 h-12">
         <input
           type="number"
           inputMode="decimal"
@@ -385,11 +374,11 @@ function BodyStatsStep(props: {
       <div>
         <span className="text-label text-muted">Height</span>
         <div className="mt-1 flex gap-3">
-          <div className="flex-1 flex items-center gap-2 bg-white border border-hairline rounded-xl px-3 h-12">
+          <div className="flex-1 flex items-center gap-2 bg-white border border-hairline rounded-input px-3 h-12">
             <input type="number" inputMode="numeric" value={props.heightFt} placeholder="5" onChange={(e) => props.setHeightFt(e.target.value)} className="w-full bg-transparent text-input text-ink outline-none" />
             <span className="text-label text-muted">ft</span>
           </div>
-          <div className="flex-1 flex items-center gap-2 bg-white border border-hairline rounded-xl px-3 h-12">
+          <div className="flex-1 flex items-center gap-2 bg-white border border-hairline rounded-input px-3 h-12">
             <input type="number" inputMode="numeric" value={props.heightIn} placeholder="10" onChange={(e) => props.setHeightIn(e.target.value)} className="w-full bg-transparent text-input text-ink outline-none" />
             <span className="text-label text-muted">in</span>
           </div>
@@ -404,11 +393,7 @@ function BodyStatsStep(props: {
               key={s}
               type="button"
               onClick={() => props.setSex(s)}
-              className={`rounded-xl py-3 text-body font-medium capitalize border min-h-[48px] ${
-                props.sex === s
-                  ? 'bg-green-700 text-white border-green-700'
-                  : 'bg-white text-ink border-hairline'
-              }`}
+              className={`pill min-h-[44px] capitalize ${props.sex === s ? 'pill-on' : ''}`}
             >
               {s}
             </button>
@@ -486,16 +471,17 @@ function BodyFatStep(props: {
       />
 
       {/* DEXA scan tip — persistent, informational (no dismiss) */}
-      <div className="rounded-xl bg-green-100 px-4 py-3">
+      <div className="tile px-4 py-3">
         <p className="text-label text-ink leading-snug">
-          📋 For the most accurate body fat baseline, consider booking a DEXA
+          <ClipboardList aria-hidden="true" size={14} strokeWidth={2} className="inline -mt-0.5 mr-1 text-green-700" />
+          For the most accurate body fat baseline, consider booking a DEXA
           scan. It’s the gold standard — and the app accepts manual DEXA entry as
           your highest-priority BF% source.
         </p>
       </div>
 
       {/* Confirm / adjust the chosen estimate */}
-      <div className="bg-white border border-hairline rounded-xl p-4 mt-1">
+      <div className="card p-4 mt-1">
         <span className="text-label text-muted">
           Starting body fat % {props.bfSource && `· from ${SOURCE_LABEL[props.bfSource]}`}
         </span>
@@ -541,7 +527,7 @@ function MethodShell({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-white border border-hairline rounded-xl overflow-hidden">
+    <div className="card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -551,7 +537,12 @@ function MethodShell({
           <span className="block text-body font-medium text-ink">{title}</span>
           <span className="block text-label text-muted">{hint}</span>
         </span>
-        <span className="text-muted text-label">{open ? '▴' : '▾'}</span>
+        <ChevronDown
+          aria-hidden="true"
+          size={18}
+          strokeWidth={2}
+          className={`text-green-700 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
       {open && <div className="px-4 pb-4">{children}</div>}
     </div>
@@ -582,10 +573,8 @@ function VisualReferencePanel({
               type="button"
               aria-pressed={isSel}
               onClick={() => onPick(band)}
-              className={`text-left rounded-lg border p-3 flex flex-col ${
-                isSel
-                  ? 'border-green-700 bg-green-100'
-                  : 'border-hairline bg-paper'
+              className={`text-left rounded-card border p-3 flex flex-col ${
+                isSel ? 'border-green-700 bg-green-100' : 'border-hairline bg-white'
               }`}
             >
               <span className="text-body font-medium text-ink">
@@ -640,7 +629,7 @@ function AiPhotoPanel({
   return (
     <MethodShell title="AI photo estimate" hint="Rough range from a photo — onboarding shortcut">
       <label className="block">
-        <span className="inline-flex items-center justify-center w-full rounded-lg py-3 text-label font-medium text-white bg-green-700 cursor-pointer min-h-[44px]">
+        <span className="btn-primary w-full cursor-pointer">
           {busy ? 'Estimating…' : 'Choose a photo'}
         </span>
         <input
@@ -655,7 +644,11 @@ function AiPhotoPanel({
         />
       </label>
       {result && (
-        <div className={`mt-2 rounded-lg px-3 py-2 ${active ? 'bg-green-100' : 'bg-paper'}`}>
+        <div
+          className={`mt-2 rounded-input border px-3 py-2 ${
+            active ? 'bg-green-100 border-green-700' : 'bg-white border-hairline'
+          }`}
+        >
           <span className="text-body font-medium text-ink">
             Roughly {result.low}–{result.high}%
           </span>
@@ -716,7 +709,7 @@ function NavyPanel(props: {
           type="button"
           disabled={computed === null}
           onClick={() => computed !== null && props.onCompute(computed)}
-          className="w-full rounded-lg py-2.5 text-label font-medium text-white bg-green-700 min-h-[44px] disabled:opacity-40"
+          className="btn-primary w-full disabled:opacity-40"
         >
           {computed !== null ? `Use ${computed}%` : 'Enter measurements'}
         </button>
@@ -810,7 +803,7 @@ function GoalStep(props: {
         <button
           type="button"
           onClick={props.onEditBodyStats}
-          className="text-label font-medium text-green-700 min-h-[44px]"
+          className="text-label font-bold text-green-700 min-h-[44px]"
         >
           Update body stats →
         </button>
@@ -854,7 +847,7 @@ function GoalStep(props: {
           type="button"
           disabled={!ready || computing}
           onClick={buildPreview}
-          className="w-full rounded-xl py-3 text-body font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-40"
+          className="btn-primary w-full disabled:opacity-40"
         >
           {computing ? 'Calculating…' : 'See my targets'}
         </button>
@@ -872,7 +865,7 @@ function GoalStep(props: {
           return (
             <div className="space-y-3">
               {/* STEP 1 — Research briefing (about the recommended season) */}
-              <div className="bg-white border border-hairline rounded-xl p-4 space-y-4">
+              <div className="card p-4 space-y-4">
                 <Micro>Recommended · {seasonLabel(preview.recommendedType)}</Micro>
 
                 <div>
@@ -944,7 +937,7 @@ function GoalStep(props: {
               {/* STEP 3 — Selected season's targets + pros/cons (live) */}
               <TargetComparison current={current} targets={targets} />
 
-              <div className="bg-white border border-hairline rounded-xl p-4">
+              <div className="card p-4">
                 <Micro>Pros &amp; cons of this season</Micro>
                 <div className="mt-2">
                   <ProsCons
@@ -964,7 +957,7 @@ function GoalStep(props: {
                   await props.onConfirm(targets, chosen, macroStyle);
                   setSaving(false);
                 }}
-                className="w-full rounded-xl py-3 text-body font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-50"
+                className="btn-primary w-full disabled:opacity-50"
               >
                 {saving
                   ? 'Saving…'
@@ -1000,10 +993,8 @@ function QuestionGroup<T extends string>({
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
-            className={`w-full text-left rounded-xl px-3.5 py-3 text-body border min-h-[48px] ${
-              value === o.value
-                ? 'border-green-700 bg-green-100 text-ink font-medium'
-                : 'border-hairline bg-white text-ink'
+            className={`w-full text-left rounded-card px-3.5 py-3 text-body text-ink border min-h-[48px] ${
+              value === o.value ? 'border-green-700 bg-green-100 font-medium' : 'border-hairline bg-white'
             }`}
           >
             {o.label}
@@ -1043,14 +1034,12 @@ function MultiQuestionGroup<T extends string>({
               type="button"
               aria-pressed={selected}
               onClick={() => onToggle(o.value)}
-              className={`w-full text-left rounded-xl px-3.5 py-3 text-body border min-h-[48px] flex items-center justify-between ${
-                selected
-                  ? 'border-green-700 bg-green-100 text-ink font-medium'
-                  : 'border-hairline bg-white text-ink'
+              className={`w-full text-left rounded-card px-3.5 py-3 text-body text-ink border min-h-[48px] flex items-center justify-between ${
+                selected ? 'border-green-700 bg-green-100 font-medium' : 'border-hairline bg-white'
               }`}
             >
               <span>{o.label}</span>
-              {selected && <span className="text-green-700 text-body">✓</span>}
+              {selected && <Check aria-hidden="true" size={18} strokeWidth={2.5} className="text-green-700" />}
             </button>
           );
         })}
@@ -1085,14 +1074,12 @@ function SeasonPicker({
             type="button"
             aria-pressed={isSel}
             onClick={() => onSelect(opt.seasonType)}
-            className={`relative w-full text-left rounded-xl border p-3.5 ${
-              isSel
-                ? 'border-green-700 bg-green-100'
-                : 'border-hairline bg-white'
+            className={`relative w-full text-left rounded-card border p-3.5 ${
+              isSel ? 'border-green-700 bg-green-100' : 'border-hairline bg-white'
             }`}
           >
             {isRec && (
-              <span className="absolute top-2.5 right-2.5 eyebrow text-white bg-green-700 rounded-full px-2 py-0.5">
+              <span className="absolute top-2.5 right-2.5 pill pill-on px-2.5 py-0.5">
                 Recommended
               </span>
             )}
@@ -1132,7 +1119,7 @@ function MacroStyleSelector({
     (o) => o.value !== 'high_protein_cut' || isCutSeason(seasonType),
   );
   return (
-    <div className="bg-white border border-hairline rounded-xl p-4">
+    <div className="card p-4">
       <Micro>Macro style</Micro>
       <p className="mt-1 text-label text-muted leading-snug">
         Protein stays high regardless. Choose how to split the rest.
@@ -1146,10 +1133,8 @@ function MacroStyleSelector({
               type="button"
               aria-pressed={isSel}
               onClick={() => onSelect(opt.value)}
-              className={`w-full text-left rounded-lg border p-3 ${
-                isSel
-                  ? 'border-green-700 bg-green-100'
-                  : 'border-hairline bg-paper'
+              className={`w-full text-left rounded-card border p-3 ${
+                isSel ? 'border-green-700 bg-green-100' : 'border-hairline bg-white'
               }`}
             >
               <span className="block text-label font-medium text-ink">
@@ -1174,12 +1159,18 @@ function TdeeExplainer() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="text-label font-medium text-green-700"
+        className="inline-flex items-center gap-1 text-label font-bold text-green-700 min-h-[44px]"
       >
-        How is this calculated? {open ? '↑' : '↓'}
+        How is this calculated?
+        <ChevronDown
+          aria-hidden="true"
+          size={16}
+          strokeWidth={2}
+          className={`transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
       {open && (
-        <div className="mt-2 rounded-xl bg-paper border border-hairline p-3 space-y-3">
+        <div className="tile mt-1 p-3 space-y-3">
           <p className="eyebrow">
             Your TDEE is calculated in two steps
           </p>
@@ -1190,7 +1181,7 @@ function TdeeExplainer() {
               Using the Mifflin-St Jeor formula — the most validated BMR equation
               for most adults:
             </p>
-            <p className="mt-1 font-mono text-label text-ink leading-snug">
+            <p className="mt-1 text-label text-ink leading-snug">
               Male: (10 × weight kg) + (6.25 × height cm) − (5 × age) + 5
               <br />
               Female: (10 × weight kg) + (6.25 × height cm) − (5 × age) − 161
@@ -1210,7 +1201,7 @@ function TdeeExplainer() {
             </p>
           </div>
 
-          <p className="font-mono text-label text-ink leading-snug">
+          <p className="text-label text-ink leading-snug">
             TDEE = BMR + avg daily active calories
           </p>
 
@@ -1240,10 +1231,7 @@ function BothLookTip({
   const copy = bothLookTip(bf);
   if (!copy) return null;
   return (
-    <div
-      className="rounded-xl bg-green-100 px-3.5 py-3"
-      style={{ borderLeft: `3px solid ${COLOR.green700}` }}
-    >
+    <div className="tile px-3.5 py-3">
       <p className="text-label text-ink leading-snug">{copy}</p>
     </div>
   );
@@ -1358,7 +1346,7 @@ function TargetComparison({
     { label: 'Water', from: current?.water_target_bottles ?? null, to: targets.water_target_bottles, unit: ' bottles' },
   ];
   return (
-    <div className="bg-white border border-hairline rounded-xl p-4">
+    <div className="card p-4">
       <p className="text-label text-muted mb-2">
         {current ? 'Your targets will change to:' : 'Your daily targets:'}
       </p>

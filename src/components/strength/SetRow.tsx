@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { SetEntry } from '../../db/types';
 import { updateSet, deleteSet } from '../../lib/strengthHelpers';
@@ -65,7 +66,7 @@ export default function SetRow({
         onBlur={commitWeight}
         placeholder="lb"
         aria-label="Weight"
-        className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[60px] h-11 text-input text-center"
+        className="input px-2 w-[60px] h-11 text-center"
       />
       <span className="text-label text-muted">×</span>
       {isDuration ? (
@@ -77,7 +78,7 @@ export default function SetRow({
           onBlur={commitDuration}
           placeholder="sec"
           aria-label="Duration in seconds"
-          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[56px] h-11 text-input text-center"
+          className="input px-2 w-[56px] h-11 text-center"
         />
       ) : (
         <input
@@ -88,14 +89,14 @@ export default function SetRow({
           onBlur={commitReps}
           placeholder="reps"
           aria-label="Reps"
-          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[56px] h-11 text-input text-center"
+          className="input px-2 w-[56px] h-11 text-center"
         />
       )}
       <button
         type="button"
         onClick={toggleType}
         aria-label={isDuration ? 'Switch to reps' : 'Switch to duration'}
-        className="eyebrow text-muted w-11 h-11 flex items-center justify-center"
+        className="text-label font-medium text-muted w-11 h-11 flex items-center justify-center"
       >
         {isDuration ? 'sec' : 'reps'}
       </button>
@@ -103,21 +104,21 @@ export default function SetRow({
         type="button"
         onClick={() => updateSet(set.id, { completed: !set.completed })}
         aria-label={set.completed ? 'Mark not done' : 'Mark done'}
-        className={`ml-auto rounded-full w-11 h-11 flex items-center justify-center text-body transition-colors ${
+        className={`ml-auto rounded-full w-11 h-11 flex items-center justify-center transition-colors border ${
           set.completed
-            ? 'bg-green-700 text-green-300'
-            : 'bg-paper text-muted border border-hairline'
+            ? 'bg-green-700 border-green-700 text-white'
+            : 'bg-white border-hairline-warm text-hint'
         }`}
       >
-        {set.completed ? '✓' : '○'}
+        <Check size={18} strokeWidth={set.completed ? 2.5 : 2} />
       </button>
       <button
         type="button"
         onClick={() => deleteSet(set.id)}
         aria-label="Delete set"
-        className="text-muted text-title w-11 h-11 flex items-center justify-center"
+        className="text-hint w-11 h-11 flex items-center justify-center"
       >
-        ×
+        <X size={18} strokeWidth={2} />
       </button>
     </div>
   );

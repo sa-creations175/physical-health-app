@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { todayISODate } from '../../lib/dateHelpers';
 import type { ActivityDot } from '../../lib/dotHelpers';
 import { COLOR } from '../../lib/brand';
@@ -46,10 +47,12 @@ export default function SharedActivityCard({
       <span
         className="rounded-full block"
         style={{
-          width: 10,
-          height: 10,
+          width: 18,
+          height: 18,
           background: d.color,
-          boxShadow: d.date === today ? `0 0 0 1.5px ${COLOR.green700}` : undefined,
+          // Today is ringed in Green 700 (an outline, not a shadow).
+          outline: d.date === today ? `2px solid ${COLOR.green700}` : undefined,
+          outlineOffset: 1,
         }}
       />
     );
@@ -78,7 +81,7 @@ export default function SharedActivityCard({
   // whole block toggles expand, preserving the prior tap area.
   const dotsBlock = (
     <>
-      <div className="mt-2 grid grid-cols-7">{dotEls}</div>
+      <div className="mt-3 grid grid-cols-7">{dotEls}</div>
       <div className="mt-1 grid grid-cols-7">
         {DAY_INITIALS.map((letter, i) => (
           <span key={i} className="text-micro text-hint text-center">
@@ -90,8 +93,7 @@ export default function SharedActivityCard({
   );
 
   return (
-    <div className="relative bg-white border border-hairline rounded-2xl px-4 py-2.5 overflow-hidden">
-
+    <div className="card relative px-4 py-3.5">
       <button
         type="button"
         onClick={onToggle}
@@ -102,20 +104,18 @@ export default function SharedActivityCard({
           {/* Icon + label left-aligned; badge + chevron right-aligned. */}
           <div className="flex items-center gap-2 min-w-0">
             {icon && <span className="shrink-0 flex items-center">{icon}</span>}
-            <span className="eyebrow truncate text-green-700">
-              {label}
-            </span>
+            <span className="eyebrow truncate">{label}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-label text-ink whitespace-nowrap">{badge}</span>
-            <span
-              aria-hidden="true"
-              className={`text-green-700 text-heading leading-none transition-transform ${
-                expanded ? 'rotate-180' : ''
-              }`}
-            >
-              ▾
+            <span className="text-body font-bold text-ink tabular-nums whitespace-nowrap">
+              {badge}
             </span>
+            <ChevronDown
+              aria-hidden="true"
+              size={18}
+              strokeWidth={2}
+              className={`text-green-700 transition-transform ${expanded ? 'rotate-180' : ''}`}
+            />
           </div>
         </div>
 
@@ -127,15 +127,13 @@ export default function SharedActivityCard({
       {pillar && <div className="relative">{dotsBlock}</div>}
 
       {expanded && children && (
-        <div
-          className="relative mt-3 pt-3 border-t border-hairline"
-        >
+        <div className="relative mt-3 pt-3 border-t border-hairline">
           {children}
         </div>
       )}
 
       {callout && (
-        <p className="relative mt-2 pl-2 text-label leading-snug text-muted border-l-2 border-green-300">
+        <p className="callout relative mt-3 font-semibold text-green-900">
           {callout}
         </p>
       )}

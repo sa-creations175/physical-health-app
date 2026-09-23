@@ -1,3 +1,4 @@
+import { Droplet } from 'lucide-react';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import DeliveryActivityCard from '../components/activity/DeliveryActivityCard';
@@ -21,7 +22,7 @@ import {
 import { todayISODate } from '../lib/dateHelpers';
 import { SectionLabel, ProgressBar } from '../components/ui/primitives';
 import type { NutritionSeason } from '../db/types';
-import { COLOR } from '../lib/brand';
+import HeaderStrip from '../components/ui/HeaderStrip';
 
 export default function Nutrition() {
   const today = todayISODate();
@@ -39,10 +40,10 @@ export default function Nutrition() {
   const bottles = bottlesFromLog(waterLog);
 
   return (
-    <div className="pt-8 pb-4">
-      <h1 className="px-5 text-title text-ink">Nutrition</h1>
+    <div className="pb-4">
+      <HeaderStrip eyebrow="Body · Nutrition" title="Nutrition" />
 
-      <div className="px-5 mt-4 space-y-3">
+      <div className="px-4 mt-4 space-y-3">
         {season === undefined ? null : season === null ? (
           <SetupCard onStart={() => setSetupOpen(true)} />
         ) : (
@@ -67,7 +68,7 @@ export default function Nutrition() {
         />
       </div>
 
-      <div className="px-5 mt-4 space-y-2">
+      <div className="px-4 mt-3 space-y-3">
         <DeliveryActivityCard expanded={open === 'delivery'} onToggle={() => toggle('delivery')} />
       </div>
 
@@ -92,9 +93,9 @@ export default function Nutrition() {
 
 function SetupCard({ onStart }: { onStart: () => void }) {
   return (
-    <div className="bg-white shadow-card rounded-2xl p-5">
+    <div className="card p-4">
       <SectionLabel>Nutrition</SectionLabel>
-      <p className="mt-2 text-body font-medium text-ink">Set up your plan</p>
+      <p className="mt-2 text-heading text-ink">Set up your plan</p>
       <p className="mt-1 text-label text-ink leading-snug">
         A few questions about your body and goals generates your daily calorie
         and macro targets — built on your lean mass and real activity, not a
@@ -103,7 +104,7 @@ function SetupCard({ onStart }: { onStart: () => void }) {
       <button
         type="button"
         onClick={onStart}
-        className="mt-3 w-full rounded-xl py-3 text-body font-medium text-white bg-green-700 min-h-[48px]"
+        className="btn-primary mt-3 w-full"
       >
         Set up nutrition
       </button>
@@ -121,9 +122,9 @@ function SeasonStrip({
   onChange: () => void;
 }) {
   return (
-    <div className="bg-white shadow-card rounded-2xl px-4 py-3 flex items-center justify-between">
+    <div className="card px-4 py-3 flex items-center justify-between">
       <div>
-        <span className="inline-block eyebrow text-white bg-green-700 rounded-full px-2.5 py-1">
+        <span className="pill pill-on">
           {seasonLabel(season.season_type)}
         </span>
         <p className="mt-1.5 text-label text-muted">
@@ -133,7 +134,7 @@ function SeasonStrip({
       <button
         type="button"
         onClick={onChange}
-        className="text-label font-medium text-green-700 min-h-[44px] px-1"
+        className="pill min-h-[44px]"
       >
         Change season
       </button>
@@ -154,7 +155,7 @@ function MacrosCard({ season }: { season: NutritionSeason }) {
   ];
 
   return (
-    <div className="bg-white shadow-card rounded-2xl p-5">
+    <div className="card p-4">
       <SectionLabel>Today — Macros</SectionLabel>
       <div className="mt-3 space-y-3">
         {bars.map((b) => (
@@ -211,7 +212,7 @@ function WaterCard({
   // to remove one.
   const slots = Math.max(target, bottles);
   return (
-    <div className="bg-white shadow-card rounded-2xl p-5">
+    <div className="card p-4">
       <div className="flex items-center justify-between">
         <SectionLabel>Water</SectionLabel>
         <span className="text-label text-muted">
@@ -277,15 +278,13 @@ function BottleButton({
         }
         if (!filled) onAdd();
       }}
-      className="w-9 h-12 rounded-md border flex items-center justify-center"
-      style={{
-        background: filled ? COLOR.green700 : COLOR.stone,
-        borderColor: filled ? COLOR.green700 : COLOR.stone,
-      }}
+      className={`w-9 h-12 rounded-md border flex items-center justify-center ${
+        filled
+          ? 'bg-green-700 border-green-700 text-white'
+          : 'bg-white border-hairline text-hint'
+      }`}
     >
-      <span className="text-heading" style={{ opacity: filled ? 1 : 0.35 }}>
-        💧
-      </span>
+      <Droplet aria-hidden="true" size={18} strokeWidth={2} fill={filled ? 'currentColor' : 'none'} />
     </button>
   );
 }
@@ -308,7 +307,7 @@ function BodyStatsCard({
   onMeasure: () => void;
 }) {
   return (
-    <div className="bg-white shadow-card rounded-2xl p-5">
+    <div className="card p-4">
       <SectionLabel>Body stats</SectionLabel>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <Stat label="Weight" value={weight !== null ? `${weight}` : '—'} unit="lbs" />
@@ -324,14 +323,14 @@ function BodyStatsCard({
         <button
           type="button"
           onClick={onWeigh}
-          className="flex-1 rounded-xl py-2.5 text-label font-medium text-ink bg-paper border border-hairline min-h-[44px]"
+          className="btn-secondary flex-1"
         >
           Log weigh-in
         </button>
         <button
           type="button"
           onClick={onMeasure}
-          className="flex-1 rounded-xl py-2.5 text-label font-medium text-ink bg-paper border border-hairline min-h-[44px]"
+          className="btn-secondary flex-1"
         >
           Log measurements
         </button>
@@ -349,9 +348,9 @@ const SOURCE_LABEL: Record<string, string> = {
 
 function Stat({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
-    <div className="bg-paper border border-hairline rounded-xl px-3 py-2.5">
+    <div className="tile px-3 py-2.5">
       <span className="block text-label text-muted">{label}</span>
-      <span className="text-title text-ink">{value}</span>
+      <span className="text-title text-ink tabular-nums">{value}</span>
       <span className="text-label text-muted"> {unit}</span>
     </div>
   );

@@ -43,13 +43,8 @@ export default function CaloriesBreakdownCard() {
   const exerciseMin = score?.strip.exerciseMinutes ?? 0;
 
   return (
-    <div className="bg-white shadow-card rounded-2xl p-4">
-      <p
-        className="eyebrow"
-        style={{ color: COLOR.green700 }}
-      >
-        Calories Burned
-      </p>
+    <div className="card p-4">
+      <p className="eyebrow">Calories Burned</p>
 
       {/* Bars — one per day, scaled to the week's max. A labeled hairline caps
           the top of the tallest bar so the scale has a concrete number; each
@@ -58,12 +53,11 @@ export default function CaloriesBreakdownCard() {
         {perDay && max > 1 && (
           <div className="absolute inset-x-0 top-0 flex items-center gap-1.5">
             <span
-              className="text-label leading-none whitespace-nowrap"
-              style={{ color: COLOR.hint }}
+              className="text-label leading-none whitespace-nowrap text-hint"
             >
               {max.toLocaleString()} cal
             </span>
-            <div className="flex-1" style={{ borderTop: `0.5px dashed ${COLOR.stone}` }} />
+            <div className="flex-1" style={{ borderTop: `1px dashed ${COLOR.green300}` }} />
           </div>
         )}
         <div className="flex items-end gap-1.5" style={{ height: BAR_AREA_H }}>
@@ -99,25 +93,24 @@ export default function CaloriesBreakdownCard() {
         {weekDates.map((date, i) => (
           <span
             key={date}
-            className="flex-1 text-center text-micro"
-            style={{ color: date > today ? COLOR.hint : COLOR.muted }}
+            className={`flex-1 text-center text-micro ${date > today ? 'text-hint' : 'text-muted'}`}
           >
             {DAY_INITIALS[i]}
           </span>
         ))}
       </div>
 
-      <div className="mt-3" style={{ borderTop: `0.5px solid ${COLOR.stone}` }} />
+      <div className="mt-3 border-t border-hairline" />
 
       <div className="mt-3 flex">
         <div className="flex-1 text-center">
-          <p className="text-body font-medium text-ink">
+          <p className="text-title text-ink tabular-nums">
             {exerciseMin.toLocaleString()}
           </p>
           <p className="text-label text-muted mt-0.5">avg exercise min/day</p>
         </div>
         <div className="flex-1 text-center">
-          <p className="text-body font-medium text-ink">
+          <p className="text-title text-ink tabular-nums">
             {stepsAvg === null ? '—' : stepsAvg.toLocaleString()}
           </p>
           <p className="text-label text-muted mt-0.5">avg steps/day</p>

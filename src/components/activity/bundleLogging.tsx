@@ -40,7 +40,7 @@ export function ExerciseLogRow({
 
   return (
     <div className="flex items-center gap-2 min-h-[44px]">
-      <span className="text-label text-muted flex-1">{label}</span>
+      <span className="text-body text-ink flex-1">{label}</span>
 
       {editing ? (
         <input
@@ -55,14 +55,14 @@ export function ExerciseLogRow({
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           aria-label={`${label} reps today`}
-          className="bg-stone text-ink text-input text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+          className="input font-semibold text-center w-[64px] h-11 px-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
         />
       ) : (
         <button
           type="button"
           onClick={() => setEditing(true)}
           aria-label={`${label}: ${value} reps today — tap to type`}
-          className="text-ink text-heading w-[64px] h-11 text-center"
+          className="text-ink text-heading tabular-nums w-[64px] h-11 text-center"
         >
           {value}
         </button>
@@ -72,8 +72,7 @@ export function ExerciseLogRow({
         type="button"
         onClick={() => bump(-increment)}
         aria-label={`Subtract ${increment} ${label}`}
-        className="text-ink text-title rounded-md flex items-center justify-center border border-hairline"
-        style={{ width: '44px', height: '44px', background: COLOR.stone }}
+        className="btn-secondary w-11 h-11 px-0 py-0 shrink-0"
       >
         −
       </button>
@@ -81,8 +80,7 @@ export function ExerciseLogRow({
         type="button"
         onClick={() => bump(increment)}
         aria-label={`Add ${increment} ${label}`}
-        className="text-white text-title rounded-md flex items-center justify-center"
-        style={{ width: '44px', height: '44px', background: COLOR.green700 }}
+        className="btn-primary w-11 h-11 px-0 py-0 shrink-0"
       >
         +
       </button>
@@ -132,7 +130,7 @@ export function MobilityRow({
   return (
     <div className="pt-1">
       <div className="flex items-center justify-between min-h-[28px]">
-        <span className="text-label text-muted">Flex / Mobility</span>
+        <span className="text-body text-ink">Flex / Mobility</span>
         {qualifying ? (
           <span
             aria-label="mobility target met today"
@@ -143,8 +141,7 @@ export function MobilityRow({
         ) : (
           <span
             aria-hidden="true"
-            className="block w-4 h-4 rounded-full border"
-            style={{ borderColor: COLOR.hint }}
+            className="block w-4 h-4 rounded-full border border-hint"
           />
         )}
       </div>
@@ -154,8 +151,7 @@ export function MobilityRow({
           type="button"
           onClick={() => bump(-5)}
           aria-label="Subtract 5 mobility minutes"
-          className="text-ink text-body font-medium rounded-md flex items-center justify-center border border-hairline"
-          style={{ width: '44px', height: '44px', background: COLOR.stone }}
+          className="btn-secondary w-11 h-11 px-0 py-0 shrink-0 text-label"
         >
           −5
         </button>
@@ -174,14 +170,14 @@ export function MobilityRow({
                 if (e.key === 'Enter') e.currentTarget.blur();
               }}
               aria-label="Mobility minutes today"
-              className="bg-stone text-ink text-input text-center rounded-md w-[64px] h-11 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+              className="input font-semibold text-center w-[64px] h-11 px-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
             />
           ) : (
             <button
               type="button"
               onClick={() => setEditing(true)}
               aria-label={`Mobility: ${minutes} minutes today — tap to type`}
-              className="text-ink text-heading h-11"
+              className="text-ink text-heading tabular-nums h-11"
             >
               {minutes}
             </button>
@@ -193,8 +189,7 @@ export function MobilityRow({
           type="button"
           onClick={() => bump(5)}
           aria-label="Add 5 mobility minutes"
-          className="text-white text-body font-medium rounded-md flex items-center justify-center"
-          style={{ width: '44px', height: '44px', background: COLOR.green700 }}
+          className="btn-primary w-11 h-11 px-0 py-0 shrink-0 text-label"
         >
           +5
         </button>
@@ -249,7 +244,7 @@ function MobilityLinks({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 text-green-700 text-label font-medium"
+        className="mt-2 text-green-700 text-label font-bold min-h-[44px]"
       >
         Links ▾
       </button>
@@ -261,7 +256,7 @@ function MobilityLinks({
       <button
         type="button"
         onClick={() => setOpen(false)}
-        className="text-green-700 text-label font-medium"
+        className="text-green-700 text-label font-bold min-h-[44px]"
       >
         Links ▴
       </button>
@@ -271,7 +266,7 @@ function MobilityLinks({
         <button
           type="button"
           onClick={() => window.open(DEFAULT_MOBILITY_SEARCH.url, '_blank')}
-          className="w-full flex items-center justify-between gap-2 bg-stone rounded-md px-3 py-2 text-left min-h-[40px]"
+          className="w-full flex items-center justify-between gap-2 bg-white border border-hairline rounded-input px-3 py-2 text-left min-h-[44px]"
         >
           <span className="text-label text-ink truncate">
             🔎 {DEFAULT_MOBILITY_SEARCH.label}
@@ -284,7 +279,7 @@ function MobilityLinks({
             <button
               type="button"
               onClick={() => window.open(link.url, '_blank')}
-              className="flex-1 flex items-center justify-between gap-2 bg-stone rounded-md px-3 py-2 text-left min-h-[40px]"
+              className="flex-1 flex items-center justify-between gap-2 bg-white border border-hairline rounded-input px-3 py-2 text-left min-h-[44px]"
             >
               <span className="text-label text-ink truncate">{link.label}</span>
               <ExternalLinkIcon />
@@ -309,7 +304,7 @@ function MobilityLinks({
               placeholder="e.g. 5 min stretch"
               autoFocus
               aria-label="Link label"
-              className="w-full bg-stone text-ink rounded-md px-3 h-10 text-input placeholder:text-hint focus:outline-none"
+              className="input w-full h-11"
             />
             <input
               type="url"
@@ -318,7 +313,7 @@ function MobilityLinks({
               onChange={(e) => setUrl(e.target.value)}
               placeholder="YouTube URL"
               aria-label="Link URL"
-              className="w-full bg-stone text-ink rounded-md px-3 h-10 text-input placeholder:text-hint focus:outline-none"
+              className="input w-full h-11"
             />
             <div className="flex gap-2">
               <button
@@ -326,7 +321,7 @@ function MobilityLinks({
                 onClick={save}
                 disabled={!label.trim() || !url.trim()}
                 aria-label="Save link"
-                className="flex-1 bg-green-700 text-white rounded-md h-10 text-body font-medium disabled:opacity-50"
+                className="btn-primary flex-1"
               >
                 ✓ Save
               </button>
@@ -334,7 +329,7 @@ function MobilityLinks({
                 type="button"
                 onClick={cancel}
                 aria-label="Cancel"
-                className="flex-1 bg-stone text-ink border border-hairline rounded-md h-10 text-body font-medium"
+                className="btn-secondary flex-1"
               >
                 × Cancel
               </button>
@@ -344,7 +339,7 @@ function MobilityLinks({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="text-green-700 text-label font-medium py-1"
+            className="text-green-700 text-label font-bold min-h-[44px]"
           >
             + Add link
           </button>

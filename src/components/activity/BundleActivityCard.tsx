@@ -166,7 +166,7 @@ export default function BundleActivityCard({
       </p>
 
       {/* Today's log */}
-      <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
+      <div className="mt-3 pt-3 border-t border-hairline">
         <p className="eyebrow">
           Log today
         </p>

@@ -4,7 +4,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import ExerciseRow from '../components/strength/ExerciseRow';
 import ExercisePicker from '../components/strength/ExercisePicker';
-import { SectionLabel } from '../components/ui/primitives';
+import HeaderStrip from '../components/ui/HeaderStrip';
+import BottomSheet from '../components/ui/BottomSheet';
+import { ArrowDown, ArrowUp, ArrowUpDown, Check } from 'lucide-react';
 import DateBlock from '../components/ui/DateBlock';
 import {
   discardSession,
@@ -12,7 +14,6 @@ import {
   updateSessionDate,
 } from '../lib/strengthHelpers';
 import type { SessionExercise } from '../db/types';
-import { COLOR } from '../lib/brand';
 
 const TYPE_LABEL: Record<string, string> = {
   upper: 'Upper Body',
@@ -69,7 +70,7 @@ export default function ActiveSession() {
 
   if (!session) {
     return (
-      <div className="px-5 pt-8 text-muted text-label">Loading session…</div>
+      <div className="px-4 pt-8 text-muted text-label">Loading session…</div>
     );
   }
 
@@ -104,14 +105,15 @@ export default function ActiveSession() {
   }
 
   return (
-    <div className="px-5 pt-8 pb-8">
-      <SectionLabel>Active Session</SectionLabel>
-      <h1 className="text-title text-ink mt-1">
-        {TYPE_LABEL[session.type] ?? session.type}
-      </h1>
+    <div className="pb-8">
+      <HeaderStrip
+        eyebrow="Active Session"
+        title={TYPE_LABEL[session.type] ?? session.type}
+      />
+      <div className="px-4">
       {/* Editable session date — retro-logging or correcting a draft started
           on the wrong day. Persists immediately via updateSessionDate. */}
-      <div className="mt-2">
+      <div className="mt-4">
         <DateBlock
           value={session.date}
           onChange={(d) => updateSessionDate(session.id, d)}
@@ -127,20 +129,24 @@ export default function ActiveSession() {
             type="button"
             onClick={() => setReordering((r) => !r)}
             aria-pressed={reordering}
-            className={`text-label font-medium uppercase min-h-[36px] px-3 rounded-lg border ${
-              reordering
-                ? 'bg-green-700 text-white border-green-700'
-                : 'bg-white text-green-700 border-hairline'
-            }`}
+            className={`pill min-h-[44px] ${reordering ? 'pill-on' : ''}`}
           >
-            {reordering ? '✓ Done' : '⇅ Reorder'}
+            {reordering ? (
+              <>
+                <Check aria-hidden="true" size={14} strokeWidth={2.5} /> Done
+              </>
+            ) : (
+              <>
+                <ArrowUpDown aria-hidden="true" size={14} strokeWidth={2} /> Reorder
+              </>
+            )}
           </button>
         </div>
       )}
 
       <div className={orderedExercises.length > 1 ? 'mt-2' : 'mt-4'}>
         {orderedExercises.length === 0 ? (
-          <div className="bg-white border border-hairline rounded-xl p-5 text-muted text-label text-center">
+          <div className="card p-5 text-muted text-label text-center">
             No exercises yet — tap below to add the first one.
           </div>
         ) : reordering ? (
@@ -166,8 +172,7 @@ export default function ActiveSession() {
           <button
             type="button"
             onClick={() => setPickerOpen(true)}
-            style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-            className="mt-3 w-full bg-white border border-hairline text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
+            className="btn-secondary mt-3 w-full"
           >
             + Add Exercise
           </button>
@@ -176,7 +181,7 @@ export default function ActiveSession() {
             <button
               type="button"
               onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
-              className="mt-3 w-full bg-green-700 text-white rounded-xl py-3.5 text-label font-medium uppercase min-h-[48px]"
+              className="btn-primary mt-3 w-full"
             >
               Finish Session
             </button>
@@ -211,6 +216,7 @@ export default function ActiveSession() {
           busy={discarding}
         />
       )}
+      </div>
     </div>
   );
 }
@@ -264,15 +270,12 @@ function CompactExerciseRow({
   if (!exercise) return null;
 
   const arrow =
-    'w-11 h-11 flex items-center justify-center rounded-lg border border-hairline bg-paper text-ink text-title leading-none disabled:opacity-30';
+    'btn-secondary w-11 h-11 px-0 py-0 disabled:opacity-30';
 
   return (
-    <div
-      className="bg-white border border-hairline rounded-xl px-3 py-2 mt-2 flex items-center justify-between gap-2"
-      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-    >
+    <div className="card px-3 py-2 mt-2 flex items-center justify-between gap-2">
       <div className="min-w-0">
-        <h3 className="text-body font-medium text-ink truncate">
+        <h3 className="text-heading text-ink truncate">
           {exercise.name}
         </h3>
         <p className="text-label text-muted">
@@ -287,7 +290,7 @@ function CompactExerciseRow({
           aria-label={`Move ${exercise.name} up`}
           className={arrow}
         >
-          ↑
+          <ArrowUp size={18} strokeWidth={2} />
         </button>
         <button
           type="button"
@@ -296,7 +299,7 @@ function CompactExerciseRow({
           aria-label={`Move ${exercise.name} down`}
           className={arrow}
         >
-          ↓
+          <ArrowDown size={18} strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -313,16 +316,8 @@ function DiscardConfirm({
   busy: boolean;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center px-5"
-      style={{ background: COLOR.scrim }}
-    >
-      <div
-        className="bg-white border border-hairline rounded-2xl p-5 w-full max-w-md mb-6"
-        role="dialog"
-        aria-modal="true"
-      >
-        <p className="text-body text-ink leading-snug">
+    <BottomSheet onClose={onCancel} label="Discard session">
+        <p className="text-body text-ink leading-snug pr-10">
           Discard this session? This can't be undone.
         </p>
         <div className="flex gap-2 mt-4">
@@ -330,7 +325,7 @@ function DiscardConfirm({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="flex-1 bg-paper border border-hairline text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
+            className="btn-secondary flex-1"
           >
             Cancel
           </button>
@@ -338,12 +333,11 @@ function DiscardConfirm({
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="flex-1 bg-white border border-hairline-warm text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px] disabled:opacity-50"
+            className="btn-secondary flex-1 disabled:opacity-50"
           >
             {busy ? 'Discarding…' : 'Discard'}
           </button>
         </div>
-      </div>
-    </div>
+    </BottomSheet>
   );
 }

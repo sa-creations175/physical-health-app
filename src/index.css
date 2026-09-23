@@ -53,10 +53,72 @@ body {
 }
 
 
+/* Shared components — PERSONAL_OS_BRAND.md sections 5 and 6. Screens use
+   these classes (and the React components built on them) rather than
+   restating colour, radius and type per element. */
 @layer components {
   /* Eyebrow: the small line above a title, and card headings. ALL CAPS by
      styling; the source stays Title Case. */
   .eyebrow {
     @apply text-eyebrow uppercase text-green-700;
+  }
+
+  /* Micro: tile titles, column heads, legends. */
+  .micro {
+    @apply text-micro uppercase;
+  }
+
+  /* Card: white, 14px corners, one hairline, no shadow. */
+  .card {
+    @apply bg-white border border-hairline rounded-card;
+  }
+
+  /* Tile: groups content on Mint with a 14px corner and a hairline. */
+  .tile {
+    @apply bg-green-100 border border-hairline rounded-card;
+  }
+
+  /* Buttons: full pills, 44px minimum. Primary is Green 700 with white
+     700-weight text; secondary is white with a hairline and Ink text.
+     Destructive actions use the secondary button plus a confirm step. */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full min-h-[44px] px-5 py-2.5 text-body font-bold text-center transition-colors disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-green-700 text-white;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-ink border border-hairline-warm;
+  }
+
+  /* Pills and chips: full pills, hairline, Label size. Selected is Green 700
+     filled; "soft selected" (a filter that is on) is Mint with Green 700. */
+  .pill {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-hairline bg-white px-3 py-1.5 text-label font-medium text-ink transition-colors disabled:opacity-50;
+  }
+  .pill-on {
+    @apply bg-green-700 border-green-700 text-white font-bold;
+  }
+  .pill-soft {
+    @apply bg-green-100 border-green-700 text-green-700 font-bold;
+  }
+
+  /* Inputs: white, hairline, 12px corners, 16px text. */
+  .input {
+    @apply bg-white border border-hairline rounded-input text-input text-ink px-3 placeholder:text-hint;
+  }
+
+  /* Bottom sheet: 40% scrim, white panel, 20px top corners, up to 85%. */
+  .sheet-scrim {
+    @apply fixed inset-0 z-50 flex items-end justify-center bg-scrim;
+  }
+  .sheet-panel {
+    @apply relative bg-white w-full max-w-md rounded-t-sheet px-4 pt-4 max-h-[85vh] overflow-auto;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  }
+
+  /* The one-liner under a card: a Green 300 rail. */
+  .callout {
+    @apply pl-2.5 border-l-[3px] border-green-300 text-label leading-snug;
   }
 }

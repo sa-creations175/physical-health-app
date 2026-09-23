@@ -10,7 +10,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <div className={`bg-white border border-hairline rounded-xl ${className}`}>
+    <div className={`card ${className}`}>
       {children}
     </div>
   );
@@ -71,7 +71,7 @@ export function SevenDayDotRow({
               background: d.hadSession ? COLOR.green700 : COLOR.stone,
             }}
           />
-          <span className="text-micro uppercase text-muted">
+          <span className="micro text-muted">
             {narrowDayLabel(d.date)}
           </span>
         </div>

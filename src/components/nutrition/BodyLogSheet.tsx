@@ -7,7 +7,7 @@ import {
   getLatestBodyStats,
 } from '../../lib/bodyComposition';
 import type { BiologicalSex } from '../../db/types';
-import { COLOR } from '../../lib/brand';
+import BottomSheet from '../ui/BottomSheet';
 
 // Recurring body-profile logging, opened from the Nutrition tab's Body stats
 // section. 'weigh' = the weekly weigh-in (weight only; height/age/sex carried
@@ -121,29 +121,8 @@ export default function BodyLogSheet({
         : !!parseFloat(dexaBf);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ background: COLOR.scrim }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full max-w-md rounded-t-2xl p-5 max-h-[85vh] overflow-auto"
-        role="dialog"
-        aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-heading text-ink">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="text-muted text-title w-9 h-9 flex items-center justify-center -mr-1"
-          >
-            ×
-          </button>
-        </div>
+    <BottomSheet onClose={onClose} label={title}>
+        <h2 className="text-heading text-ink pr-10">{title}</h2>
 
         {needsSetup ? (
           <p className="mt-4 text-label text-ink">
@@ -194,14 +173,13 @@ export default function BodyLogSheet({
               type="button"
               disabled={!canSave || busy}
               onClick={save}
-              className="w-full rounded-xl py-3 text-body font-medium text-white bg-green-700 min-h-[48px] disabled:opacity-40"
+              className="btn-primary w-full disabled:opacity-40"
             >
               {busy ? 'Saving…' : 'Save'}
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </BottomSheet>
   );
 }
 
@@ -218,11 +196,7 @@ function MethodTab({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl py-2.5 text-label font-medium border min-h-[44px] ${
-        active
-          ? 'bg-green-700 text-white border-green-700'
-          : 'bg-paper text-ink border-hairline'
-      }`}
+      className={`pill min-h-[44px] ${active ? 'pill-on' : ''}`}
     >
       {label}
     </button>
@@ -245,7 +219,7 @@ function SmallField({
   return (
     <label className={`block ${width}`}>
       <span className="text-label text-muted">{label}</span>
-      <div className="mt-1 flex items-center gap-2 bg-paper border border-hairline rounded-xl px-3 h-12">
+      <div className="mt-1 flex items-center gap-2 bg-white border border-hairline rounded-input px-3 h-12">
         <input
           type="number"
           inputMode="decimal"

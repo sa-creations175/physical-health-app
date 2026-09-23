@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { SectionLabel } from '../components/ui/primitives';
@@ -8,7 +9,7 @@ import {
 } from '../lib/userPreferences';
 import NutritionSetupModal from '../components/nutrition/NutritionSetupModal';
 import { getActiveSeason, seasonLabel } from '../lib/nutritionSeason';
-import { COLOR } from '../lib/brand';
+import HeaderStrip from '../components/ui/HeaderStrip';
 
 export default function Settings() {
   const prefs = useLiveQuery(() => getUserPreferences(), []);
@@ -17,17 +18,18 @@ export default function Settings() {
 
   if (!prefs) {
     return (
-      <div className="px-5 pt-8 text-muted text-label">Loading…</div>
+      <div className="px-4 pt-8 text-muted text-label">Loading…</div>
     );
   }
 
   return (
-    <div className="px-5 pt-8 pb-8">
-      <SectionLabel>Settings</SectionLabel>
-      <h1 className="text-title text-ink mt-1">Settings</h1>
-      <p className="text-label text-muted mt-1">
-        Targets save automatically when you tap away from the field.
-      </p>
+    <div className="pb-8">
+      <HeaderStrip
+        eyebrow="Settings"
+        title="Settings"
+        subtitle="Targets save automatically when you tap away from the field."
+      />
+      <div className="px-4">
 
       <section className="mt-6">
         <SectionLabel>Nutrition season</SectionLabel>
@@ -39,7 +41,7 @@ export default function Settings() {
         <button
           type="button"
           onClick={() => setSeasonSetup(true)}
-          className="mt-2 rounded-xl py-2.5 px-4 text-label font-medium text-white bg-green-700 min-h-[44px]"
+          className="btn-primary mt-2"
         >
           {season ? 'Change season' : 'Set up nutrition'}
         </button>
@@ -283,6 +285,7 @@ export default function Settings() {
           onComplete={() => setSeasonSetup(false)}
         />
       )}
+      </div>
     </div>
   );
 }
@@ -356,8 +359,7 @@ function NumberRow({
 
   return (
     <div
-      className="bg-white border border-hairline rounded-xl px-4 py-3 mt-2 flex items-center justify-between gap-3"
-      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
+      className="card px-4 py-3 mt-2 flex items-center justify-between gap-3"
     >
       <div className="min-w-0">
         <p className="text-body text-ink">{label}</p>
@@ -373,14 +375,14 @@ function NumberRow({
           onChange={(e) => setText(e.target.value)}
           onBlur={commit}
           aria-label={label}
-          className="bg-paper border border-hairline text-ink rounded-lg px-2 w-[72px] h-11 text-input text-center"
+          className="input px-2 w-[72px] h-11 text-center"
         />
         <span
           aria-hidden={!showCheck}
-          className="text-green-700 text-heading leading-none w-3 transition-opacity duration-500"
+          className="text-green-700 w-4 transition-opacity duration-500"
           style={{ opacity: showCheck ? 1 : 0 }}
         >
-          ✓
+          <Check size={16} strokeWidth={2.5} />
         </span>
       </div>
     </div>

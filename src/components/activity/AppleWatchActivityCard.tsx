@@ -6,7 +6,6 @@ import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { App } from '@capacitor/app';
 import { getHealthSnapshot, type HealthSnapshot } from '../../lib/healthkit';
 import { LAST_IMPORT_KEY } from '../../lib/watchImport';
-import { COLOR } from '../../lib/brand';
 
 const STEPS_TARGET = 10000;
 const CALORIE_TARGET = 600;
@@ -136,7 +135,7 @@ export default function AppleWatchActivityCard({
       )}
 
       {connected && snapshot.recentWorkouts.length > 0 && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
+        <div className="mt-3 pt-3 border-t border-hairline">
           <p className="eyebrow">
             Recent workouts
           </p>
@@ -184,8 +183,8 @@ function StatTile({
   met: boolean;
 }) {
   return (
-    <div className="bg-stone rounded-xl p-3 min-h-[64px] flex flex-col">
-      <p className="text-micro uppercase text-green-700">
+    <div className="tile p-3 min-h-[64px] flex flex-col">
+      <p className="micro text-green-700">
         {label}
       </p>
       {value === null ? (

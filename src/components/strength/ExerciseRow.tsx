@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
@@ -11,7 +12,6 @@ import {
 import { relativeDateLabel } from '../../lib/dateHelpers';
 import { formatSetMagnitude } from '../../lib/setFormat';
 import SetRow from './SetRow';
-import { COLOR } from '../../lib/brand';
 
 export default function ExerciseRow({ link }: { link: SessionExercise }) {
   const [confirming, setConfirming] = useState(false);
@@ -54,18 +54,15 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
   if (!exercise) return null;
 
   return (
-    <div
-      className="bg-white border border-hairline rounded-xl p-3 mt-2"
-      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-    >
+    <div className="card p-3.5 mt-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <h3 className="text-body font-medium text-ink truncate">
+          <h3 className="text-heading text-ink truncate">
             {exercise.name}
           </h3>
         </div>
         <div className="flex items-center gap-2 whitespace-nowrap">
-          <span className="eyebrow">
+          <span className="micro text-muted">
             {exercise.muscle_group.replace('_', ' ')}
           </span>
           {/* Remove the whole exercise + its sets. Distinct from the
@@ -75,14 +72,14 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
             type="button"
             onClick={() => setConfirming(true)}
             aria-label={`Remove ${exercise.name}`}
-            className="text-muted text-title w-8 h-8 flex items-center justify-center -mr-1"
+            className="text-hint w-11 h-11 flex items-center justify-center -mr-2"
           >
-            ×
+            <X size={18} strokeWidth={2} />
           </button>
         </div>
       </div>
       {confirming && (
-        <div className="mt-2 px-3 py-2 bg-paper rounded-lg border border-hairline">
+        <div className="tile mt-2 px-3 py-2.5">
           <p className="text-label text-ink leading-snug">
             Remove {exercise.name} and all its sets?
           </p>
@@ -90,7 +87,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
             <button
               type="button"
               onClick={() => setConfirming(false)}
-              className="flex-1 bg-white border border-hairline text-ink rounded-md py-2 eyebrow min-h-[36px]"
+              className="btn-secondary flex-1"
             >
               Cancel
             </button>
@@ -99,7 +96,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
               onClick={() => {
                 void removeExerciseFromSession(link.id);
               }}
-              className="flex-1 bg-white border border-hairline-warm text-ink rounded-md py-2 eyebrow min-h-[36px]"
+              className="btn-secondary flex-1"
             >
               Remove
             </button>
@@ -108,8 +105,8 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       )}
 
       {previous && previous.sets.length > 0 && (
-        <div className="mt-2 px-3 py-2 bg-paper rounded-lg">
-          <p className="eyebrow text-muted">
+        <div className="tile mt-2 px-3 py-2">
+          <p className="micro text-muted">
             Last · {relativeDateLabel(previous.date)} · {previous.sets.length} set
             {previous.sets.length === 1 ? '' : 's'}
           </p>
@@ -134,7 +131,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
       <button
         type="button"
         onClick={handleAddSet}
-        className="mt-2 w-full bg-paper text-muted rounded-lg py-2.5 eyebrow border border-hairline min-h-[44px]"
+        className="btn-secondary mt-2 w-full"
       >
         + Add Set
       </button>
@@ -164,7 +161,7 @@ function NoteField({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="mt-2 w-full text-left text-label text-green-700 font-medium py-1.5"
+        className="mt-2 w-full text-left text-label text-green-700 font-bold min-h-[44px]"
       >
         Add note
       </button>
@@ -187,7 +184,7 @@ function NoteField({
       }}
       placeholder="Note for this exercise"
       aria-label="Exercise note"
-      className="mt-2 w-full bg-paper border border-hairline text-ink rounded-lg px-3 py-2 text-input placeholder:text-muted"
+      className="input mt-2 w-full px-3 py-2"
     />
   );
 }

@@ -17,6 +17,7 @@ import {
   type HistoryItem,
 } from '../lib/historyHelpers';
 import { COLOR } from '../lib/brand';
+import HeaderStrip from '../components/ui/HeaderStrip';
 
 type FilterKey = 'all' | 'lower' | 'upper' | 'full_body' | 'cardio';
 type ViewMode = 'list' | 'calendar';
@@ -67,39 +68,36 @@ export default function History() {
   );
 
   return (
-    <div className="px-5 pt-8 pb-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-title text-ink">History</h1>
-        <div className="flex items-center gap-1">
-          <ViewButton active={view === 'list'} onClick={() => setView('list')} label="List view">
-            <List size={18} strokeWidth={1.9} />
-          </ViewButton>
-          <ViewButton active={view === 'calendar'} onClick={() => setView('calendar')} label="Calendar view">
-            <CalendarIcon size={18} strokeWidth={1.9} />
-          </ViewButton>
-        </div>
-      </header>
-
-      {/* Filter pills — apply to both views */}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {FILTERS.map(({ key, label }) => {
-          const active = filter === key;
-          return (
+    <div className="pb-4">
+      <HeaderStrip
+        eyebrow="Body · Fitness"
+        title="History"
+        right={
+          <>
+            <ViewButton active={view === 'list'} onClick={() => setView('list')} label="List view">
+              <List size={18} strokeWidth={2} />
+            </ViewButton>
+            <ViewButton active={view === 'calendar'} onClick={() => setView('calendar')} label="Calendar view">
+              <CalendarIcon size={18} strokeWidth={2} />
+            </ViewButton>
+          </>
+        }
+      >
+        {/* Filter pills — apply to both views */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {FILTERS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`px-3 py-1 rounded-full text-label font-medium border ${
-                active
-                  ? 'bg-green-700 text-white border-green-700'
-                  : 'bg-white text-muted border-hairline'
-              }`}
+              className={`pill ${filter === key ? 'pill-on' : ''}`}
             >
               {label}
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      </HeaderStrip>
+      <div className="px-4">
 
       {view === 'list' ? (
         <div className="mt-4 space-y-1.5">
@@ -114,6 +112,7 @@ export default function History() {
       ) : (
         <CalendarView items={filtered} />
       )}
+      </div>
     </div>
   );
 }
@@ -135,8 +134,8 @@ function ViewButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`w-9 h-9 flex items-center justify-center rounded-lg ${
-        active ? 'text-green-700 bg-green-100' : 'text-hint'
+      className={`w-11 h-11 flex items-center justify-center rounded-full border ${
+        active ? 'bg-white border-green-700 text-green-700' : 'border-transparent text-hint'
       }`}
     >
       {children}
@@ -164,7 +163,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       : '';
 
   return (
-    <div className="bg-white shadow-card rounded-2xl px-4 py-3">
+    <div className="card px-4 py-3">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -212,7 +211,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       </button>
 
       {open && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: COLOR.hairline }}>
+        <div className="mt-3 pt-3 border-t border-hairline">
           {item.kind === 'strength' ? (
             <StrengthDetail item={item} />
           ) : (

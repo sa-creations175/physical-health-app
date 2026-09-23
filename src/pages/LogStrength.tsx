@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { SectionLabel } from '../components/ui/primitives';
 import {
   createSession,
   discardSession,
@@ -22,7 +21,7 @@ import {
 import { formatSetMagnitude } from '../lib/setFormat';
 import DateBlock from '../components/ui/DateBlock';
 import type { SessionType } from '../db/types';
-import { COLOR } from '../lib/brand';
+import HeaderStrip from '../components/ui/HeaderStrip';
 
 const STRENGTH_TYPE_LABEL: Record<'upper' | 'lower' | 'full_body', string> = {
   upper: 'Upper Body',
@@ -256,17 +255,16 @@ export default function LogStrength() {
   }
 
   return (
-    <div className="px-5 pt-8 pb-8">
-      <SectionLabel>Log Session</SectionLabel>
-      <h1 className="text-title text-ink mt-1">
-        What kind of session?
-      </h1>
-      <p className="text-label text-muted mt-1">
-        Tap to start logging.
-      </p>
+    <div className="pb-8">
+      <HeaderStrip
+        eyebrow="Log Session"
+        title="What kind of session?"
+        subtitle="Tap to start logging."
+      />
+      <div className="px-4">
 
       {drafts.length > 0 && (
-        <div className="mt-6 space-y-2">
+        <div className="mt-4 space-y-2">
           {drafts.map((d) => (
             <StaleDraftCard
               key={d.sessionId}
@@ -304,7 +302,7 @@ export default function LogStrength() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2 mt-6">
+      <div className="grid grid-cols-1 gap-2 mt-4">
         {TYPE_OPTIONS.map((opt) => {
           const isInFlight = routing === opt.value;
           const isPanelOpen = panelType === opt.value;
@@ -338,12 +336,11 @@ export default function LogStrength() {
                 type="button"
                 onClick={() => handleTap(opt.value)}
                 disabled={routing !== null}
-                style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-                className={`bg-white border rounded-xl p-4 text-left min-h-[64px] transition-colors flex items-center justify-between ${
-                  accented ? 'border-green-700' : 'border-hairline'
+                className={`card p-4 text-left min-h-[64px] transition-colors flex items-center justify-between ${
+                  accented ? 'border-green-700 bg-green-100' : ''
                 } ${muted ? 'opacity-50' : ''}`}
               >
-                <span className="text-body font-medium text-ink">{opt.label}</span>
+                <span className="text-heading text-ink">{opt.label}</span>
                 {/* Resume badge takes priority over "Due next" — surfacing
                     both would be redundant, and the unfinished work is the
                     more actionable signal. */}
@@ -392,6 +389,7 @@ export default function LogStrength() {
           ariaLabel="Session date"
         />
       </div>
+      </div>
     </div>
   );
 }
@@ -420,11 +418,8 @@ function StaleDraftCard({
   const label = STRENGTH_TYPE_LABEL[draft.type];
 
   return (
-    <div
-      className="bg-white border border-hairline rounded-xl p-4"
-      style={{ borderLeftWidth: '3px', borderLeftColor: COLOR.amber }}
-    >
-      <p className="eyebrow text-amber-text">
+    <div className="card p-4">
+      <p className="eyebrow">
         Unfinished session
       </p>
       <p className="text-body text-ink mt-1 leading-snug">
@@ -446,7 +441,7 @@ function StaleDraftCard({
       </button>
 
       {viewing && (
-        <div className="mt-2 bg-paper border border-hairline rounded-lg p-3 space-y-2">
+        <div className="tile mt-2 p-3 space-y-2">
           {draft.exercises.length === 0 ? (
             <p className="text-label text-muted">No exercises logged yet.</p>
           ) : (
@@ -481,8 +476,7 @@ function StaleDraftCard({
             type="button"
             onClick={() => onResume()}
             disabled={busy}
-            style={{ backgroundColor: COLOR.green700 }}
-            className="rounded-xl p-3 text-body font-medium text-white disabled:opacity-50"
+            className="btn-primary"
           >
             Resume
           </button>
@@ -491,7 +485,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => setMode('date')}
               disabled={busy}
-              className="rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
+              className="btn-secondary disabled:opacity-50"
             >
               Resume + change date
             </button>
@@ -502,7 +496,7 @@ function StaleDraftCard({
                 setMode('discard');
               }}
               disabled={busy}
-              className="rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
+              className="btn-secondary disabled:opacity-50"
             >
               Discard
             </button>
@@ -523,8 +517,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => onResume(date)}
               disabled={busy}
-              style={{ backgroundColor: COLOR.green700 }}
-              className="flex-1 rounded-xl p-3 text-label font-medium text-white disabled:opacity-50"
+              className="btn-primary flex-1"
             >
               Resume on this date
             </button>
@@ -532,7 +525,7 @@ function StaleDraftCard({
               type="button"
               onClick={() => setMode('idle')}
               disabled={busy}
-              className="flex-1 rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline disabled:opacity-50"
+              className="btn-secondary flex-1 disabled:opacity-50"
             >
               Cancel
             </button>
@@ -550,14 +543,14 @@ function StaleDraftCard({
             <button
               type="button"
               onClick={() => setMode('idle')}
-              className="flex-1 rounded-xl p-3 text-label font-medium text-ink bg-stone border border-hairline"
+              className="btn-secondary flex-1"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={onDiscard}
-              className="flex-1 rounded-xl p-3 text-label font-medium text-ink bg-white border border-hairline-warm"
+              className="btn-secondary flex-1"
             >
               Discard
             </button>
@@ -609,14 +602,11 @@ function RepeatPanel({
   return (
     <div
       ref={ref}
-      className={`bg-white border border-hairline rounded-xl p-4 transition-[opacity,transform] duration-100 ease-out ${
+      className={`card p-4 transition-[opacity,transform] duration-100 ease-out ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
       }`}
     >
-      <div
-        className="text-label mb-3"
-        style={{ color: COLOR.muted }}
-      >
+      <div className="text-label text-muted mb-3">
         Last {STRENGTH_LABEL[type]} · {shortDateLabel(summary.date)} ·{' '}
         {summary.exerciseCount} exercise{summary.exerciseCount === 1 ? '' : 's'}
       </div>
@@ -625,8 +615,7 @@ function RepeatPanel({
           type="button"
           onClick={onRepeat}
           disabled={disabled}
-          style={{ backgroundColor: COLOR.green700 }}
-          className="rounded-xl p-3 text-body font-medium text-white"
+          className="btn-primary"
         >
           Repeat last session
         </button>
@@ -634,8 +623,7 @@ function RepeatPanel({
           type="button"
           onClick={onStartFresh}
           disabled={disabled}
-          style={{ backgroundColor: COLOR.stone }}
-          className="rounded-xl p-3 text-body font-medium text-ink border border-hairline"
+          className="btn-secondary"
         >
           Start fresh
         </button>

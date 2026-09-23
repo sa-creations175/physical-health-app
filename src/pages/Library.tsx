@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
-import { SectionLabel } from '../components/ui/primitives';
 import type { Exercise } from '../db/types';
-import { COLOR } from '../lib/brand';
+import HeaderStrip from '../components/ui/HeaderStrip';
 
 export default function Library() {
   const [search, setSearch] = useState('');
@@ -22,19 +21,20 @@ export default function Library() {
     : exercises;
 
   return (
-    <div className="px-5 pt-8 pb-8">
-      <SectionLabel>Exercise Library</SectionLabel>
-      <h1 className="text-title text-ink mt-1">Library</h1>
-      <p className="text-label text-muted mt-1">
-        {exercises.length} exercise{exercises.length === 1 ? '' : 's'} · tap for history
-      </p>
+    <div className="pb-8">
+      <HeaderStrip
+        eyebrow="Exercise Library"
+        title="Library"
+        subtitle={<>{exercises.length} exercise{exercises.length === 1 ? '' : 's'} · tap for history</>}
+      />
+      <div className="px-4">
 
       <input
         type="text"
         placeholder="Search…"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="mt-4 w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input"
+        className="input mt-4 w-full px-4 h-11"
       />
 
       <div className="mt-3">
@@ -51,6 +51,7 @@ export default function Library() {
           />
         ))}
       </div>
+      </div>
     </div>
   );
 }
@@ -66,8 +67,7 @@ function ExerciseListItem({
     <button
       type="button"
       onClick={onTap}
-      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-      className="w-full bg-white border border-hairline rounded-xl p-3 mt-2 flex items-center justify-between text-left gap-3 min-h-[48px]"
+      className="w-full card p-3 mt-2 flex items-center justify-between text-left gap-3 min-h-[48px]"
     >
       <div className="min-w-0">
         <p className="text-body text-ink truncate">{exercise.name}</p>
@@ -77,7 +77,7 @@ function ExerciseListItem({
           </p>
         )}
       </div>
-      <span className="eyebrow whitespace-nowrap">
+      <span className="micro text-muted whitespace-nowrap">
         {exercise.muscle_group.replace('_', ' ')}
       </span>
     </button>

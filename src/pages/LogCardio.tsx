@@ -4,6 +4,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import { useToast } from '../components/ui/Toast';
 import { SectionLabel } from '../components/ui/primitives';
+import HeaderStrip from '../components/ui/HeaderStrip';
+import BottomSheet from '../components/ui/BottomSheet';
+import CloseButton from '../components/ui/CloseButton';
 import {
   createCardioLog,
   createCardioType,
@@ -21,38 +24,14 @@ import {
 } from '../lib/defaults';
 import { getUserPreferences } from '../lib/userPreferences';
 import type { Intensity } from '../db/types';
-import { COLOR } from '../lib/brand';
 
-// Selected intensity pill is Green 700 like every selected pill; unselected
-// pills are filled Stone with Ink text — never outline-only against the
-// recessed intensity block, which would render the affordance invisible.
+// Intensity options use the shared selection pill: Green 700 when selected,
+// white with a hairline otherwise.
 const INTENSITY_OPTIONS: { value: Intensity; label: string }[] = [
   { value: 'low', label: 'Low' },
   { value: 'moderate', label: 'Moderate' },
   { value: 'high', label: 'High' },
 ];
-
-// Inline lucide-style "Activity" path — heart-pulse line. Mint to match
-// the SectionLabel family. Pure SVG (no icon-lib dep) so it tree-shakes
-// cleanly and stays predictable across themes.
-function CardioGlyph() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={COLOR.green700}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className="shrink-0"
-    >
-      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-    </svg>
-  );
-}
 
 // Compose user-picked date (YYYY-MM-DD local) + time (HH:MM local) into
 // an ISO datetime that represents the intended local moment.
@@ -284,20 +263,17 @@ export default function LogCardio() {
   const canSave = Boolean(cardioTypeId) && duration >= 1;
 
   return (
-    <div className="px-5 pt-8 pb-8">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CardioGlyph />
-          <h1 className="text-title text-ink">Log cardio</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="text-muted text-label min-h-[44px] min-w-[44px] flex items-center justify-end"
-        >
-          Cancel
-        </button>
-      </header>
+    <div className="pb-8">
+      <HeaderStrip
+        eyebrow="Body · Log"
+        title="Log cardio"
+        right={
+          <button type="button" onClick={() => navigate(-1)} className="pill min-h-[44px]">
+            Cancel
+          </button>
+        }
+      />
+      <div className="px-4">
 
       {/* When */}
       <section className="mt-6">
@@ -310,10 +286,7 @@ export default function LogCardio() {
               showPicker() silently no-ops on opacity:0 type="time"
               inputs in some browsers (Safari especially), so the time
               field below uses a visible input instead. */}
-          <div
-            style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green300 }}
-            className="relative bg-stone border border-hairline rounded-xl p-3 min-h-[64px] flex flex-col"
-          >
+          <div className="relative bg-white border border-hairline rounded-input p-3 min-h-[64px] flex flex-col">
             <p className="eyebrow">
               Date
             </p>
@@ -342,10 +315,7 @@ export default function LogCardio() {
               for the asymmetry rationale. Native UI (Chrome popup /
               iOS wheel sheet / macOS spinners) signals interactivity
               instead of our chevron. */}
-          <div
-            style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green300 }}
-            className="bg-stone border border-hairline rounded-xl p-3 min-h-[64px] flex flex-col"
-          >
+          <div className="bg-white border border-hairline rounded-input p-3 min-h-[64px] flex flex-col">
             <p className="eyebrow">
               Time · {bucket}
             </p>
@@ -380,11 +350,7 @@ export default function LogCardio() {
                   key={t.id}
                   type="button"
                   onClick={() => setCardioTypeId(t.id)}
-                  className={`px-3 min-h-[44px] rounded-full text-label font-medium transition-colors ${
-                    active
-                      ? 'bg-green-700 text-white border border-green-700'
-                      : 'bg-white text-ink border border-hairline'
-                  }`}
+                  className={`pill min-h-[44px] ${active ? 'pill-on' : ''}`}
                 >
                   {t.name}
                 </button>
@@ -395,8 +361,7 @@ export default function LogCardio() {
         <button
           type="button"
           onClick={openPicker}
-          style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-          className={`mt-2 w-full bg-white border rounded-xl p-3 min-h-[48px] text-left flex items-center justify-between ${
+          className={`mt-2 w-full bg-white border rounded-input p-3 min-h-[48px] text-left flex items-center justify-between ${
             selectedType ? 'border-green-700' : 'border-hairline'
           }`}
         >
@@ -428,14 +393,7 @@ export default function LogCardio() {
         {/* Duration block — collapses to a single Duration section on
             non-eligible types; expands to stacked Time + Distance
             sub-sections on Run / Bike / Walk / Hike / Row. */}
-        <div
-          style={{
-            borderLeftWidth: '2px',
-            borderLeftColor: COLOR.green300,
-            padding: '14px 12px',
-          }}
-          className="bg-stone rounded-lg flex flex-col items-center"
-        >
+        <div className="tile px-3 py-3.5 flex flex-col items-center">
           {distanceEligible ? (
             <>
               {/* TIME sub-section */}
@@ -450,7 +408,7 @@ export default function LogCardio() {
                 onBlur={commitDuration}
                 aria-label="duration in minutes"
                 style={{ padding: '8px 18px' }}
-                className="mt-3 bg-white text-ink text-display text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                className="mt-3 bg-white border border-hairline rounded-input text-ink text-display text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
               />
               <p className="text-label text-muted mt-1">min</p>
               <div className="flex gap-2 mt-2">
@@ -458,8 +416,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(-5)}
                   aria-label="decrease duration by 5 minutes"
-                  className="bg-white border border-hairline text-ink text-body font-medium rounded-md"
-                  style={{ width: '44px', height: '32px' }}
+                  className="btn-secondary w-11 h-11 px-0 py-0 text-label"
                 >
                   −5
                 </button>
@@ -467,8 +424,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(5)}
                   aria-label="increase duration by 5 minutes"
-                  className="bg-white border border-hairline text-ink text-body font-medium rounded-md"
-                  style={{ width: '44px', height: '32px' }}
+                  className="btn-secondary w-11 h-11 px-0 py-0 text-label"
                 >
                   +5
                 </button>
@@ -505,7 +461,7 @@ export default function LogCardio() {
                     onBlur={commitDistance}
                     aria-label="distance in miles"
                     style={{ padding: '8px 18px' }}
-                    className="mt-3 bg-white text-ink text-display text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                    className="mt-3 bg-white border border-hairline rounded-input text-ink text-display text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
                   />
                   <p className="text-label text-muted mt-1">mi</p>
                   <div className="flex gap-2 mt-2">
@@ -513,8 +469,7 @@ export default function LogCardio() {
                       type="button"
                       onClick={() => bumpDistance(-0.1)}
                       aria-label="decrease distance by 0.1 mile"
-                      className="bg-white border border-hairline text-ink text-body font-medium rounded-md"
-                      style={{ width: '44px', height: '32px' }}
+                      className="btn-secondary w-11 h-11 px-0 py-0 text-label"
                     >
                       −.1
                     </button>
@@ -522,8 +477,7 @@ export default function LogCardio() {
                       type="button"
                       onClick={() => bumpDistance(0.1)}
                       aria-label="increase distance by 0.1 mile"
-                      className="bg-white border border-hairline text-ink text-body font-medium rounded-md"
-                      style={{ width: '44px', height: '32px' }}
+                      className="btn-secondary w-11 h-11 px-0 py-0 text-label"
                     >
                       +.1
                     </button>
@@ -533,7 +487,7 @@ export default function LogCardio() {
                 <button
                   type="button"
                   onClick={showDistanceInput}
-                  className="mt-3 w-full text-center text-green-700 font-medium text-body py-2"
+                  className="mt-3 w-full text-center text-green-700 font-bold text-body min-h-[44px]"
                 >
                   Add distance
                 </button>
@@ -552,7 +506,7 @@ export default function LogCardio() {
                 onBlur={commitDuration}
                 aria-label="duration in minutes"
                 style={{ padding: '10px 24px' }}
-                className="mt-3 bg-white text-ink text-display text-center rounded-md w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
+                className="mt-3 bg-white border border-hairline rounded-input text-ink text-display text-center w-full [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none"
               />
               <p className="text-label text-muted mt-1">min</p>
               <div className="flex gap-2 mt-3">
@@ -560,8 +514,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(-5)}
                   aria-label="decrease duration by 5 minutes"
-                  className="bg-white border border-hairline text-ink text-heading rounded-md"
-                  style={{ width: '52px', height: '40px' }}
+                  className="btn-secondary w-[52px] h-11 px-0 py-0"
                 >
                   −5
                 </button>
@@ -569,8 +522,7 @@ export default function LogCardio() {
                   type="button"
                   onClick={() => bumpDuration(5)}
                   aria-label="increase duration by 5 minutes"
-                  className="bg-white border border-hairline text-ink text-heading rounded-md"
-                  style={{ width: '52px', height: '40px' }}
+                  className="btn-secondary w-[52px] h-11 px-0 py-0"
                 >
                   +5
                 </button>
@@ -580,14 +532,7 @@ export default function LogCardio() {
         </div>
 
         {/* Intensity block */}
-        <div
-          style={{
-            borderLeftWidth: '2px',
-            borderLeftColor: COLOR.green300,
-            padding: '14px 12px',
-          }}
-          className="bg-stone rounded-lg flex flex-col"
-        >
+        <div className="tile px-3 py-3.5 flex flex-col">
           <p className="eyebrow text-center">
             Intensity
           </p>
@@ -599,12 +544,7 @@ export default function LogCardio() {
                   key={opt.value}
                   type="button"
                   onClick={() => setIntensity(opt.value)}
-                  style={
-                    active
-                      ? { background: COLOR.green700, color: COLOR.white }
-                      : { background: COLOR.stone, color: COLOR.ink }
-                  }
-                  className="w-full rounded-md text-label font-medium py-2.5 text-center transition-colors"
+                  className={`pill w-full min-h-[44px] ${active ? 'pill-on' : ''}`}
                 >
                   {opt.label}
                 </button>
@@ -622,8 +562,7 @@ export default function LogCardio() {
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Optional"
           rows={2}
-          style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-          className="mt-2 w-full bg-white border border-hairline text-ink rounded-xl p-3 text-input placeholder:text-muted resize-none"
+          className="input mt-2 w-full p-3 resize-none"
         />
       </section>
 
@@ -631,7 +570,7 @@ export default function LogCardio() {
         type="button"
         onClick={handleSaveTap}
         disabled={!canSave || saving}
-        className="mt-6 w-full bg-green-700 text-white rounded-xl py-3.5 text-label font-medium uppercase min-h-[48px] disabled:opacity-50"
+        className="btn-primary mt-6 w-full disabled:opacity-50"
       >
         {saving ? 'Saving…' : 'Save session'}
       </button>
@@ -672,6 +611,7 @@ export default function LogCardio() {
           }}
         />
       )}
+      </div>
     </div>
   );
 }
@@ -709,40 +649,33 @@ function CardioTypePicker({
   }
 
   return (
-    <div className="fixed inset-0 bg-paper z-50 flex flex-col">
-      <header className="px-5 pt-8 pb-4 flex items-center justify-between">
-        <h2 className="text-title text-ink">
-          {adding ? 'New activity' : 'Pick activity'}
-        </h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="text-muted text-display w-11 h-11 flex items-center justify-center"
-        >
-          ×
-        </button>
-      </header>
+    <div className="fixed inset-0 bg-paper z-50 flex flex-col overflow-hidden">
+      <HeaderStrip
+        overlay
+        eyebrow="Body · Log"
+        title={adding ? 'New activity' : 'Pick activity'}
+        right={<CloseButton onClose={onClose} />}
+      />
+      <div className="h-3 shrink-0" />
 
       {!adding ? (
         <>
-          <div className="px-5">
+          <div className="px-4">
             <input
               type="text"
               placeholder="Search…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input"
+              className="input w-full px-4 h-11"
             />
           </div>
-          <div className="flex-1 overflow-y-auto px-5 mt-3 pb-3">
+          <div className="flex-1 overflow-y-auto px-4 mt-3 pb-3">
             {filtered.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => onPick(t.id)}
-                style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
-                className="w-full bg-white border border-hairline rounded-xl p-3 mt-2 text-left min-h-[48px] text-body text-ink"
+                className="w-full card p-3 mt-2 text-left min-h-[48px] text-body text-ink"
               >
                 {t.name}
               </button>
@@ -754,7 +687,7 @@ function CardioTypePicker({
             )}
           </div>
           <div
-            className="px-5 py-3 border-t border-hairline"
+            className="px-4 py-3 border-t border-hairline"
             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
           >
             <button
@@ -763,14 +696,14 @@ function CardioTypePicker({
                 setAdding(true);
                 setNewName(search);
               }}
-              className="w-full bg-paper text-green-700 border border-green-700 rounded-xl py-3 text-label font-semibold uppercase min-h-[48px]"
+              className="btn-secondary w-full"
             >
               + Add new type
             </button>
           </div>
         </>
       ) : (
-        <div className="flex-1 px-5 overflow-y-auto pb-6">
+        <div className="flex-1 px-4 overflow-y-auto pb-6">
           <label className="block eyebrow">
             Name
           </label>
@@ -779,13 +712,13 @@ function CardioTypePicker({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             autoFocus
-            className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input mt-2"
+            className="input w-full px-4 h-11 mt-2"
           />
           <div className="flex gap-2 mt-6">
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="flex-1 bg-white border border-hairline text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
+              className="btn-secondary flex-1"
             >
               Back
             </button>
@@ -793,7 +726,7 @@ function CardioTypePicker({
               type="button"
               onClick={handleCreateNew}
               disabled={!newName.trim() || busy}
-              className="flex-1 bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[48px] disabled:opacity-50"
+              className="btn-primary flex-1 disabled:opacity-50"
             >
               Create &amp; pick
             </button>
@@ -816,16 +749,8 @@ function RetroactiveConfirm({
   onConfirm: () => void;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center px-5"
-      style={{ background: COLOR.scrim }}
-    >
-      <div
-        className="bg-white border border-hairline rounded-2xl p-5 w-full max-w-md mb-6"
-        role="dialog"
-        aria-modal="true"
-      >
-        <p className="text-body text-ink leading-snug">
+    <BottomSheet onClose={onCancel} label="Confirm date">
+        <p className="text-body text-ink leading-snug pr-10">
           Logging from <span className="text-ink font-medium">{dateText}</span> —
           that's {daysAgo} days ago. Save anyway?
         </p>
@@ -833,19 +758,18 @@ function RetroactiveConfirm({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 bg-paper border border-hairline text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
+            className="btn-secondary flex-1"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="flex-1 bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
+            className="btn-primary flex-1"
           >
             Save anyway
           </button>
         </div>
-      </div>
-    </div>
+    </BottomSheet>
   );
 }

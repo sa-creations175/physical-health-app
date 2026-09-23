@@ -3,6 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { syncedUpdate } from '../../db/syncedWrite';
 import type { MuscleGroup } from '../../db/types';
+import HeaderStrip from '../ui/HeaderStrip';
+import CloseButton from '../ui/CloseButton';
 
 const MUSCLE_GROUPS: MuscleGroup[] = [
   'chest',
@@ -70,20 +72,15 @@ export default function ExerciseEditor({
   }
 
   return (
-    <div className="fixed inset-0 bg-paper z-50 flex flex-col">
-      <header className="px-5 pt-8 pb-4 flex items-center justify-between">
-        <h2 className="text-title text-ink">Edit Exercise</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="text-muted text-display w-11 h-11 flex items-center justify-center"
-        >
-          ×
-        </button>
-      </header>
+    <div className="fixed inset-0 bg-paper z-50 flex flex-col overflow-hidden">
+      <HeaderStrip
+        overlay
+        eyebrow="Body · Library"
+        title="Edit Exercise"
+        right={<CloseButton onClose={onClose} />}
+      />
 
-      <div className="flex-1 px-5 overflow-y-auto pb-6">
+      <div className="flex-1 px-4 pt-4 overflow-y-auto pb-6">
         <label className="block eyebrow">
           Name
         </label>
@@ -91,7 +88,7 @@ export default function ExerciseEditor({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input mt-2"
+          className="input w-full px-4 h-11 mt-2"
         />
 
         <label className="block eyebrow mt-4">
@@ -100,7 +97,7 @@ export default function ExerciseEditor({
         <select
           value={group}
           onChange={(e) => setGroup(e.target.value as MuscleGroup)}
-          className="w-full bg-white border border-hairline text-ink rounded-xl px-4 h-11 text-input mt-2"
+          className="input w-full px-4 h-11 mt-2"
         >
           {MUSCLE_GROUPS.map((g) => (
             <option key={g} value={g}>
@@ -123,7 +120,7 @@ export default function ExerciseEditor({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-white border border-hairline text-ink rounded-xl py-3 text-label font-medium uppercase min-h-[48px]"
+            className="btn-secondary flex-1"
           >
             Cancel
           </button>
@@ -131,7 +128,7 @@ export default function ExerciseEditor({
             type="button"
             onClick={handleSave}
             disabled={!name.trim() || saving}
-            className="flex-1 bg-green-700 text-white rounded-xl py-3 text-label font-medium uppercase min-h-[48px] disabled:opacity-50"
+            className="btn-primary flex-1 disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

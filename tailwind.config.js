@@ -45,9 +45,15 @@ export default {
       eyebrow: ['11px', { lineHeight: '1.3', letterSpacing: '0.1em', fontWeight: '700' }],
       micro: ['10px', { lineHeight: '1.3', letterSpacing: '0.08em', fontWeight: '700' }],
     },
+    // No shadows anywhere: a card's only edge is its hairline.
+    boxShadow: {
+      none: 'none',
+    },
     extend: {
-      boxShadow: {
-        card: '0 1px 3px rgba(13, 31, 24, 0.08), 0 1px 2px rgba(13, 31, 24, 0.04)',
+      borderRadius: {
+        card: '14px',
+        input: '12px',
+        sheet: '20px',
       },
     },
   },

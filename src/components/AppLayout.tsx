@@ -4,7 +4,7 @@ import BottomNav from './BottomNav';
 export default function AppLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-paper text-ink">
-      <main className="flex-1 pb-24">
+      <main className="flex-1 pb-24 w-full max-w-md mx-auto">
         <Outlet />
       </main>
       <BottomNav />

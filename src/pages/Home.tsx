@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
-import { DumbbellIcon, LeafIcon, HeartPulseIcon } from '../components/dashboard/PillarIcons';
-import { computeStreak } from '../lib/dashboardQueries';
+import { ProgressBar } from '../components/ui/primitives';
 import { getUserPreferences } from '../lib/userPreferences';
 import { getFitnessScore, type ScoreMark } from '../lib/fitnessScore';
 import { summaryNarrative } from '../lib/pillarNarrative';
@@ -19,7 +18,7 @@ export default function Home() {
   return (
     <>
       <DashboardHeader />
-      <div className="px-5 mt-5 space-y-4">
+      <div className="px-4 mt-4 space-y-3">
         <FitnessSummary />
         <NutritionSummary />
         <HealthSummary />
@@ -28,63 +27,36 @@ export default function Home() {
   );
 }
 
-function SummaryLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="eyebrow">
-      {children}
-    </span>
-  );
-}
-
-// Big dial — the week's overall fullness as one %. SVG ring, r=28 →
-// circumference ≈ 175.9; the arc scales with pct/100.
+// Dial — the week's overall fullness as one %. A conic ring: Green 700 for
+// the filled share, Stone for the rest.
 function ScoreDial({ pct }: { pct: number }) {
-  const dash = (Math.max(0, Math.min(pct, 100)) / 100) * 175.9;
+  const clamped = Math.max(0, Math.min(pct, 100));
   return (
-    <svg width="72" height="72" viewBox="0 0 72 72" className="shrink-0">
-      <circle cx="36" cy="36" r="28" fill="none" stroke={COLOR.stone} strokeWidth="7" />
-      <circle
-        cx="36"
-        cy="36"
-        r="28"
-        fill="none"
-        stroke={COLOR.green700}
-        strokeWidth="7"
-        strokeLinecap="round"
-        strokeDasharray={`${dash} 175.9`}
-        transform="rotate(-90 36 36)"
-      />
-      <text
-        x="36"
-        y="36"
-        textAnchor="middle"
-        dominantBaseline="central"
-        fontSize="18"
-        fontWeight="600"
-        fill={COLOR.ink}
-      >
+    <div
+      className="w-[84px] h-[84px] rounded-full flex items-center justify-center shrink-0"
+      style={{
+        background: `conic-gradient(${COLOR.green700} ${clamped}%, ${COLOR.stone} 0)`,
+      }}
+    >
+      <span className="w-[66px] h-[66px] rounded-full bg-white flex items-center justify-center text-title text-ink tabular-nums">
         {pct}%
-      </text>
-    </svg>
+      </span>
+    </div>
   );
 }
 
-// One mark's honest breakdown: a fill bar in the mark's color + actual/target.
+// One mark's honest breakdown: actual/target over a Green 700 bar.
 function ScoreBar({ mark }: { mark: ScoreMark }) {
-  const width = Math.round(mark.fraction * 100);
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-label text-muted">{mark.label}</span>
-        <span className="text-label text-ink tabular-nums">
+        <span className="text-label font-semibold text-ink tabular-nums">
           {mark.actual}/{mark.target}
         </span>
       </div>
-      <div className="mt-0.5 h-1.5 rounded-full" style={{ background: COLOR.stone }}>
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${width}%`, background: COLOR.green700 }}
-        />
+      <div className="mt-1">
+        <ProgressBar value={mark.fraction} max={1} height={6} />
       </div>
     </div>
   );
@@ -99,7 +71,7 @@ function StripStat({
 }) {
   return (
     <div className="flex-1 text-center">
-      <p className="text-body font-medium text-ink">{value}</p>
+      <p className="text-title text-ink tabular-nums">{value}</p>
       <p className="text-label text-muted mt-0.5">{label}</p>
     </div>
   );
@@ -107,7 +79,6 @@ function StripStat({
 
 function FitnessSummary() {
   const score = useLiveQuery(() => getFitnessScore(), []);
-  const streak = useLiveQuery(() => computeStreak(), [], 0) ?? 0;
 
   // Bars for participating marks only (target 0 / no data drop out).
   const bars = score?.marks.filter((m) => m.participates) ?? [];
@@ -127,15 +98,12 @@ function FitnessSummary() {
     : null;
 
   return (
-    <Link to="/fitness" className="block bg-white shadow-card rounded-2xl p-4">
-      <div className="flex items-center justify-between">
-        <SummaryLabel>Fitness Score</SummaryLabel>
-        <DumbbellIcon />
-      </div>
+    <Link to="/fitness" className="card block p-4">
+      <p className="eyebrow">Fitness Score</p>
 
       <div className="mt-3 flex items-center gap-4">
         <ScoreDial pct={score?.dialPct ?? 0} />
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 space-y-2">
           {bars.length === 0 ? (
             <p className="text-label text-muted">
               Set weekly targets in Settings to see your score.
@@ -147,31 +115,22 @@ function FitnessSummary() {
       </div>
 
       {narrative && (
-        <div className="mt-3 space-y-0.5">
+        <div className="callout mt-3 space-y-0.5">
           {narrative.message && (
-            <p className="text-label text-ink leading-snug">{narrative.message}</p>
+            <p className="font-semibold text-green-900">{narrative.message}</p>
           )}
           {narrative.win && (
-            <p className="text-label text-ink leading-snug">{narrative.win}</p>
+            <p className="font-semibold text-green-900">{narrative.win}</p>
           )}
-          {narrative.nudge && (
-            <p className="text-label text-muted leading-snug">
-              → {narrative.nudge}
-            </p>
-          )}
+          {narrative.nudge && <p className="text-muted">→ {narrative.nudge}</p>}
           {narrative.allClear && (
-            <p className="text-label text-green-700 leading-snug">
-              {narrative.allClear}
-            </p>
+            <p className="font-semibold text-green-900">{narrative.allClear}</p>
           )}
         </div>
       )}
 
       {strip && (
-        <div
-          className="mt-3 pt-3 border-t flex"
-          style={{ borderColor: COLOR.hairline }}
-        >
+        <div className="mt-3 pt-3 border-t border-hairline flex">
           <StripStat
             label="Cal/day"
             value={strip.calories === null ? '—' : strip.calories.toLocaleString()}
@@ -186,10 +145,6 @@ function FitnessSummary() {
           />
         </div>
       )}
-
-      <span className="mt-3 inline-block bg-green-100 text-green-700 text-label font-medium rounded-full px-2.5 py-1">
-        {streak} day{streak === 1 ? '' : 's'} streak
-      </span>
     </Link>
   );
 }
@@ -212,12 +167,9 @@ function NutritionSummary() {
   const weekDates = currentWeekISODates();
 
   return (
-    <Link to="/nutrition" className="block bg-white shadow-card rounded-2xl p-4">
-      <div className="flex items-center justify-between">
-        <SummaryLabel>Nutrition</SummaryLabel>
-        <LeafIcon />
-      </div>
-      <p className="mt-2 text-label text-ink">
+    <Link to="/nutrition" className="card block p-4">
+      <p className="eyebrow">Nutrition</p>
+      <p className="mt-2 text-body text-ink">
         Protein {protein}g · Water {water} glasses · {delivery.currentStreak} day delivery streak
       </p>
       <div className="mt-3 grid grid-cols-7">
@@ -245,16 +197,9 @@ function NutritionSummary() {
 
 function HealthSummary() {
   return (
-    <Link
-      to="/health"
-      className="block shadow-card rounded-2xl p-4"
-      style={{ background: COLOR.green100 }}
-    >
-      <div className="flex items-center justify-between">
-        <SummaryLabel>Health</SummaryLabel>
-        <HeartPulseIcon />
-      </div>
-      <p className="mt-2 text-label text-hint">No check-ins configured yet</p>
+    <Link to="/health" className="tile block p-4">
+      <p className="eyebrow">Health</p>
+      <p className="mt-2 text-body text-hint">No check-ins configured yet</p>
     </Link>
   );
 }

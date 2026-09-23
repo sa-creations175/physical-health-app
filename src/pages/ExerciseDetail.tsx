@@ -9,7 +9,7 @@ import { composeExerciseHistory } from '../lib/exerciseHistory';
 import { formatSetMagnitude } from '../lib/setFormat';
 import { relativeDateLabel } from '../lib/dateHelpers';
 import type { Session, SessionExercise, SetEntry } from '../db/types';
-import { COLOR } from '../lib/brand';
+import HeaderStrip from '../components/ui/HeaderStrip';
 
 export default function ExerciseDetail() {
   const { exerciseId } = useParams<{ exerciseId: string }>();
@@ -64,7 +64,7 @@ export default function ExerciseDetail() {
 
   if (!exerciseId) {
     return (
-      <div className="px-5 pt-8 text-muted text-label">
+      <div className="px-4 pt-8 text-muted text-label">
         No exercise selected.
       </div>
     );
@@ -72,7 +72,7 @@ export default function ExerciseDetail() {
 
   if (exercise === undefined) {
     return (
-      <div className="px-5 pt-8 text-muted text-label">Loading…</div>
+      <div className="px-4 pt-8 text-muted text-label">Loading…</div>
     );
   }
 
@@ -80,38 +80,36 @@ export default function ExerciseDetail() {
   const pr = history.personalRecord;
 
   return (
-    <div className="px-5 pt-8 pb-8">
-      <button
-        type="button"
-        onClick={() => navigate('/library')}
-        className="eyebrow text-muted py-2 -ml-2 px-2 min-h-[44px] flex items-center"
-      >
-        ← Library
-      </button>
-
-      <div className="mt-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <SectionLabel>Exercise</SectionLabel>
-          <h1 className="text-title text-ink mt-1 leading-tight">
-            {exercise.name}
-          </h1>
-          <p className="text-label text-muted mt-1">
+    <div className="pb-8">
+      <HeaderStrip
+        eyebrow="Exercise"
+        title={exercise.name}
+        subtitle={
+          <>
             {exercise.muscle_group.replace('_', ' ')}
             {exercise.is_compound ? ' · compound' : ''}
-          </p>
+          </>
+        }
+        right={
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="pill min-h-[44px] min-w-[64px] whitespace-nowrap"
+          >
+            Edit
+          </button>
+        }
+      >
+        <div className="mt-3">
+          <button type="button" onClick={() => navigate('/library')} className="pill">
+            ← Library
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="eyebrow border border-hairline bg-white rounded-lg px-4 h-11 min-w-[64px] whitespace-nowrap"
-        >
-          Edit
-        </button>
-      </div>
+      </HeaderStrip>
+      <div className="px-4">
 
       <div
-        className="bg-white border border-hairline rounded-xl p-4 mt-5"
-        style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green700 }}
+        className="card p-4 mt-5"
       >
         {!last && !pr ? (
           <p className="text-label text-muted">
@@ -159,7 +157,7 @@ export default function ExerciseDetail() {
 
       <div className="mt-5">
         <SectionLabel>Last 8 sessions</SectionLabel>
-        <div className="bg-white border border-hairline rounded-xl p-4 mt-2">
+        <div className="card p-4 mt-2">
           <Sparkline entries={history.entries} />
         </div>
       </div>
@@ -173,15 +171,13 @@ export default function ExerciseDetail() {
         ) : (
           <div className="mt-2">
             {history.entries.map((entry) => {
-              const accent = COLOR.green700;
               return (
                 <div
                   key={entry.sessionId}
-                  className="bg-white border border-hairline rounded-xl p-3 mt-2 flex items-center justify-between gap-3"
-                  style={{ borderLeftWidth: '2px', borderLeftColor: accent }}
+                  className="card p-3 mt-2 flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
-                    <p className="text-micro uppercase text-muted">
+                    <p className="micro text-muted">
                       {relativeDateLabel(entry.date)}
                     </p>
                     <p className="text-body text-ink mt-0.5">
@@ -208,6 +204,7 @@ export default function ExerciseDetail() {
       {editing && (
         <ExerciseEditor exerciseId={exerciseId} onClose={() => setEditing(false)} />
       )}
+      </div>
     </div>
   );
 }

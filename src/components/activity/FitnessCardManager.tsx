@@ -9,11 +9,8 @@ export default function FitnessCardManager() {
   const { config, toggle } = useFitnessCardConfig();
 
   return (
-    <div className="bg-white shadow-card rounded-2xl p-4">
-      <p
-        className="eyebrow"
-        style={{ color: COLOR.green700 }}
-      >
+    <div className="card p-4">
+      <p className="eyebrow">
         Show / hide cards
       </p>
 

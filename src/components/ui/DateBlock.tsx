@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { cardioDateLabel } from '../../lib/timeBucket';
-import { COLOR } from '../../lib/brand';
 
 // Date block matching the cardio logger's date field: light recessed
 // surface, mint left accent, mint micro-label, "Today / Yesterday / Mon Apr 28"
@@ -21,10 +20,7 @@ export default function DateBlock({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div
-      style={{ borderLeftWidth: '2px', borderLeftColor: COLOR.green300 }}
-      className="relative bg-stone border border-hairline rounded-xl p-3 min-h-[64px] flex flex-col"
-    >
+    <div className="relative bg-white border border-hairline rounded-input p-3 min-h-[64px] flex flex-col">
       <p className="eyebrow">
         {label}
       </p>
