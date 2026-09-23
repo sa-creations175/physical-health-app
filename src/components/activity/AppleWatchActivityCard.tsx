@@ -137,7 +137,7 @@ export default function AppleWatchActivityCard({
       {connected && snapshot.recentWorkouts.length > 0 && (
         <div className="mt-3 pt-3 border-t border-hairline">
           <p className="eyebrow">
-            Recent workouts
+            Recent Workouts
           </p>
           <ul className="mt-1.5 space-y-1">
             {snapshot.recentWorkouts.slice(0, 4).map((w, i) => (

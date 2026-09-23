@@ -11,7 +11,7 @@ export default function FitnessCardManager() {
   return (
     <div className="card p-4">
       <p className="eyebrow">
-        Show / hide cards
+        Show / Hide Cards
       </p>
 
       <div className="mt-3 space-y-0.5">

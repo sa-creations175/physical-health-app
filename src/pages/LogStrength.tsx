@@ -58,7 +58,7 @@ export default function LogStrength() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   // Suggestion math is strength-only (cross-pillar logic deferred). Cardio
-  // never receives a "Due next" badge.
+  // never receives a "Due Next" badge.
   const [suggested, setSuggested] = useState<SessionType | null>(null);
   const [routing, setRouting] = useState<TypeValue | null>(null);
   // null when no panel; otherwise the strength type currently expanded.
@@ -259,7 +259,7 @@ export default function LogStrength() {
     <div className="pb-8">
       <HeaderStrip
         eyebrow="Log Session"
-        title="What kind of session?"
+        title="What Kind of Session?"
         subtitle="Tap to start logging."
       />
       <div className="px-4">
@@ -342,7 +342,7 @@ export default function LogStrength() {
                 } ${muted ? 'opacity-50' : ''}`}
               >
                 <span className="text-heading text-ink">{opt.label}</span>
-                {/* Resume badge takes priority over "Due next" — surfacing
+                {/* Resume badge takes priority over "Due Next" — surfacing
                     both would be redundant, and the unfinished work is the
                     more actionable signal. */}
                 {draft ? (
@@ -355,7 +355,7 @@ export default function LogStrength() {
                 ) : (
                   opt.value !== 'cardio' && suggested === opt.value && (
                     <span className="eyebrow">
-                      Due next
+                      Due Next
                     </span>
                   )
                 )}
@@ -386,7 +386,7 @@ export default function LogStrength() {
         <DateBlock
           value={sessionDate}
           onChange={setSessionDate}
-          label="Session date"
+          label="Session Date"
           ariaLabel="Session date"
         />
       </div>
@@ -421,7 +421,7 @@ function StaleDraftCard({
   return (
     <div className="card p-4">
       <p className="eyebrow">
-        Unfinished session
+        Unfinished Session
       </p>
       <p className="text-body text-ink mt-1 leading-snug">
         You have an unfinished <span className="font-semibold">{label}</span>{' '}
@@ -515,7 +515,7 @@ function StaleDraftCard({
           <DateBlock
             value={date}
             onChange={setDate}
-            label="Resume on date"
+            label="Resume on Date"
             ariaLabel="Resume on date"
           />
           <div className="flex gap-2 mt-2">

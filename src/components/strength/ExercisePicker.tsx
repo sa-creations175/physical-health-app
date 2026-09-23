@@ -145,7 +145,7 @@ export default function ExercisePicker({
             className="input w-full px-4 h-11 mt-2"
           />
           <label className="block eyebrow mt-4">
-            Muscle group
+            Muscle Group
           </label>
           <select
             value={newGroup}
@@ -181,7 +181,7 @@ export default function ExercisePicker({
               disabled={!newName.trim() || busy}
               className="btn-primary flex-1 disabled:opacity-50"
             >
-              Create &amp; Add
+              Create &amp; add
             </button>
           </div>
         </div>

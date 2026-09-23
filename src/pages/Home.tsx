@@ -132,15 +132,15 @@ function FitnessSummary() {
       {strip && (
         <div className="mt-3 pt-3 border-t border-hairline flex">
           <StripStat
-            label="Cal/day"
+            label="cal/day"
             value={strip.calories === null ? '—' : strip.calories.toLocaleString()}
           />
           <StripStat
-            label="Exercise min/day"
+            label="exercise min/day"
             value={strip.exerciseMinutes.toLocaleString()}
           />
           <StripStat
-            label="Steps/day"
+            label="steps/day"
             value={strip.steps === null ? '—' : strip.steps.toLocaleString()}
           />
         </div>

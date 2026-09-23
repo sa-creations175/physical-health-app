@@ -116,7 +116,7 @@ export default function SessionComplete() {
     <div className="pb-8">
       <HeaderStrip
         eyebrow="Session Summary"
-        title="How'd it go?"
+        title="How'd It Go?"
         subtitle={TYPE_LABEL[session.type] ?? session.type}
       />
       <div className="px-4">
@@ -155,7 +155,7 @@ export default function SessionComplete() {
 
       {noteRows.length > 0 && (
         <div className="mt-6">
-          <SectionLabel>Exercise notes</SectionLabel>
+          <SectionLabel>Exercise Notes</SectionLabel>
           <ul className="mt-2 card p-3 space-y-2">
             {noteRows.map((row) => (
               <li key={row.id} className="text-label leading-snug">
@@ -168,7 +168,7 @@ export default function SessionComplete() {
       )}
 
       <div className="mt-6">
-        <SectionLabel>Session date</SectionLabel>
+        <SectionLabel>Session Date</SectionLabel>
         <div className="mt-2">
           <DateBlock
             value={session.date}
@@ -184,7 +184,7 @@ export default function SessionComplete() {
       </div>
 
       <div className="mt-6">
-        <SectionLabel>How did it feel?</SectionLabel>
+        <SectionLabel>How Did It Feel?</SectionLabel>
         <div className="grid grid-cols-1 gap-2 mt-2">
           {FEEL_OPTIONS.map((opt) => (
             <button
@@ -203,7 +203,7 @@ export default function SessionComplete() {
       </div>
 
       <div className="mt-6">
-        <SectionLabel>Notes (optional)</SectionLabel>
+        <SectionLabel>Notes (Optional)</SectionLabel>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -218,7 +218,7 @@ export default function SessionComplete() {
         disabled={!feel || saving}
         className="btn-primary mt-6 w-full disabled:opacity-50"
       >
-        {saving ? 'Saving…' : 'Save Session'}
+        {saving ? 'Saving…' : 'Save session'}
       </button>
       </div>
     </div>

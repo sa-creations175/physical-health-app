@@ -508,14 +508,14 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
         'Research from sports scientists like Dr. Mike Israetel and Eric Helms suggests that above ~16% body fat, your body is less efficient at building muscle. Excess body fat impairs insulin sensitivity and hormone optimization — both of which affect how well your body partitions calories toward muscle vs fat storage.',
         'Most evidence-based coaches recommend cutting to 12–14% body fat first, then transitioning to a lean bulk. You build more muscle per calorie in a leaner state.',
       ],
-      prosLabel: 'Pros of cutting first',
+      prosLabel: 'Pros of Cutting First',
       pros: [
         'Better muscle-building efficiency afterward',
         'Improved insulin sensitivity',
         'Hormones optimize',
         "You'll look and feel better at a lower BF% baseline",
       ],
-      consLabel: 'Cons of cutting first',
+      consLabel: 'Cons of Cutting First',
       cons: [
         'Slower path to "bigger"',
         'Requires discipline',
@@ -531,13 +531,13 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
         "At your current body fat percentage, you're in the range where recomposition — losing fat and building muscle simultaneously — is genuinely achievable, especially with your training history. It's slower than a dedicated cut or bulk, but sustainable and effective.",
         'If your goal is both leaner and more muscular, a lean build at a small surplus is well-supported by research at this body fat range.',
       ],
-      prosLabel: 'Pros of recomp',
+      prosLabel: 'Pros of Recomp',
       pros: [
         'Simultaneous progress on both goals',
         'No dramatic diet phases',
         'Sustainable long-term',
       ],
-      consLabel: 'Cons of recomp',
+      consLabel: 'Cons of Recomp',
       cons: [
         'Slower than a dedicated cut or bulk',
         'Requires patience',
@@ -552,13 +552,13 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
       'Below 12% body fat, your body is primed for muscle building. Research consistently shows better muscle protein synthesis, improved testosterone levels, and superior calorie partitioning at lower body fat percentages.',
       'A lean bulk is the evidence-based recommendation here — a small surplus maximizes muscle gain while keeping fat gain minimal.',
     ],
-    prosLabel: 'Pros of lean bulk',
+    prosLabel: 'Pros of Lean Bulk',
     pros: [
       'Best muscle-building environment',
       'Hormones optimized',
       'Efficient calorie partitioning',
     ],
-    consLabel: 'Cons of lean bulk',
+    consLabel: 'Cons of Lean Bulk',
     cons: [
       'Requires consistent eating above maintenance',
       'Some fat gain is normal and expected',

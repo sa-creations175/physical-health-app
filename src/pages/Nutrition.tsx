@@ -308,7 +308,7 @@ function BodyStatsCard({
 }) {
   return (
     <div className="card p-4">
-      <SectionLabel>Body stats</SectionLabel>
+      <SectionLabel>Body Stats</SectionLabel>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <Stat label="Weight" value={weight !== null ? `${weight}` : '—'} unit="lbs" />
         <Stat label="Body fat" value={bf !== null ? `${bf}` : '—'} unit="%" />

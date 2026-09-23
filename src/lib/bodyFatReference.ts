@@ -13,7 +13,7 @@ export const MALE_BODY_FAT_BANDS: BodyFatBand[] = [
   {
     pct: 10, // midpoint of 8–11%
     label: '8–11%',
-    descriptor: 'Competition lean',
+    descriptor: 'Competition Lean',
     description:
       'Striations and visible vascularity across the whole frame. Stage-ready conditioning that’s hard to hold year-round.',
   },

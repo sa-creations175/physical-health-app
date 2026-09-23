@@ -117,7 +117,7 @@ export default function ActiveSession() {
         <DateBlock
           value={session.date}
           onChange={(d) => updateSessionDate(session.id, d)}
-          label="Session date"
+          label="Session Date"
           ariaLabel="Session date"
         />
       </div>
@@ -174,7 +174,7 @@ export default function ActiveSession() {
             onClick={() => setPickerOpen(true)}
             className="btn-secondary mt-3 w-full"
           >
-            + Add Exercise
+            + Add exercise
           </button>
 
           {sessionExercises.length > 0 && (
@@ -183,7 +183,7 @@ export default function ActiveSession() {
               onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
               className="btn-primary mt-3 w-full"
             >
-              Finish Session
+              Finish session
             </button>
           )}
 

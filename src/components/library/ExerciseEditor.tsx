@@ -92,7 +92,7 @@ export default function ExerciseEditor({
         />
 
         <label className="block eyebrow mt-4">
-          Muscle group
+          Muscle Group
         </label>
         <select
           value={group}

@@ -133,7 +133,7 @@ export default function ExerciseRow({ link }: { link: SessionExercise }) {
         onClick={handleAddSet}
         className="btn-secondary mt-2 w-full"
       >
-        + Add Set
+        + Add set
       </button>
 
       <NoteField sessionExerciseId={link.id} notes={link.notes} />

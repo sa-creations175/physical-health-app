@@ -32,7 +32,7 @@ export default function Settings() {
       <div className="px-4">
 
       <section className="mt-6">
-        <SectionLabel>Nutrition season</SectionLabel>
+        <SectionLabel>Nutrition Season</SectionLabel>
         <p className="text-label text-muted mt-1">
           {season
             ? `Current: ${seasonLabel(season.season_type)}. Re-runs the goal questions and shows a before/after before switching.`
@@ -48,7 +48,7 @@ export default function Settings() {
       </section>
 
       <section className="mt-6">
-        <SectionLabel>Weekly targets</SectionLabel>
+        <SectionLabel>Weekly Targets</SectionLabel>
         <p className="text-label text-muted mt-1">Sessions per week</p>
 
         <NumberRow
@@ -91,7 +91,7 @@ export default function Settings() {
       </section>
 
       <section className="mt-6">
-        <SectionLabel>Daily nutrition</SectionLabel>
+        <SectionLabel>Daily Nutrition</SectionLabel>
         <p className="text-label text-muted mt-1">
           Saved now — Phase 3 lights up dashboard tracking.
         </p>
@@ -129,7 +129,7 @@ export default function Settings() {
       </section>
 
       <section className="mt-6">
-        <SectionLabel>Daily bundle</SectionLabel>
+        <SectionLabel>Daily Bundle</SectionLabel>
         <p className="text-label text-muted mt-1">
           Daily rep targets, and the amount each tap adds on the dashboard card.
         </p>
@@ -243,7 +243,7 @@ export default function Settings() {
       </section>
 
       <section className="mt-6">
-        <SectionLabel>Daily activity</SectionLabel>
+        <SectionLabel>Daily Activity</SectionLabel>
         <p className="text-label text-muted mt-1">
           Daily-average targets for the Home Fitness Score. Set 0 to drop a
           mark from the score.

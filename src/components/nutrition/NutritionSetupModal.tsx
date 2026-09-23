@@ -297,7 +297,7 @@ function Header({ step, onClose }: { step: Step; onClose: () => void }) {
     <div className="px-4 pt-4 pb-3 sticky top-0 bg-white z-10">
       <SheetClose onClose={onClose} />
       <p className="eyebrow pr-10">
-        Set up nutrition · Step {step} of 3
+        Set Up Nutrition · Step {step} of 3
       </p>
       <h2 className="text-title text-ink mt-1">{titles[step - 1]}</h2>
       {/* Stepper: Green 300 done, Green 700 current, Stone not yet. */}
@@ -869,7 +869,7 @@ function GoalStep(props: {
                 <Micro>Recommended · {seasonLabel(preview.recommendedType)}</Micro>
 
                 <div>
-                  <Micro>Your baseline</Micro>
+                  <Micro>Your Baseline</Micro>
                   <p className="mt-1 text-label text-ink leading-snug">
                     Based on your body stats and Apple Watch data, your body
                     burns approximately{' '}
@@ -895,14 +895,14 @@ function GoalStep(props: {
                 </div>
 
                 <div>
-                  <Micro>What we’re doing</Micro>
+                  <Micro>What We’re Doing</Micro>
                   <p className="mt-1 text-label text-ink leading-snug">
                     {SEASON_EXPLANATION[preview.recommendedType]}
                   </p>
                 </div>
 
                 <div>
-                  <Micro>What the research says</Micro>
+                  <Micro>What the Research Says</Micro>
                   <ResearchNote bf={props.bfNum > 0 ? props.bfNum : null} />
                 </div>
               </div>
@@ -938,7 +938,7 @@ function GoalStep(props: {
               <TargetComparison current={current} targets={targets} />
 
               <div className="card p-4">
-                <Micro>Pros &amp; cons of this season</Micro>
+                <Micro>Pros &amp; Cons of This Season</Micro>
                 <div className="mt-2">
                   <ProsCons
                     prosLabel="Pros"
@@ -1120,7 +1120,7 @@ function MacroStyleSelector({
   );
   return (
     <div className="card p-4">
-      <Micro>Macro style</Micro>
+      <Micro>Macro Style</Micro>
       <p className="mt-1 text-label text-muted leading-snug">
         Protein stays high regardless. Choose how to split the rest.
       </p>
@@ -1172,11 +1172,11 @@ function TdeeExplainer() {
       {open && (
         <div className="tile mt-1 p-3 space-y-3">
           <p className="eyebrow">
-            Your TDEE is calculated in two steps
+            Your TDEE Is Calculated in Two Steps
           </p>
 
           <div>
-            <Micro>Step 1 — Resting burn (BMR)</Micro>
+            <Micro>Step 1 — Resting Burn (BMR)</Micro>
             <p className="mt-1 text-label text-ink leading-snug">
               Using the Mifflin-St Jeor formula — the most validated BMR equation
               for most adults:
@@ -1192,7 +1192,7 @@ function TdeeExplainer() {
           </div>
 
           <div>
-            <Micro>Step 2 — Active burn (from Apple Watch)</Micro>
+            <Micro>Step 2 — Active Burn (From Apple Watch)</Micro>
             <p className="mt-1 text-label text-ink leading-snug">
               Your 90-day rolling average of daily active calories from
               HealthKit. This is your real movement burn — not a generic activity

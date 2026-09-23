@@ -267,7 +267,7 @@ export default function LogCardio() {
     <div className="pb-8">
       <HeaderStrip
         eyebrow="Body · Log"
-        title="Log cardio"
+        title="Log Cardio"
         right={
           <button type="button" onClick={() => navigate(-1)} className="pill min-h-[44px]">
             Cancel
@@ -654,7 +654,7 @@ function CardioTypePicker({
       <HeaderStrip
         overlay
         eyebrow="Body · Log"
-        title={adding ? 'New activity' : 'Pick activity'}
+        title={adding ? 'New Activity' : 'Pick Activity'}
         right={<CloseButton onClose={onClose} />}
       />
       <div className="h-3 shrink-0" />

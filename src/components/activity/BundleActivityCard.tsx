@@ -154,8 +154,8 @@ export default function BundleActivityCard({
       {/* Weekly progress bars */}
       <div className="mt-3 space-y-2.5">
         <WeeklyBar label="Push-ups" total={totals.pushups} weeklyTarget={pushupTarget * bundleTarget} />
-        <WeeklyBar label="Ab rolls" total={totals.ab_rolls} weeklyTarget={abrollTarget * bundleTarget} />
-        <WeeklyBar label="Calf raises" total={totals.calf_raises} weeklyTarget={calfTarget * bundleTarget} />
+        <WeeklyBar label="Ab Rolls" total={totals.ab_rolls} weeklyTarget={abrollTarget * bundleTarget} />
+        <WeeklyBar label="Calf Raises" total={totals.calf_raises} weeklyTarget={calfTarget * bundleTarget} />
       </div>
 
       <p
@@ -169,7 +169,7 @@ export default function BundleActivityCard({
       {/* Today's log */}
       <div className="mt-3 pt-3 border-t border-hairline">
         <p className="eyebrow">
-          Log today
+          Log Today
         </p>
         {(todayLog?.watch_duration_minutes ?? 0) > 0 && (
           <p className="mt-1 text-label text-green-700">

@@ -118,7 +118,7 @@ export default function ExerciseDetail() {
         ) : (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <SectionLabel>Last set</SectionLabel>
+              <SectionLabel>Last Set</SectionLabel>
               {last ? (
                 <>
                   <p className="text-body text-ink mt-1">
@@ -136,7 +136,7 @@ export default function ExerciseDetail() {
               )}
             </div>
             <div>
-              <SectionLabel>Personal best</SectionLabel>
+              <SectionLabel>Personal Best</SectionLabel>
               {pr ? (
                 <>
                   <p className="text-body text-ink mt-1">
@@ -156,7 +156,7 @@ export default function ExerciseDetail() {
       </div>
 
       <div className="mt-5">
-        <SectionLabel>Last 8 sessions</SectionLabel>
+        <SectionLabel>Last 8 Sessions</SectionLabel>
         <div className="card p-4 mt-2">
           <Sparkline entries={history.entries} />
         </div>
