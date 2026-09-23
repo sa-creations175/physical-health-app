@@ -10,6 +10,7 @@ import { formatSetList } from '../lib/sessionSets';
 import { getWatchDurationForSession } from '../lib/sessionDuration';
 import { pillarCallout } from '../lib/pillarNarrative';
 import { fillFraction } from '../lib/progress';
+import FeelAndNote from '../components/strength/FeelAndNote';
 import type { SetEntry, StrengthType } from '../db/types';
 
 const TARGET_FIELD = {
@@ -129,6 +130,7 @@ export default function SessionComplete() {
             ))}
           </div>
           {callout && <p className="callout mt-3 font-semibold text-green-900">{callout}</p>}
+          <FeelAndNote session={session} />
         </div>
 
         {type && week && week.target > 0 && (
