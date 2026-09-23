@@ -59,7 +59,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           type="button"
           onClick={handleDismiss}
           aria-live="polite"
-          className="fixed left-1/2 -translate-x-1/2 bg-ink text-white rounded-full px-4 py-2.5 text-label font-medium max-w-[88vw] whitespace-nowrap overflow-hidden text-ellipsis z-[60]"
+          className="fixed left-1/2 -translate-x-1/2 bg-ink text-white rounded-[20px] px-4 py-2.5 text-label font-medium text-center w-max max-w-[88vw] z-[60]"
           style={{ bottom: 'calc(env(safe-area-inset-bottom) + 84px)' }}
         >
           {message}

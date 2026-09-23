@@ -19,7 +19,9 @@ import {
   swapExerciseInInstance,
 } from '../lib/sessionPlans';
 import {
+  droppedMessage,
   finishExercise,
+  finishSession,
   getLastTimes,
   reopenExercise,
   type LastTimeEntry,
@@ -42,6 +44,7 @@ export default function ActiveSession() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<SheetState>(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [finishing, setFinishing] = useState(false);
 
   const session = useLiveQuery(() => db.sessions.get(sessionId), [sessionId]);
   const links = useLiveQuery(
@@ -128,6 +131,23 @@ export default function ActiveSession() {
     session.date === todayISODate()
       ? "Today's Session"
       : `${date.toLocaleDateString('en-US', { weekday: 'long' })}'s Session`;
+
+  // "Finish session" / "Save changes": never blocks. Anything typed lands
+  // first; then every exercise with a logged set is finished and the rest are
+  // left out, named in a toast.
+  async function handleFinishSession() {
+    if (finishing || !links) return;
+    setFinishing(true);
+    await Promise.all(links.map((l) => rowsApi.settle(l.id)));
+    const result = await finishSession(sessionId);
+    if (result.discarded) {
+      showToast('Nothing logged, so the session wasn’t saved');
+      navigate('/fitness');
+      return;
+    }
+    if (result.dropped.length > 0) showToast(droppedMessage(result.dropped), 3200);
+    navigate(`/log/strength/complete/${sessionId}`);
+  }
 
   function scrollTo(linkId: string) {
     requestAnimationFrame(() =>
@@ -279,7 +299,8 @@ export default function ActiveSession() {
           )}
           <button
             type="button"
-            onClick={() => navigate(`/log/strength/complete/${sessionId}`)}
+            onClick={() => void handleFinishSession()}
+            disabled={finishing}
             className="btn-primary flex-1"
           >
             {editing ? 'Save changes' : 'Finish session'}

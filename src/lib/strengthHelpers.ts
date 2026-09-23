@@ -10,7 +10,6 @@ import type {
   SessionType,
   Exercise,
   SetEntry,
-  FeelRating,
   MuscleGroup,
 } from '../db/types';
 import { todayISODate, startOfWeekISODate } from './dateHelpers';
@@ -56,20 +55,6 @@ export async function updateSessionDate(
   await syncedUpdate(db.sessions, sessionId, {
     date,
     updated_at: new Date().toISOString(),
-  });
-}
-
-export async function completeSession(
-  sessionId: string,
-  feel_rating: FeelRating,
-  notes: string,
-): Promise<void> {
-  const now = new Date().toISOString();
-  await syncedUpdate(db.sessions, sessionId, {
-    feel_rating,
-    notes,
-    completed_at: now,
-    updated_at: now,
   });
 }
 

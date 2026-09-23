@@ -9,6 +9,7 @@ import BundleActivityCard from '../components/activity/BundleActivityCard';
 import AppleWatchActivityCard from '../components/activity/AppleWatchActivityCard';
 import CaloriesBreakdownCard from '../components/activity/CaloriesBreakdownCard';
 import FitnessCardManager from '../components/activity/FitnessCardManager';
+import AutoSavedNotices from '../components/activity/AutoSavedNotices';
 import { useFitnessCardConfig } from '../lib/useFitnessCardConfig';
 import { startOfWeekISODate, addDaysISO } from '../lib/dateHelpers';
 
@@ -26,7 +27,8 @@ export default function Fitness() {
     <div className="pb-4">
       <FitnessHeader />
 
-      <div className="px-4 mt-4">
+      <div className="px-4 mt-4 space-y-3">
+        <AutoSavedNotices />
         <CaloriesBreakdownCard />
       </div>
 

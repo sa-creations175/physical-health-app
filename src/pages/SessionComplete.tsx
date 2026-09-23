@@ -1,225 +1,152 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
-import { completeSession, updateSessionDate } from '../lib/strengthHelpers';
-import { SectionLabel } from '../components/ui/primitives';
-import DateBlock from '../components/ui/DateBlock';
-import type { FeelRating } from '../db/types';
 import HeaderStrip from '../components/ui/HeaderStrip';
+import { getLiftingSummary } from '../lib/dashboardQueries';
+import { getUserPreferences } from '../lib/userPreferences';
+import { isStrengthType, STRENGTH_TYPE_LABEL } from '../lib/sessionPlans';
+import { formatSetList } from '../lib/sessionSets';
+import { getWatchDurationForSession } from '../lib/sessionDuration';
+import { pillarCallout } from '../lib/pillarNarrative';
+import { fillFraction } from '../lib/progress';
+import type { SetEntry, StrengthType } from '../db/types';
 
-const FEEL_OPTIONS: {
-  value: FeelRating;
-  label: string;
-  description: string;
-}[] = [
-  { value: 'flying', label: 'Flying', description: 'Light, strong, in the zone' },
-  { value: 'cruising', label: 'Cruising', description: 'Steady, productive, fine' },
-  { value: 'crawling', label: 'Crawling', description: 'Heavy legs, slow, off' },
-];
+const TARGET_FIELD = {
+  lower: 'lifting_target_lower',
+  upper: 'lifting_target_upper',
+  full_body: 'lifting_target_full_body',
+} as const;
 
-const TYPE_LABEL: Record<string, string> = {
-  upper: 'Upper Body',
-  lower: 'Lower Body',
-  full_body: 'Full Body',
-};
-
+// The summary after "Finish session": date, Apple Watch duration when there's
+// a matching workout, the exercise count, what you did, and this week's count
+// for the type. "Edit session" reopens the same screen, folded.
 export default function SessionComplete() {
-  const { sessionId } = useParams<{ sessionId: string }>();
+  const { sessionId = '' } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const [feel, setFeel] = useState<FeelRating | null>(null);
-  const [notes, setNotes] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [minutes, setMinutes] = useState<number | null>(null);
 
-  const session = useLiveQuery(
-    () => (sessionId ? db.sessions.get(sessionId) : undefined),
-    [sessionId],
-  );
-  const sessionExercises = useLiveQuery(
-    () =>
-      sessionId
-        ? db.session_exercises.where('session_id').equals(sessionId).toArray()
-        : [],
-    [sessionId],
-    [],
-  );
-  const allSets = useLiveQuery(
+  const session = useLiveQuery(() => db.sessions.get(sessionId), [sessionId]);
+  const rows = useLiveQuery(
     async () => {
-      if (!sessionId) return [];
-      const links = await db.session_exercises
-        .where('session_id')
-        .equals(sessionId)
+      const links = await db.session_exercises.where('session_id').equals(sessionId).toArray();
+      const sets = await db.sets
+        .where('session_exercise_id')
+        .anyOf(links.map((l) => l.id))
         .toArray();
-      const ids = links.map((l) => l.id);
-      if (ids.length === 0) return [];
-      return await db.sets.where('session_exercise_id').anyOf(ids).toArray();
+      const exercises = await db.exercises.where('id').anyOf(links.map((l) => l.exercise_id)).toArray();
+      const name = new Map(exercises.map((e) => [e.id, e.name]));
+      return links
+        .slice()
+        .sort(
+          (a, b) =>
+            (a.finished_order ?? Infinity) - (b.finished_order ?? Infinity) ||
+            a.order_index - b.order_index,
+        )
+        .map((l) => ({
+          id: l.id,
+          name: name.get(l.exercise_id) ?? 'Exercise',
+          sets: sets
+            .filter((s) => s.session_exercise_id === l.id)
+            .sort((a, b) => a.set_number - b.set_number) as SetEntry[],
+        }));
     },
     [sessionId],
     [],
   );
-
-  // Notes joined with their exercise name for the summary "Notes" section.
-  // Empty / null notes are filtered out so the section only mounts when
-  // there's something to show.
-  const noteRows = useLiveQuery(
+  const type: StrengthType | null = session && isStrengthType(session.type) ? session.type : null;
+  const week = useLiveQuery(
     async () => {
-      if (!sessionId) return [];
-      const links = await db.session_exercises
-        .where('session_id')
-        .equals(sessionId)
-        .sortBy('order_index');
-      const withNotes = links.filter((l) => l.notes && l.notes.trim() !== '');
-      if (withNotes.length === 0) return [];
-      const exs = await db.exercises
-        .where('id')
-        .anyOf(withNotes.map((l) => l.exercise_id))
-        .toArray();
-      const nameById = new Map(exs.map((e) => [e.id, e.name]));
-      return withNotes.map((l) => ({
-        id: l.id,
-        name: nameById.get(l.exercise_id) ?? 'Exercise',
-        note: l.notes as string,
-      }));
+      if (!type) return null;
+      const [summary, prefs] = await Promise.all([getLiftingSummary(type), getUserPreferences()]);
+      return { count: summary.thisWeekCount, target: prefs[TARGET_FIELD[type]] };
     },
-    [sessionId],
-    [],
+    [type],
   );
 
-  const totalSets = allSets.length;
-  // Volume is lb·reps — only rep-mode sets contribute. Duration sets are
-  // counted in totalSets but excluded here; weight × seconds isn't a
-  // meaningful comparable magnitude.
-  const totalVolume = allSets.reduce(
-    (sum, s) => (s.set_type === 'duration' ? sum : sum + s.weight * s.reps),
-    0,
-  );
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    getWatchDurationForSession(session)
+      .then((m) => {
+        if (!cancelled) setMinutes(m);
+      })
+      .catch(() => {
+        /* no Watch duration: the summary just shows the date */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   if (!session) {
-    return (
-      <div className="px-4 pt-8 text-muted text-label">Loading session…</div>
-    );
+    return <div className="px-4 pt-8 text-muted text-label">Loading session…</div>;
   }
 
-  async function handleSave() {
-    if (!feel || !sessionId || saving) return;
-    setSaving(true);
-    try {
-      await completeSession(sessionId, feel, notes);
-      navigate('/');
-    } catch (err) {
-      console.error('Failed to save session:', err);
-      setSaving(false);
-    }
-  }
+  const typeLabel = type ? STRENGTH_TYPE_LABEL[type] : 'Session';
+  const dateLabel = new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
+  const subtitle = [
+    dateLabel,
+    minutes ? `${minutes} min · Apple Watch` : null,
+    `${rows.length} exercise${rows.length === 1 ? '' : 's'}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const met = !!week && week.target > 0 && week.count >= week.target;
+  const callout =
+    week && week.target > 0 && (type === 'lower' || type === 'upper')
+      ? pillarCallout(type, fillFraction(week.count, week.target), session.date)
+      : null;
 
   return (
     <div className="pb-8">
-      <HeaderStrip
-        eyebrow="Session Summary"
-        title="How'd It Go?"
-        subtitle={TYPE_LABEL[session.type] ?? session.type}
-      />
+      <HeaderStrip eyebrow={`Body · Fitness · ${typeLabel}`} title="Session Saved" subtitle={subtitle} />
       <div className="px-4">
-
-      <div
-        className="card p-4 mt-4"
-      >
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <p className="micro text-green-700">
-              Exercises
-            </p>
-            <p className="text-title text-ink mt-1 leading-none">
-              {sessionExercises.length}
-            </p>
-          </div>
-          <div>
-            <p className="micro text-green-700">
-              Sets
-            </p>
-            <p className="text-title text-ink mt-1 leading-none">
-              {totalSets}
-            </p>
-          </div>
-          <div>
-            <p className="micro text-green-700">
-              Volume
-            </p>
-            <p className="text-title text-ink mt-1 leading-none">
-              {Math.round(totalVolume).toLocaleString()}
-            </p>
-            <p className="text-label text-muted mt-0.5">lb·reps</p>
-          </div>
-        </div>
-      </div>
-
-      {noteRows.length > 0 && (
-        <div className="mt-6">
-          <SectionLabel>Exercise Notes</SectionLabel>
-          <ul className="mt-2 card p-3 space-y-2">
-            {noteRows.map((row) => (
-              <li key={row.id} className="text-label leading-snug">
-                <span className="text-ink font-medium">{row.name}</span>
-                <span className="text-muted"> — {row.note}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <div className="mt-6">
-        <SectionLabel>Session Date</SectionLabel>
-        <div className="mt-2">
-          <DateBlock
-            value={session.date}
-            onChange={(next) => {
-              if (next && next !== session.date) {
-                void updateSessionDate(session.id, next);
-              }
-            }}
-            label="Date"
-            ariaLabel="Session date"
-          />
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <SectionLabel>How Did It Feel?</SectionLabel>
-        <div className="grid grid-cols-1 gap-2 mt-2">
-          {FEEL_OPTIONS.map((opt) => (
+        <div className="card p-4 mt-4">
+          <div className="flex items-center justify-between gap-2">
+            <p className="eyebrow">What You Did</p>
             <button
-              key={opt.value}
               type="button"
-              onClick={() => setFeel(opt.value)}
-              className={`card p-3 text-left min-h-[60px] transition-colors ${
-                feel === opt.value ? 'border-green-700 bg-green-100' : ''
-              }`}
+              onClick={() => navigate(`/log/strength/active/${sessionId}`)}
+              className="pill pill-soft py-1 px-2.5"
             >
-              <p className="text-body font-medium text-ink">{opt.label}</p>
-              <p className="text-label text-muted mt-0.5">{opt.description}</p>
+              Edit session
             </button>
-          ))}
+          </div>
+          <div className="mt-1">
+            {rows.map((r) => (
+              <div
+                key={r.id}
+                className="flex justify-between gap-3 py-2.5 border-b border-hairline last:border-b-0 text-body tabular-nums"
+              >
+                <span className="text-ink">{r.name}</span>
+                <span className="text-ink text-right">{formatSetList(r.sets)}</span>
+              </div>
+            ))}
+          </div>
+          {callout && <p className="callout mt-3 font-semibold text-green-900">{callout}</p>}
         </div>
-      </div>
 
-      <div className="mt-6">
-        <SectionLabel>Notes (Optional)</SectionLabel>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Anything to remember from this session?"
-          className="input mt-2 w-full px-4 py-3 min-h-[80px] resize-none"
-        />
-      </div>
+        {type && week && week.target > 0 && (
+          <div className="card p-4 mt-3">
+            <p className="eyebrow">This Week</p>
+            <p className="text-body text-ink mt-2">
+              {typeLabel}{' '}
+              <span className="font-bold tabular-nums">
+                {week.count} / {week.target}
+              </span>
+              {met && <span className="pill pill-soft py-0.5 px-2 ml-2 text-micro">goal met</span>}
+            </p>
+          </div>
+        )}
 
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={!feel || saving}
-        className="btn-primary mt-6 w-full disabled:opacity-50"
-      >
-        {saving ? 'Saving…' : 'Save session'}
-      </button>
+        <button type="button" onClick={() => navigate('/fitness')} className="btn-primary w-full mt-4">
+          Done
+        </button>
       </div>
     </div>
   );

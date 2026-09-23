@@ -6,7 +6,13 @@
 // rows) by the session screen.
 import { db } from '../db/database';
 import { syncedAdd, syncedDelete, syncedUpdate } from '../db/syncedWrite';
-import { isSessionComplete } from './sessionPlans';
+import {
+  adoptAsPlanIfEmpty,
+  isSessionComplete,
+  isStrengthType,
+  STRENGTH_TYPE_LABEL,
+} from './sessionPlans';
+import { todayISODate } from './dateHelpers';
 import { formatSetMagnitude } from './setFormat';
 import type { Session, SessionExercise, SetEntry, SetType } from '../db/types';
 
@@ -195,4 +201,141 @@ export async function finishExercise(
 // Tap a folded card to reopen it.
 export async function reopenExercise(linkId: string): Promise<void> {
   await syncedUpdate(db.session_exercises, linkId, { finished_order: null });
+}
+
+// ---- Finishing a session --------------------------------------------------------
+
+export interface FinishResult {
+  kept: number; // exercises in the saved session
+  dropped: string[]; // names of exercises left out because nothing was logged
+  discarded: boolean; // nothing at all was logged, so the session wasn't kept
+}
+
+// "Finish session" (and "Save changes" when editing). Never blocks: every open
+// exercise with at least one logged set (typed or checked) is finished, its
+// sets marked done; every exercise with nothing logged is left out. A session
+// with nothing logged anywhere isn't kept. Untouched ghost rows were never
+// written, so there's nothing to drop for them.
+export async function finishSession(sessionId: string): Promise<FinishResult> {
+  const session = await db.sessions.get(sessionId);
+  if (!session) return { kept: 0, dropped: [], discarded: true };
+  const links = await db.session_exercises
+    .where('session_id')
+    .equals(sessionId)
+    .sortBy('order_index');
+  const names = new Map(
+    (await db.exercises.where('id').anyOf(links.map((l) => l.exercise_id)).toArray()).map(
+      (e) => [e.id, e.name],
+    ),
+  );
+
+  const dropped: string[] = [];
+  const kept: SessionExercise[] = [];
+  let order = links.reduce((m, l) => Math.max(m, l.finished_order ?? 0), 0);
+  for (const l of links) {
+    const sets = (await db.sets.where('session_exercise_id').equals(l.id).toArray()).sort(
+      (a, b) => a.set_number - b.set_number,
+    );
+    if (sets.length === 0) {
+      dropped.push(names.get(l.exercise_id) ?? 'An exercise');
+      await syncedDelete(db.session_exercises, l.id);
+      continue;
+    }
+    kept.push(l);
+    if (l.finished_order != null) continue;
+    await renumberSets(sets.map((s) => s.id));
+    for (const s of sets) if (!s.completed) await syncedUpdate(db.sets, s.id, { completed: true });
+    await syncedUpdate(db.session_exercises, l.id, { finished_order: ++order });
+  }
+
+  if (kept.length === 0) {
+    await syncedDelete(db.sessions, sessionId);
+    return { kept: 0, dropped, discarded: true };
+  }
+
+  const now = new Date().toISOString();
+  await syncedUpdate(db.sessions, sessionId, {
+    completed_at: session.completed_at ?? now,
+    updated_at: now,
+  });
+  if (isStrengthType(session.type)) {
+    const ordered = kept
+      .slice()
+      .sort((a, b) => a.order_index - b.order_index)
+      .map((l) => l.exercise_id);
+    await adoptAsPlanIfEmpty(session.type, ordered);
+  }
+  return { kept: kept.length, dropped, discarded: false };
+}
+
+// "Bulgarian Split Squat and Leg Press had no sets, left out"
+export function droppedMessage(dropped: string[]): string {
+  const list =
+    dropped.length <= 1
+      ? (dropped[0] ?? '')
+      : `${dropped.slice(0, -1).join(', ')} and ${dropped[dropped.length - 1]}`;
+  return `${list} had no sets, left out`;
+}
+
+// ---- Sessions left unfinished --------------------------------------------------
+
+// A notice Fitness shows once for each session saved on the user's behalf.
+export interface AutoSavedNotice {
+  sessionId: string;
+  text: string; // "Monday's Lower Body was saved with 2 exercises. Tap to edit"
+}
+
+export const AUTOSAVED_NOTICES_KEY = 'ph_autosaved_session_notices';
+// Fired on window when notices change, so a mounted Fitness screen updates.
+export const AUTOSAVED_NOTICES_EVENT = 'ph-autosaved-notices';
+
+function writeNotices(notices: AutoSavedNotice[]): void {
+  try {
+    localStorage.setItem(AUTOSAVED_NOTICES_KEY, JSON.stringify(notices));
+  } catch {
+    /* storage unavailable: no notice, the session is still saved */
+  }
+  window.dispatchEvent(new Event(AUTOSAVED_NOTICES_EVENT));
+}
+
+export function readAutoSavedNotices(): AutoSavedNotice[] {
+  try {
+    return JSON.parse(localStorage.getItem(AUTOSAVED_NOTICES_KEY) ?? '[]') as AutoSavedNotice[];
+  } catch {
+    return [];
+  }
+}
+
+export function dismissAutoSavedNotice(sessionId: string): void {
+  writeNotices(readAutoSavedNotices().filter((n) => n.sessionId !== sessionId));
+}
+
+// On app open: a strength session left unfinished on an earlier day is saved
+// with whatever was logged (same rules as Finish session), and Fitness is told
+// once. Nothing keeps running. Today's unfinished session is left as a draft:
+// the app may simply have been closed mid-workout, and "Save for later" keeps
+// a draft on purpose.
+export async function autoSaveUnfinishedSessions(): Promise<void> {
+  const today = todayISODate();
+  const drafts = (await db.sessions.toArray()).filter(
+    (s) =>
+      !isSessionComplete(s) &&
+      s.source !== 'watch' &&
+      isStrengthType(s.type) &&
+      s.date < today,
+  );
+  if (drafts.length === 0) return;
+  const notices = readAutoSavedNotices();
+  for (const s of drafts) {
+    const result = await finishSession(s.id);
+    if (result.discarded || !isStrengthType(s.type)) continue;
+    const weekday = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
+    notices.push({
+      sessionId: s.id,
+      text: `${weekday}'s ${STRENGTH_TYPE_LABEL[s.type]} was saved with ${result.kept} exercise${
+        result.kept === 1 ? '' : 's'
+      }. Tap to edit`,
+    });
+  }
+  writeNotices(notices);
 }

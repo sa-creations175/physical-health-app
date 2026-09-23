@@ -121,6 +121,19 @@ async function setPlanExercises(type: StrengthType, ids: string[]): Promise<void
   });
 }
 
+// A type with no standing list yet (no history when lists were seeded) takes
+// the exercises of its first finished session as the list, so the next
+// session doesn't open empty again.
+export async function adoptAsPlanIfEmpty(
+  type: StrengthType,
+  exerciseIds: string[],
+): Promise<void> {
+  const plan = await getSessionPlan(type);
+  if (plan && plan.exercise_ids.length > 0) return;
+  if (exerciseIds.length === 0) return;
+  await setPlanExercises(type, [...new Set(exerciseIds)]);
+}
+
 // ---- Instances --------------------------------------------------------------
 
 function newLink(
