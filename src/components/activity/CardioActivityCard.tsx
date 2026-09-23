@@ -1,3 +1,4 @@
+import { Watch } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import SharedActivityCard from './SharedActivityCard';
 import { CardioIcon } from './activityIcons';
@@ -91,7 +92,7 @@ export default function CardioActivityCard({
       </p>
       {watchCount > 0 && (
         <p className="text-label text-hint mt-2">
-          ⌚ {watchCount} from Apple Watch this week
+          <Watch aria-hidden="true" size={12} strokeWidth={2} className="inline -mt-0.5" /> {watchCount} from Apple Watch this week
         </p>
       )}
     </SharedActivityCard>

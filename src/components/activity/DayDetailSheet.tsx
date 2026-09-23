@@ -1,3 +1,4 @@
+import { ChevronDown, Watch, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BottomSheet from '../ui/BottomSheet';
@@ -124,7 +125,7 @@ function ReclassifyControl({
         onClick={() => setOpen(true)}
         className="text-label text-green-700 font-bold mt-1 min-h-[44px]"
       >
-        Reclassify ▾
+        Reclassify <ChevronDown aria-hidden="true" size={14} strokeWidth={2} className="inline" />
       </button>
     );
   }
@@ -159,7 +160,7 @@ function ReclassifyControl({
 const WATCH_BADGE = (
   <span className="text-label text-hint" title="From Apple Watch">
     {' '}
-    ⌚
+    <Watch size={12} strokeWidth={2} className="inline -mt-0.5" />
   </span>
 );
 
@@ -180,18 +181,19 @@ function BundleDay({ date, readOnly }: { date: string; readOnly: boolean }) {
   const watchMin = row?.watch_duration_minutes ?? 0;
 
   if (readOnly) {
-    const lines: string[] = [];
-    if (row?.pushups) lines.push(`Push-ups: ${row.pushups}`);
-    if (row?.ab_rolls) lines.push(`Ab rolls: ${row.ab_rolls}`);
-    if (row?.calf_raises) lines.push(`Calf raises: ${row.calf_raises}`);
-    if (watchMin > 0) lines.push(`⌚ ${watchMin} min strength`);
+    const lines: { key: string; node: React.ReactNode }[] = [];
+    if (row?.pushups) lines.push({ key: 'p', node: `Push-ups: ${row.pushups}` });
+    if (row?.ab_rolls) lines.push({ key: 'a', node: `Ab rolls: ${row.ab_rolls}` });
+    if (row?.calf_raises) lines.push({ key: 'c', node: `Calf raises: ${row.calf_raises}` });
+    if (watchMin > 0)
+      lines.push({ key: 'w', node: <><Watch aria-hidden="true" size={12} strokeWidth={2} className="inline -mt-0.5" /> {watchMin} min strength</> });
     return lines.length === 0 ? (
       <p className="text-label text-muted">Nothing logged this day.</p>
     ) : (
       <div className="space-y-1">
         {lines.map((l) => (
-          <p key={l} className="text-body text-ink">
-            {l}
+          <p key={l.key} className="text-body text-ink">
+            {l.node}
           </p>
         ))}
       </div>
@@ -221,7 +223,7 @@ function BundleDay({ date, readOnly }: { date: string; readOnly: boolean }) {
       {watchMin > 0 && row && (
         <div className="pt-2">
           <p className="text-label text-green-700">
-            ⌚ Apple Watch · {watchMin} min strength
+            <Watch aria-hidden="true" size={12} strokeWidth={2} className="inline -mt-0.5" /> Apple Watch · {watchMin} min strength
           </p>
           <ReclassifyControl
             current="bundle"
@@ -339,9 +341,9 @@ function CardioDay({
                   type="button"
                   onClick={() => void syncedDelete(db.cardio_logs, l.id)}
                   aria-label={`Delete ${l.name}`}
-                  className="text-muted text-title w-8 h-8 flex items-center justify-center -mr-1"
+                  className="text-hint w-11 h-11 flex items-center justify-center -mr-2"
                 >
-                  ×
+                  <X size={18} strokeWidth={2} />
                 </button>
               </div>
               {l.source === 'watch' && (

@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -292,7 +293,7 @@ export default function LogCardio() {
             </p>
             <span className="mt-1 flex items-center justify-between gap-2">
               <span className="text-body text-ink font-medium">{dateText}</span>
-              <span aria-hidden className="text-muted text-label leading-none">⌄</span>
+              <ChevronDown aria-hidden="true" size={16} strokeWidth={2} className="text-muted shrink-0" />
             </span>
             <input
               ref={dateInputRef}
@@ -368,7 +369,7 @@ export default function LogCardio() {
           <span className="text-body text-ink">
             {selectedType ? selectedType.name : 'Search or pick another'}
           </span>
-          <span aria-hidden className="text-muted text-heading">⌄</span>
+          <ChevronDown aria-hidden="true" size={16} strokeWidth={2} className="text-muted shrink-0" />
         </button>
         {lastLog && selectedType && (
           <p className="text-label text-muted mt-2">

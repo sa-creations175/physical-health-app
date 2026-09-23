@@ -1,3 +1,4 @@
+import { Watch } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import { useToast } from '../ui/Toast';
@@ -142,7 +143,7 @@ export default function BundleActivityCard({
                   style={{ color: INTENSITY_INITIAL[intensity] }}
                   title={`Apple Watch · ${log?.watch_duration_minutes} min`}
                 >
-                  ⌚
+                  <Watch aria-hidden="true" size={10} strokeWidth={2.5} />
                 </span>
               )}
             </div>
@@ -172,7 +173,7 @@ export default function BundleActivityCard({
         </p>
         {(todayLog?.watch_duration_minutes ?? 0) > 0 && (
           <p className="mt-1 text-label text-green-700">
-            ⌚ Apple Watch · {todayLog?.watch_duration_minutes} min strength
+            <Watch aria-hidden="true" size={12} strokeWidth={2} className="inline -mt-0.5" /> Apple Watch · {todayLog?.watch_duration_minutes} min strength
           </p>
         )}
         <div className="mt-1 space-y-1">

@@ -1,3 +1,4 @@
+import { Check, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MobilityLink } from '../../lib/bundleHelpers';
 import { COLOR } from '../../lib/brand';
@@ -136,7 +137,7 @@ export function MobilityRow({
             aria-label="mobility target met today"
             className="text-green-700 text-heading leading-none"
           >
-            ✓
+            <Check size={18} strokeWidth={2.5} />
           </span>
         ) : (
           <span
@@ -246,7 +247,7 @@ function MobilityLinks({
         onClick={() => setOpen(true)}
         className="mt-2 text-green-700 text-label font-bold min-h-[44px]"
       >
-        Links ▾
+        Links <ChevronDown aria-hidden="true" size={14} strokeWidth={2} className="inline" />
       </button>
     );
   }
@@ -258,7 +259,7 @@ function MobilityLinks({
         onClick={() => setOpen(false)}
         className="text-green-700 text-label font-bold min-h-[44px]"
       >
-        Links ▴
+        Links <ChevronUp aria-hidden="true" size={14} strokeWidth={2} className="inline" />
       </button>
 
       <div className="mt-1.5 space-y-1.5">
@@ -269,7 +270,8 @@ function MobilityLinks({
           className="w-full flex items-center justify-between gap-2 bg-white border border-hairline rounded-input px-3 py-2 text-left min-h-[44px]"
         >
           <span className="text-label text-ink truncate">
-            🔎 {DEFAULT_MOBILITY_SEARCH.label}
+            <Search aria-hidden="true" size={14} strokeWidth={2} className="inline -mt-0.5 mr-1 text-green-700" />
+            {DEFAULT_MOBILITY_SEARCH.label}
           </span>
           <ExternalLinkIcon />
         </button>
@@ -288,9 +290,9 @@ function MobilityLinks({
               type="button"
               onClick={() => void onDelete(link.id)}
               aria-label={`Delete ${link.label}`}
-              className="text-muted text-title w-9 h-9 flex items-center justify-center shrink-0"
+              className="text-hint w-11 h-11 flex items-center justify-center shrink-0"
             >
-              ×
+              <X size={18} strokeWidth={2} />
             </button>
           </div>
         ))}
@@ -323,7 +325,7 @@ function MobilityLinks({
                 aria-label="Save link"
                 className="btn-primary flex-1"
               >
-                ✓ Save
+                <Check aria-hidden="true" size={16} strokeWidth={2.5} /> Save
               </button>
               <button
                 type="button"
@@ -331,7 +333,7 @@ function MobilityLinks({
                 aria-label="Cancel"
                 className="btn-secondary flex-1"
               >
-                × Cancel
+                <X aria-hidden="true" size={16} strokeWidth={2} /> Cancel
               </button>
             </div>
           </div>

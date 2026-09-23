@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import SharedActivityCard from './SharedActivityCard';
@@ -94,16 +95,12 @@ function DayCell({
   if (status === 'clean') {
     bg = COLOR.green700;
     content = (
-      <span aria-hidden="true" className="text-white text-heading leading-none">
-        ✓
-      </span>
+      <Check aria-hidden="true" size={18} strokeWidth={2.5} className="text-white" />
     );
   } else if (status === 'ordered') {
     bg = COLOR.amber;
     content = (
-      <span aria-hidden="true" className="text-white text-heading leading-none">
-        ✗
-      </span>
+      <X aria-hidden="true" size={18} strokeWidth={2.5} className="text-white" />
     );
   } else if (isToday) {
     border = `2px solid ${COLOR.green700}`;

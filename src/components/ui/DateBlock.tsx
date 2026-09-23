@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { useRef } from 'react';
 import { cardioDateLabel } from '../../lib/timeBucket';
 
@@ -28,9 +29,7 @@ export default function DateBlock({
         <span className="text-body text-ink font-medium">
           {cardioDateLabel(value)}
         </span>
-        <span aria-hidden className="text-muted text-label leading-none">
-          ⌄
-        </span>
+<ChevronDown aria-hidden="true" size={16} strokeWidth={2} className="text-muted shrink-0" />
       </span>
       <input
         ref={inputRef}

@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ClipboardList } from 'lucide-react';
+import { Check, ChevronDown, ClipboardList, Lightbulb } from 'lucide-react';
 import { SheetClose } from '../ui/BottomSheet';
 import { useEffect, useMemo, useState } from 'react';
 import { useToast } from '../ui/Toast';
@@ -1232,7 +1232,10 @@ function BothLookTip({
   if (!copy) return null;
   return (
     <div className="tile px-3.5 py-3">
-      <p className="text-label text-ink leading-snug">{copy}</p>
+      <p className="text-label text-ink leading-snug">
+        <Lightbulb aria-hidden="true" size={14} strokeWidth={2} className="inline -mt-0.5 mr-1 text-green-700" />
+        {copy}
+      </p>
     </div>
   );
 }

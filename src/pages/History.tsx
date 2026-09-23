@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { List, Calendar as CalendarIcon } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  List,
+  Plane,
+  Rocket,
+  Snail,
+  Watch,
+} from 'lucide-react';
 import {
   LowerBodyIcon,
   UpperBodyIcon,
@@ -39,7 +49,8 @@ const STRENGTH_META: Record<
   full_body: { label: 'Full Body', Icon: FullBodyIcon },
 };
 
-const FEEL_EMOJI = { flying: '🚀', cruising: '✈️', crawling: '🐌' } as const;
+// Feel ratings as Lucide icons (flying / cruising / crawling).
+const FEEL_ICON = { flying: Rocket, cruising: Plane, crawling: Snail } as const;
 
 
 function dayLabel(dateISO: string): string {
@@ -157,10 +168,10 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       : item.totalVolume > 0
         ? `${item.totalVolume.toLocaleString()} lb`
         : `${item.totalSets} set${item.totalSets === 1 ? '' : 's'}`;
-  const feel =
+  const Feel =
     item.kind === 'strength' && item.feel_rating
-      ? FEEL_EMOJI[item.feel_rating]
-      : '';
+      ? FEEL_ICON[item.feel_rating]
+      : null;
 
   return (
     <div className="card px-4 py-3">
@@ -190,7 +201,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
                 : 'Imported from Apple Watch'
             }
           >
-            ⌚
+            <Watch size={14} strokeWidth={2} className="text-muted" />
           </span>
         )}
         <span className="flex-1 text-center text-label text-muted truncate">
@@ -198,16 +209,16 @@ function HistoryRow({ item }: { item: HistoryItem }) {
         </span>
         <span className="text-label text-ink whitespace-nowrap">
           {right}
-          {feel && <span className="ml-1">{feel}</span>}
+          {Feel && (
+            <Feel aria-hidden="true" size={14} strokeWidth={2} className="inline ml-1 -mt-0.5 text-green-700" />
+          )}
         </span>
-        <span
+        <ChevronDown
           aria-hidden="true"
-          className={`text-green-700 text-heading leading-none transition-transform ${
-            open ? 'rotate-180' : ''
-          }`}
-        >
-          ▾
-        </span>
+          size={18}
+          strokeWidth={2}
+          className={`text-green-700 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {open && (
@@ -258,9 +269,17 @@ function StrengthDetail({
 
       {item.feel_rating && (
         <div className="flex items-center justify-between pt-1">
-          <span className="text-title leading-none" aria-label={item.feel_rating}>
-            {FEEL_EMOJI[item.feel_rating]}
-          </span>
+          {(() => {
+            const FeelIcon = FEEL_ICON[item.feel_rating];
+            return (
+              <FeelIcon
+                aria-label={item.feel_rating}
+                size={22}
+                strokeWidth={2}
+                className="text-green-700"
+              />
+            );
+          })()}
         </div>
       )}
 
@@ -365,9 +384,9 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
           type="button"
           onClick={() => shiftMonth(-1)}
           aria-label="Previous month"
-          className="w-9 h-9 flex items-center justify-center text-green-700 text-title"
+          className="w-11 h-11 flex items-center justify-center text-green-700"
         >
-          ←
+          <ChevronLeft size={20} strokeWidth={2} />
         </button>
         <span className="text-body font-medium text-ink">
           {monthLabel}
@@ -376,9 +395,9 @@ function CalendarView({ items }: { items: HistoryItem[] }) {
           type="button"
           onClick={() => shiftMonth(1)}
           aria-label="Next month"
-          className="w-9 h-9 flex items-center justify-center text-green-700 text-title"
+          className="w-11 h-11 flex items-center justify-center text-green-700"
         >
-          →
+          <ChevronRight size={20} strokeWidth={2} />
         </button>
       </div>
 

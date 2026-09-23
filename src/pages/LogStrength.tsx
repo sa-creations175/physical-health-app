@@ -1,3 +1,4 @@
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -437,7 +438,12 @@ function StaleDraftCard({
         onClick={() => setViewing((v) => !v)}
         className="mt-2 text-green-700 text-label font-medium"
       >
-        {viewing ? 'Hide contents ▴' : 'View contents ▾'}
+        {viewing ? 'Hide contents' : 'View contents'}{' '}
+        {viewing ? (
+          <ChevronUp aria-hidden="true" size={14} strokeWidth={2} className="inline" />
+        ) : (
+          <ChevronDown aria-hidden="true" size={14} strokeWidth={2} className="inline" />
+        )}
       </button>
 
       {viewing && (

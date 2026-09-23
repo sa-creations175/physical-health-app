@@ -577,10 +577,10 @@ export function bodyFatGuidance(bf: number | null): BodyFatGuidance | null {
 export function bothLookTip(bf: number | null): string | null {
   if (bf === null || bf <= 0) return null;
   if (bf > 15) {
-    return "💡 At your current body fat, cutting first will get you better results. Most coaches recommend reaching ~12% BF before starting a lean bulk — you'll build more muscle per calorie, stay leaner during the bulk, and have more runway before needing to cut again. Consider 'Leaner' now and switch seasons when you get there.";
+    return "At your current body fat, cutting first will get you better results. Most coaches recommend reaching ~12% BF before starting a lean bulk — you'll build more muscle per calorie, stay leaner during the bulk, and have more runway before needing to cut again. Consider 'Leaner' now and switch seasons when you get there.";
   }
   if (bf >= 12) {
-    return "💡 You're close to the ideal lean bulk entry point (~12% BF). A recomp approach works here but is slower. If you want to maximize muscle-building efficiency, a short cut to get to 12% first is worth considering before switching to a lean build season.";
+    return "You're close to the ideal lean bulk entry point (~12% BF). A recomp approach works here but is slower. If you want to maximize muscle-building efficiency, a short cut to get to 12% first is worth considering before switching to a lean build season.";
   }
   return null;
 }
