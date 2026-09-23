@@ -41,6 +41,30 @@ export async function getCaloriesByDay(): Promise<number[] | null> {
   }
 }
 
+// Active calories per local day from `startDate` (YYYY-MM-DD) through now, for
+// the move goal streak. Returns null off iOS / without HealthKit. Days with no
+// sample are absent from the map (read as 0 by callers).
+export async function getActiveCaloriesSince(startDate: string): Promise<Map<string, number> | null> {
+  if (!(await ensureHealthPermissions())) return null;
+  try {
+    const { aggregatedData } = await Health.queryAggregated({
+      startDate: new Date(startDate + 'T00:00:00').toISOString(),
+      endDate: new Date().toISOString(),
+      dataType: 'active-calories',
+      bucket: 'day',
+    });
+    const byDate = new Map<string, number>();
+    for (const sample of aggregatedData) {
+      const key = new Date(sample.startDate).toLocaleDateString('en-CA');
+      byDate.set(key, (byDate.get(key) ?? 0) + (sample.value || 0));
+    }
+    return byDate;
+  } catch (e) {
+    console.error('HK error at getActiveCaloriesSince:', e);
+    return null;
+  }
+}
+
 // Per-day averages for steps + active calories over the current week so far,
 // for the Home Fitness Score. Returns null off iOS / without HealthKit so the
 // score gracefully drops those marks rather than scoring them 0. `daysElapsed`

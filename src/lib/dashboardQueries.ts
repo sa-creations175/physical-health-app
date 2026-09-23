@@ -1,10 +1,8 @@
 import { db } from '../db/database';
 import {
-  todayISODate,
   startOfWeekISODate,
   currentWeekISODates,
   shortDayLabel,
-  addDaysISO,
 } from './dateHelpers';
 import type { Intensity } from '../db/types';
 import { isSessionComplete } from './sessionPlans';
@@ -154,45 +152,6 @@ export async function getCardioSummary(
     threshold,
     sessions: weekRows,
   };
-}
-
-export async function computeStreak(): Promise<number> {
-  // Days with at least one strength OR cardio session, counted backward
-  // from today. Strength days come from completed Session rows
-  // (feel_rating !== null); cardio days come from cardio_logs directly,
-  // since Build 2.1 stopped routing cardio through Session rows. Any
-  // cardio_log keeps the streak alive — even short ones — because
-  // showing up at all is the signal we're rewarding.
-  //
-  // If today has no qualifying session, we count from yesterday so the
-  // streak doesn't collapse mid-day before the user has logged.
-  const [strengthSessions, cardioLogs] = await Promise.all([
-    db.sessions
-      .where('type').anyOf('upper', 'lower', 'full_body')
-      .filter((s) => isSessionComplete(s))
-      .toArray(),
-    db.cardio_logs.toArray(),
-  ]);
-
-  const days = new Set<string>();
-  for (const s of strengthSessions) days.add(s.date);
-  for (const c of cardioLogs) {
-    days.add(new Date(c.started_at).toLocaleDateString('en-CA'));
-  }
-
-  if (days.size === 0) return 0;
-
-  let cursor = todayISODate();
-  if (!days.has(cursor)) {
-    cursor = addDaysISO(cursor, -1);
-  }
-
-  let streak = 0;
-  while (days.has(cursor)) {
-    streak++;
-    cursor = addDaysISO(cursor, -1);
-  }
-  return streak;
 }
 
 async function getExerciseNamesForSession(sessionId: string): Promise<string[]> {
