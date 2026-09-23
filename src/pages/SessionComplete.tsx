@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import HeaderStrip from '../components/ui/HeaderStrip';
 import { getLiftingSummary } from '../lib/dashboardQueries';
-import { getUserPreferences } from '../lib/userPreferences';
+import { getGoals, goalFor } from '../lib/goals';
 import { isStrengthType, STRENGTH_TYPE_LABEL } from '../lib/sessionPlans';
 import { formatSetList } from '../lib/sessionSets';
 import { getWatchDurationForSession } from '../lib/sessionDuration';
@@ -12,12 +12,6 @@ import { pillarCallout } from '../lib/pillarNarrative';
 import { fillFraction } from '../lib/progress';
 import FeelAndNote from '../components/strength/FeelAndNote';
 import type { SetEntry, StrengthType } from '../db/types';
-
-const TARGET_FIELD = {
-  lower: 'lifting_target_lower',
-  upper: 'lifting_target_upper',
-  full_body: 'lifting_target_full_body',
-} as const;
 
 // The summary after "Finish session": date, Apple Watch duration when there's
 // a matching workout, the exercise count, what you did, and this week's count
@@ -59,8 +53,8 @@ export default function SessionComplete() {
   const week = useLiveQuery(
     async () => {
       if (!type) return null;
-      const [summary, prefs] = await Promise.all([getLiftingSummary(type), getUserPreferences()]);
-      return { count: summary.thisWeekCount, target: prefs[TARGET_FIELD[type]] };
+      const [summary, goals] = await Promise.all([getLiftingSummary(type), getGoals('week')]);
+      return { count: summary.thisWeekCount, target: goalFor(goals, type)?.target ?? 0 };
     },
     [type],
   );

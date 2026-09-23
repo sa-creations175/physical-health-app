@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -49,46 +50,16 @@ export default function Settings() {
       </section>
 
       <section className="mt-6">
-        <SectionLabel>Weekly Targets</SectionLabel>
-        <p className="text-label text-muted mt-1">Sessions per week</p>
-
-        <NumberRow
-          label="Lower Body"
-          value={prefs.lifting_target_lower}
-          min={TARGET_RANGES.lifting.min}
-          max={TARGET_RANGES.lifting.max}
-          onCommit={(v) =>
-            updateUserPreferences({ lifting_target_lower: v })
-          }
-        />
-        <NumberRow
-          label="Upper Body"
-          value={prefs.lifting_target_upper}
-          min={TARGET_RANGES.lifting.min}
-          max={TARGET_RANGES.lifting.max}
-          onCommit={(v) =>
-            updateUserPreferences({ lifting_target_upper: v })
-          }
-        />
-        <NumberRow
-          label="Full Body"
-          hint="Optional — set 0 to hide from progress tracking."
-          value={prefs.lifting_target_full_body}
-          min={TARGET_RANGES.lifting.min}
-          max={TARGET_RANGES.lifting.max}
-          onCommit={(v) =>
-            updateUserPreferences({ lifting_target_full_body: v })
-          }
-        />
-        <NumberRow
-          label="Cardio"
-          value={prefs.cardio_target_weekly}
-          min={TARGET_RANGES.cardio.min}
-          max={TARGET_RANGES.cardio.max}
-          onCommit={(v) =>
-            updateUserPreferences({ cardio_target_weekly: v })
-          }
-        />
+        <SectionLabel>Goals</SectionLabel>
+        <Link to="/" className="card px-4 py-3 mt-2 flex items-center justify-between gap-3">
+          <span className="min-w-0">
+            <span className="block text-body text-ink">Weekly and daily goals</span>
+            <span className="block text-label text-muted mt-0.5">
+              Set on Home: tap Edit goals on the Fitness Score or on the daily averages.
+            </span>
+          </span>
+          <span className="text-label font-bold text-green-700 shrink-0">Home →</span>
+        </Link>
       </section>
 
       <section className="mt-6">
@@ -200,7 +171,7 @@ export default function Settings() {
       <section className="mt-6">
         <SectionLabel>Thresholds</SectionLabel>
         <p className="text-label text-muted mt-1">
-          What counts as a qualifying session, and weekly day targets.
+          What counts as a qualifying session.
         </p>
 
         <NumberRow
@@ -223,24 +194,6 @@ export default function Settings() {
             updateUserPreferences({ bundle_mobility_min_minutes: v })
           }
         />
-        <NumberRow
-          label="Mobility weekly target"
-          hint="Target days per week for mobility practice."
-          value={prefs.bundle_mobility_target}
-          min={TARGET_RANGES.weekly_days.min}
-          max={TARGET_RANGES.weekly_days.max}
-          onCommit={(v) =>
-            updateUserPreferences({ bundle_mobility_target: v })
-          }
-        />
-        <NumberRow
-          label="Bundle weekly target"
-          hint="Target days per week for daily bundle activity."
-          value={prefs.bundle_target}
-          min={TARGET_RANGES.weekly_days.min}
-          max={TARGET_RANGES.weekly_days.max}
-          onCommit={(v) => updateUserPreferences({ bundle_target: v })}
-        />
       </section>
 
       <section className="mt-6">
@@ -261,43 +214,6 @@ export default function Settings() {
           </span>
           <Switch on={prefs.one_tap_repeat !== false} />
         </button>
-      </section>
-
-      <section className="mt-6">
-        <SectionLabel>Daily Activity</SectionLabel>
-        <p className="text-label text-muted mt-1">
-          Daily-average targets for the Home Fitness Score. Set 0 to drop a
-          mark from the score.
-        </p>
-
-        <NumberRow
-          label="Exercise minutes"
-          hint="Target active minutes per day (cardio + lifting + mobility)."
-          value={prefs.daily_exercise_minutes_target}
-          min={TARGET_RANGES.daily_exercise_minutes.min}
-          max={TARGET_RANGES.daily_exercise_minutes.max}
-          onCommit={(v) =>
-            updateUserPreferences({ daily_exercise_minutes_target: v })
-          }
-        />
-        <NumberRow
-          label="Calories burned"
-          hint="Target active calories per day (from Apple Watch)."
-          value={prefs.daily_calories_target}
-          min={TARGET_RANGES.daily_calories.min}
-          max={TARGET_RANGES.daily_calories.max}
-          onCommit={(v) =>
-            updateUserPreferences({ daily_calories_target: v })
-          }
-        />
-        <NumberRow
-          label="Steps"
-          hint="Target steps per day (from Apple Watch)."
-          value={prefs.daily_steps_target}
-          min={TARGET_RANGES.daily_steps.min}
-          max={TARGET_RANGES.daily_steps.max}
-          onCommit={(v) => updateUserPreferences({ daily_steps_target: v })}
-        />
       </section>
 
       {seasonSetup && (

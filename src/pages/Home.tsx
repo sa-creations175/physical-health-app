@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import { ProgressBar } from '../components/ui/primitives';
 import { getUserPreferences } from '../lib/userPreferences';
-import { getFitnessScore, type ScoreMark } from '../lib/fitnessScore';
-import { summaryNarrative } from '../lib/pillarNarrative';
+import { getFitnessScore, type WeeklyProgress } from '../lib/fitnessScore';
+import { getGoals } from '../lib/goals';
+import GoalsSheet from '../components/goals/GoalsSheet';
+import type { BodyGoal, GoalPeriod } from '../db/types';
+import { summaryNarrative, type NarrativeKey } from '../lib/pillarNarrative';
 import { computeDeliveryStreak, getDeliveryWeek } from '../lib/deliveryHelpers';
 import {
   startOfWeekISODate,
@@ -15,14 +19,26 @@ import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../lib/defaults';
 import { COLOR } from '../lib/brand';
 
 export default function Home() {
+  // The sheet edits a snapshot of the goals, loaded before it opens.
+  const [sheet, setSheet] = useState<{ period: GoalPeriod; goals: BodyGoal[] } | null>(null);
+  const openGoals = async (period: GoalPeriod) => setSheet({ period, goals: await getGoals(period) });
   return (
     <>
       <DashboardHeader />
       <div className="px-4 mt-4 space-y-3">
-        <FitnessSummary />
+        <FitnessSummary onEditGoals={() => void openGoals('week')} />
+        <DailyAverages onEditGoals={() => void openGoals('day')} />
         <NutritionSummary />
         <HealthSummary />
       </div>
+      {sheet && (
+        <GoalsSheet
+          key={sheet.period}
+          period={sheet.period}
+          goals={sheet.goals}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </>
   );
 }
@@ -45,71 +61,63 @@ function ScoreDial({ pct }: { pct: number }) {
   );
 }
 
-// One mark's honest breakdown: actual/target over a Green 700 bar.
-function ScoreBar({ mark }: { mark: ScoreMark }) {
+// One weekly goal's honest breakdown: done/goal over a Green 700 bar.
+function ScoreBar({ row }: { row: WeeklyProgress }) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-label text-muted">{mark.label}</span>
+        <span className="text-label text-muted truncate">{row.goal.name}</span>
         <span className="text-label font-semibold text-ink tabular-nums">
-          {mark.actual}/{mark.target}
+          {row.actual}/{row.goal.target}
         </span>
       </div>
       <div className="mt-1">
-        <ProgressBar value={mark.fraction} max={1} height={6} />
+        <ProgressBar value={row.fraction} max={1} height={6} />
       </div>
     </div>
   );
 }
 
-function StripStat({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex-1 text-center">
-      <p className="text-title text-ink tabular-nums">{value}</p>
-      <p className="text-label text-muted mt-0.5">{label}</p>
-    </div>
-  );
-}
+const NARRATIVE_KEYS: readonly string[] = ['lower', 'upper', 'cardio', 'bundle', 'mobility'];
 
-function FitnessSummary() {
+function FitnessSummary({ onEditGoals }: { onEditGoals: () => void }) {
   const score = useLiveQuery(() => getFitnessScore(), []);
+  const rows = score?.weekly ?? [];
 
-  // Bars for participating marks only (target 0 / no data drop out).
-  const bars = score?.marks.filter((m) => m.participates) ?? [];
-  const strip = score?.strip;
-
-  // Four-state hype summary (win + nudge / all-clear / early-days / all-low).
+  // Four-state hype summary (win + nudge / all-clear / early-days / all-low),
+  // over the goals that have a phrase bank.
   const narrative = score
     ? summaryNarrative(
-        score.marks.map((m) => ({
-          key: m.key,
-          fraction: m.fraction,
-          participates: m.participates,
-        })),
+        score.weekly
+          .filter((w) => w.goal.metric && NARRATIVE_KEYS.includes(w.goal.metric))
+          .map((w) => ({
+            key: w.goal.metric as NarrativeKey,
+            fraction: w.fraction,
+            participates: true,
+          })),
         score.daysElapsed,
         todayISODate(),
       )
     : null;
 
   return (
-    <Link to="/fitness" className="card block p-4">
-      <p className="eyebrow">Fitness Score</p>
+    <div className="card p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="eyebrow">Fitness Score</p>
+        <button type="button" onClick={onEditGoals} className="pill pill-soft py-1 px-2.5">
+          Edit goals
+        </button>
+      </div>
 
       <div className="mt-3 flex items-center gap-4">
         <ScoreDial pct={score?.dialPct ?? 0} />
-        <div className="flex-1 space-y-2">
-          {bars.length === 0 ? (
+        <div className="flex-1 min-w-0 space-y-2">
+          {rows.length === 0 ? (
             <p className="text-label text-muted">
-              Set weekly targets in Settings to see your score.
+              No weekly goals yet. Tap Edit goals to add one.
             </p>
           ) : (
-            bars.map((m) => <ScoreBar key={m.key} mark={m} />)
+            rows.map((r) => <ScoreBar key={r.goal.id} row={r} />)
           )}
         </div>
       </div>
@@ -128,24 +136,66 @@ function FitnessSummary() {
           )}
         </div>
       )}
+    </div>
+  );
+}
 
-      {strip && (
-        <div className="mt-3 pt-3 border-t border-hairline flex">
-          <StripStat
-            label="cal/day"
-            value={strip.calories === null ? '—' : strip.calories.toLocaleString()}
-          />
-          <StripStat
-            label="exercise min/day"
-            value={strip.exerciseMinutes.toLocaleString()}
-          />
-          <StripStat
-            label="steps/day"
-            value={strip.steps === null ? '—' : strip.steps.toLocaleString()}
-          />
+// "cal/day" under the calories number, and so on. A goal the person added
+// themselves is labelled with its own name.
+const DAILY_LABEL: Record<string, string> = {
+  calories: 'cal/day',
+  exercise_minutes: 'exercise min/day',
+  steps: 'steps/day',
+};
+
+// This week's average per day against each daily goal: the number, a label,
+// a mini-bar (green at or past the goal, Bronze Amber under it) and the goal.
+// An unticked goal keeps its number and drops the bar and the goal line.
+function DailyAverages({ onEditGoals }: { onEditGoals: () => void }) {
+  const score = useLiveQuery(() => getFitnessScore(), []);
+  const daily = score?.daily ?? [];
+  return (
+    <div className="tile p-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="eyebrow">This Week, Average Per Day</p>
+        <button type="button" onClick={onEditGoals} className="pill pill-soft py-1 px-2.5 shrink-0">
+          Edit goals
+        </button>
+      </div>
+      {daily.length === 0 ? (
+        <p className="text-label text-muted mt-3">No daily goals yet. Tap Edit goals to add one.</p>
+      ) : (
+        <div className="mt-3 grid grid-cols-3 gap-y-3">
+          {daily.map(({ goal, average, met }) => {
+            const judged = goal.active && goal.target > 0;
+            const pct = judged && average !== null ? Math.min(100, (average / goal.target) * 100) : 0;
+            return (
+              <div key={goal.id} className="text-center">
+                <p className="text-title text-ink tabular-nums">
+                  {average === null ? '—' : Math.round(average).toLocaleString()}
+                </p>
+                <p className="text-label text-muted">
+                  {goal.metric ? DAILY_LABEL[goal.metric] : goal.name.toLowerCase()}
+                </p>
+                {judged && (
+                  <>
+                    <div className="mx-auto mt-1.5 h-1 w-14 rounded-full bg-white overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${met === false ? 'bg-amber' : 'bg-green-700'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <p className="text-micro font-normal tracking-normal text-hint mt-1">
+                      goal {goal.target.toLocaleString()}
+                    </p>
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
-    </Link>
+    </div>
   );
 }
 
@@ -168,7 +218,10 @@ function NutritionSummary() {
 
   return (
     <Link to="/nutrition" className="card block p-4">
-      <p className="eyebrow">Nutrition</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="eyebrow">Nutrition</p>
+        <span className="text-label font-bold text-green-700">Log →</span>
+      </div>
       <p className="mt-2 text-body text-ink">
         Protein {protein}g · Water {water} glasses · {delivery.currentStreak} day delivery streak
       </p>
@@ -198,7 +251,10 @@ function NutritionSummary() {
 function HealthSummary() {
   return (
     <Link to="/health" className="tile block p-4">
-      <p className="eyebrow">Health</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="eyebrow">Health</p>
+        <span className="text-label font-bold text-green-700">Set up →</span>
+      </div>
       <p className="mt-2 text-body text-hint">No check-ins configured yet</p>
     </Link>
   );

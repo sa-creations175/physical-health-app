@@ -39,8 +39,8 @@ export default function CaloriesBreakdownCard() {
   const weekDates = currentWeekISODates();
   const today = todayISODate();
   const max = Math.max(1, ...(perDay ?? []));
-  const stepsAvg = score?.strip.steps ?? null;
-  const exerciseMin = score?.strip.exerciseMinutes ?? 0;
+  const stepsAvg = score?.averages.steps ?? null;
+  const exerciseMin = score?.averages.exercise_minutes ?? 0;
 
   return (
     <div className="card p-4">

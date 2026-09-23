@@ -1,7 +1,7 @@
-// Fitness Score for Home (June 5 design). An honest weekly scorecard, not a
-// flattering single grade. Everything reads LIVE from user_preferences — fills
-// and the dial reason about fractions against live targets, never raw counts or
-// hardcoded targets, so changing a threshold in Settings updates the score.
+// Fitness Score for Home and the Fitness tab, computed from the person's goals.
+// Nothing here knows a target number: every target is a BodyGoal row. The dial
+// is the average of each weekly goal's fill (each capped at 100%); the daily
+// averages are compared with the daily goals.
 import { db } from './../db/database';
 import { LOCAL_USER_ID } from './constants';
 import { getUserPreferences } from './userPreferences';
@@ -14,124 +14,147 @@ import {
 } from './dateHelpers';
 import { getWeeklyHealthAverages, getExerciseMinutesThisWeek } from './healthkit';
 import { fillFraction } from './progress';
+import { getGoals } from './goals';
+import { isSessionComplete } from './sessionPlans';
+import type { BodyGoal, DailyGoalMetric, WeeklyGoalMetric } from '../db/types';
 
-// The dial + bars cover ONLY the five pillar marks. Calories / steps / exercise
-// minutes are context shown in the daily-average strip — they do NOT affect the
-// score (a cardio-heavy day shouldn't quietly inflate the grade).
-export type MarkKey = 'bundle' | 'cardio' | 'lower' | 'upper' | 'mobility';
-
-export interface ScoreMark {
-  key: MarkKey;
-  label: string;
+export interface WeeklyProgress {
+  goal: BodyGoal;
   actual: number;
-  target: number;
-  fraction: number; // clamped 0..1 (0 when target 0)
-  participates: boolean; // counts toward the dial
+  fraction: number; // 0..1, capped
+}
+
+export interface DailyProgress {
+  goal: BodyGoal;
+  average: number | null; // null when there's nothing to measure (no HealthKit)
+  // At or past the goal (true), under it (false), or not judged (unticked goal
+  // or no data).
+  met: boolean | null;
 }
 
 export interface FitnessScore {
-  dialPct: number; // 0..100, average of participating pillar marks' fractions
-  marks: ScoreMark[]; // the five pillars only
-  daysElapsed: number; // Sun..today inclusive, 1..7 — for early-week softening
-  strip: {
-    calories: number | null; // avg/day, null when HealthKit unavailable
-    exerciseMinutes: number; // avg/day (Apple Exercise ring; app-logged fallback)
-    steps: number | null; // avg/day, null when HealthKit unavailable
+  dialPct: number; // 0..100
+  weekly: WeeklyProgress[];
+  daily: DailyProgress[];
+  daysElapsed: number; // Sun..today inclusive, 1..7
+  averages: Record<DailyGoalMetric, number | null>;
+}
+
+// This week's count for every weekly metric the app measures.
+export async function getWeeklyActuals(): Promise<Record<WeeklyGoalMetric, number>> {
+  const prefs = await getUserPreferences();
+  const weekStart = startOfWeekISODate();
+  const [lower, upper, fullBody, cardio, bundleWeek] = await Promise.all([
+    getLiftingSummary('lower'),
+    getLiftingSummary('upper'),
+    getLiftingSummary('full_body'),
+    getCardioSummary(prefs.cardio_threshold_minutes),
+    getBundleWeek(weekStart),
+  ]);
+  return {
+    bundle: bundleWeek.filter(isDayQualifying).length,
+    cardio: cardio.qualifyingCount,
+    lower: lower?.thisWeekCount ?? 0,
+    upper: upper?.thisWeekCount ?? 0,
+    full_body: fullBody?.thisWeekCount ?? 0,
+    mobility: getWeeklyTotals(bundleWeek, prefs.bundle_mobility_min_minutes).mobilityQualifyingDays,
+  };
+}
+
+// A goal the person added themselves ("Swim, 2 a week") counts this week's
+// cardio logs whose activity has the same name.
+async function customWeeklyCount(name: string): Promise<number> {
+  const weekStart = startOfWeekISODate();
+  const [logs, types] = await Promise.all([
+    db.cardio_logs.where('user_id').equals(LOCAL_USER_ID).toArray(),
+    db.cardio_types.toArray(),
+  ]);
+  const want = name.trim().toLowerCase();
+  const ids = new Set(types.filter((t) => t.name.trim().toLowerCase() === want).map((t) => t.id));
+  return logs.filter(
+    (l) => ids.has(l.cardio_type_id) && new Date(l.started_at).toLocaleDateString('en-CA') >= weekStart,
+  ).length;
+}
+
+// Daily averages over the week so far.
+export async function getDailyAverages(daysElapsed: number): Promise<Record<DailyGoalMetric, number | null>> {
+  const weekStart = startOfWeekISODate();
+  const weekEnd = currentWeekISODates()[6];
+  // Exercise minutes: Apple's Exercise ring when HealthKit is there; otherwise
+  // the app-logged sum (cardio + sessions + Watch strength + mobility).
+  const [cardioLogs, sessions, hkExerciseWeek, bundleWeek, hk] = await Promise.all([
+    db.cardio_logs.where('user_id').equals(LOCAL_USER_ID).toArray(),
+    db.sessions.toArray(),
+    getExerciseMinutesThisWeek(),
+    getBundleWeek(weekStart),
+    getWeeklyHealthAverages(daysElapsed),
+  ]);
+  let appLogged = 0;
+  for (const l of cardioLogs) {
+    if (new Date(l.started_at).toLocaleDateString('en-CA') >= weekStart) appLogged += l.duration_minutes;
+  }
+  for (const s of sessions) {
+    if (s.date >= weekStart && s.date <= weekEnd) appLogged += s.duration_minutes ?? 0;
+  }
+  for (const b of bundleWeek) appLogged += (b.watch_duration_minutes ?? 0) + (b.mobility_minutes ?? 0);
+  return {
+    calories: hk?.caloriesAvg ?? null,
+    steps: hk?.stepsAvg ?? null,
+    exercise_minutes: Math.round((hkExerciseWeek ?? appLogged) / daysElapsed),
   };
 }
 
 export async function getFitnessScore(): Promise<FitnessScore> {
-  const prefs = await getUserPreferences();
-  const weekStart = startOfWeekISODate();
-  const weekDates = currentWeekISODates();
-  const weekEnd = weekDates[6];
   const today = todayISODate();
-  const daysElapsed = weekDates.filter((d) => d <= today).length || 1;
-
-  // --- Weekly-count marks (Dexie; available web + iOS) ---
-  const [lower, upper, cardio, bundleWeek] = await Promise.all([
-    getLiftingSummary('lower'),
-    getLiftingSummary('upper'),
-    getCardioSummary(prefs.cardio_threshold_minutes),
-    getBundleWeek(weekStart),
+  const daysElapsed = currentWeekISODates().filter((d) => d <= today).length || 1;
+  const [weeklyGoals, dailyGoals, actuals, averages] = await Promise.all([
+    getGoals('week'),
+    getGoals('day'),
+    getWeeklyActuals(),
+    getDailyAverages(daysElapsed),
   ]);
-  const bundleQualDays = bundleWeek.filter(isDayQualifying).length;
-  const mobTotals = getWeeklyTotals(bundleWeek, prefs.bundle_mobility_min_minutes);
 
-  // --- Exercise minutes/day ---
-  // Primary source: Apple's Exercise ring (HKQuantityTypeIdentifierAppleExerciseTime),
-  // week total ÷ days elapsed. Falls back to the app-logged sum (cardio +
-  // sessions + watch-strength + mobility) when HealthKit is unavailable (web,
-  // no Watch) — so the strip shows a real number rather than 0.
-  const [cardioLogs, sessions, hkExerciseWeek] = await Promise.all([
-    db.cardio_logs.where('user_id').equals(LOCAL_USER_ID).toArray(),
-    db.sessions.toArray(),
-    getExerciseMinutesThisWeek(),
-  ]);
-  let appLoggedMinutes = 0;
-  for (const l of cardioLogs) {
-    if (new Date(l.started_at).toLocaleDateString('en-CA') >= weekStart) {
-      appLoggedMinutes += l.duration_minutes;
-    }
+  const weekly: WeeklyProgress[] = [];
+  for (const goal of weeklyGoals.filter((g) => g.active && g.target > 0)) {
+    const actual =
+      goal.metric && goal.metric in actuals
+        ? actuals[goal.metric as WeeklyGoalMetric]
+        : await customWeeklyCount(goal.name);
+    weekly.push({ goal, actual, fraction: fillFraction(actual, goal.target) });
   }
-  for (const s of sessions) {
-    if (s.date >= weekStart && s.date <= weekEnd) {
-      appLoggedMinutes += s.duration_minutes ?? 0;
-    }
-  }
-  for (const b of bundleWeek) {
-    appLoggedMinutes += (b.watch_duration_minutes ?? 0) + (b.mobility_minutes ?? 0);
-  }
-  const exerciseAvg =
-    hkExerciseWeek != null
-      ? Math.round(hkExerciseWeek / daysElapsed)
-      : Math.round(appLoggedMinutes / daysElapsed);
 
-  // --- Calories + steps/day (HealthKit; iOS only, null elsewhere) ---
-  const hk = await getWeeklyHealthAverages(daysElapsed);
+  const daily: DailyProgress[] = dailyGoals.map((goal) => {
+    const average =
+      goal.metric && goal.metric in averages ? averages[goal.metric as DailyGoalMetric] : null;
+    return {
+      goal,
+      average,
+      met: goal.active && goal.target > 0 && average !== null ? average >= goal.target : null,
+    };
+  });
 
-  // Only the five pillars feed the dial + bars.
-  const marks: ScoreMark[] = [
-    mark('bundle', 'Bundle', bundleQualDays, prefs.bundle_target),
-    mark('cardio', 'Cardio', cardio.qualifyingCount, prefs.cardio_target_weekly),
-    mark('lower', 'Lower', lower?.thisWeekCount ?? 0, prefs.lifting_target_lower),
-    mark('upper', 'Upper', upper?.thisWeekCount ?? 0, prefs.lifting_target_upper),
-    mark('mobility', 'Mobility', mobTotals.mobilityQualifyingDays, prefs.bundle_mobility_target),
-  ];
-
-  const participating = marks.filter((m) => m.participates);
-  const dialPct = participating.length
-    ? Math.round(
-        (participating.reduce((sum, m) => sum + m.fraction, 0) /
-          participating.length) *
-          100,
-      )
+  const dialPct = weekly.length
+    ? Math.round((weekly.reduce((sum, w) => sum + w.fraction, 0) / weekly.length) * 100)
     : 0;
 
-  return {
-    dialPct,
-    marks,
-    daysElapsed,
-    strip: {
-      calories: hk?.caloriesAvg ?? null,
-      exerciseMinutes: exerciseAvg,
-      steps: hk?.stepsAvg ?? null,
-    },
-  };
+  return { dialPct, weekly, daily, daysElapsed, averages };
 }
 
-function mark(
-  key: MarkKey,
-  label: string,
-  actual: number,
-  target: number,
-): ScoreMark {
-  return {
-    key,
-    label,
-    actual,
-    target,
-    fraction: fillFraction(actual, target),
-    participates: target > 0,
-  };
+// Sessions per day this week (finished strength sessions plus cardio logs),
+// for the week strip under Home's header.
+export async function getWeekSessionCounts(): Promise<Map<string, number>> {
+  const dates = currentWeekISODates();
+  const [sessions, cardio] = await Promise.all([
+    db.sessions.where('date').between(dates[0], dates[6], true, true).toArray(),
+    db.cardio_logs.where('user_id').equals(LOCAL_USER_ID).toArray(),
+  ]);
+  const out = new Map<string, number>(dates.map((d) => [d, 0]));
+  for (const s of sessions) {
+    if (isSessionComplete(s)) out.set(s.date, (out.get(s.date) ?? 0) + 1);
+  }
+  for (const l of cardio) {
+    const d = new Date(l.started_at).toLocaleDateString('en-CA');
+    if (out.has(d)) out.set(d, (out.get(d) ?? 0) + 1);
+  }
+  return out;
 }

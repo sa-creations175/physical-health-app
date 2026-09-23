@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom';
 import { Settings as SettingsIcon } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import HeaderStrip from '../ui/HeaderStrip';
+import WeekStrip from './WeekStrip';
 import { computeStreak } from '../../lib/dashboardQueries';
 import { dayName, dateLabel, weekNumber } from '../../lib/dateHelpers';
 
 // Home's header strip: where you are (week), what it is (the day), then the
-// date and the streak on the subtitle line. Settings sits top right.
+// date and the streak on the subtitle line, then the week strip. Settings sits
+// top right.
 export default function DashboardHeader() {
   const streak = useLiveQuery(() => computeStreak(), [], 0) ?? 0;
   const now = new Date();
@@ -29,6 +31,8 @@ export default function DashboardHeader() {
           <SettingsIcon size={18} strokeWidth={2} />
         </Link>
       }
-    />
+    >
+      <WeekStrip />
+    </HeaderStrip>
   );
 }
