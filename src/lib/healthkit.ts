@@ -11,7 +11,7 @@
 // completed workouts. There is no resting-heart-rate query, so the card's
 // third tile is a "workouts this week" count instead of resting HR.
 import { Capacitor } from '@capacitor/core';
-import { Health, type HealthPermission } from 'capacitor-health';
+import { Health, type HealthPermission, type SleepSample } from 'capacitor-health';
 import { startOfWeekISODate, currentWeekISODates } from './dateHelpers';
 
 // Active calories burned per day for the current week (Sun..Sat, 7 values),
@@ -232,6 +232,7 @@ const READ_PERMISSIONS: HealthPermission[] = [
   'READ_HEART_RATE_VARIABILITY',
   'READ_RESTING_HEART_RATE',
   'READ_VO2_MAX',
+  'READ_SLEEP',
 ];
 
 // True only inside the native iOS app with the Health store reachable.
@@ -286,6 +287,20 @@ async function sumAggregated(
   } catch (e) {
     console.error(`HK error at sumAggregated(${dataType}):`, e);
     return 0;
+  }
+}
+
+// Raw HealthKit sleep analysis samples overlapping [startISO, endISO], oldest
+// first, for the sleep import. `value` is HKCategoryValueSleepAnalysis: 0 in
+// bed, 1 asleep (no stage), 2 awake, 3 core, 4 deep, 5 REM. Assumes permissions
+// were already ensured by the caller. Returns [] on error.
+export async function getSleepSamples(startISO: string, endISO: string): Promise<SleepSample[]> {
+  try {
+    const { samples } = await Health.querySleep({ startDate: startISO, endDate: endISO });
+    return samples;
+  } catch (e) {
+    console.error('HK error at getSleepSamples:', e);
+    return [];
   }
 }
 

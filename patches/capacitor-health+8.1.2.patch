@@ -1,17 +1,24 @@
 diff --git a/node_modules/capacitor-health/dist/esm/definitions.d.ts b/node_modules/capacitor-health/dist/esm/definitions.d.ts
-index e2d0c67..bd17c17 100644
+index e2d0c67..c36ba2f 100644
 --- a/node_modules/capacitor-health/dist/esm/definitions.d.ts
 +++ b/node_modules/capacitor-health/dist/esm/definitions.d.ts
-@@ -59,7 +59,7 @@ export interface HealthPlugin {
+@@ -58,8 +58,14 @@ export interface HealthPlugin {
+      * @param request
       */
      queryRecords(request: QueryRecordsRequest): Promise<QueryRecordsResponse>;
++    /**
++     * Query sleep analysis samples (iOS). Each sample's `value` is the
++     * HKCategoryValueSleepAnalysis raw value: 0 inBed, 1 asleepUnspecified,
++     * 2 awake, 3 asleepCore, 4 asleepDeep, 5 asleepREM.
++     */
++    querySleep(request: QuerySleepRequest): Promise<QuerySleepResponse>;
  }
 -export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'WRITE_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS';
-+export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'WRITE_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_EXERCISE_TIME' | 'READ_HEART_RATE_VARIABILITY' | 'READ_RESTING_HEART_RATE' | 'READ_VO2_MAX';
++export declare type HealthPermission = 'READ_STEPS' | 'READ_WORKOUTS' | 'WRITE_WORKOUTS' | 'READ_ACTIVE_CALORIES' | 'READ_TOTAL_CALORIES' | 'READ_DISTANCE' | 'READ_HEART_RATE' | 'READ_ROUTE' | 'READ_MINDFULNESS' | 'READ_EXERCISE_TIME' | 'READ_HEART_RATE_VARIABILITY' | 'READ_RESTING_HEART_RATE' | 'READ_VO2_MAX' | 'READ_SLEEP';
  export interface PermissionsRequest {
      permissions: HealthPermission[];
  }
-@@ -105,7 +105,7 @@ export interface Workout {
+@@ -105,7 +111,7 @@ export interface Workout {
  export interface QueryAggregatedRequest {
      startDate: string;
      endDate: string;
@@ -20,11 +27,39 @@ index e2d0c67..bd17c17 100644
      bucket: string;
      /**
       * Optional list of package names (Android) or bundle identifiers (iOS) to
+@@ -141,3 +147,17 @@ export interface HealthRecord {
+ export interface QueryRecordsResponse {
+     records: HealthRecord[];
+ }
++export interface QuerySleepRequest {
++    startDate: string;
++    endDate: string;
++}
++export interface SleepSample {
++    startDate: string;
++    endDate: string;
++    value: number;
++    sourceBundleId: string;
++    sourceName: string;
++}
++export interface QuerySleepResponse {
++    samples: SleepSample[];
++}
 diff --git a/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift b/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift
-index 3c96dc2..659496f 100644
+index 3c96dc2..79e7475 100644
 --- a/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift
 +++ b/node_modules/capacitor-health/ios/Sources/HealthPluginPlugin/HealthPlugin.swift
-@@ -100,6 +100,14 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+@@ -17,7 +17,8 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+         CAPPluginMethod(name: "openAppleHealthSettings", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "queryAggregated", returnType: CAPPluginReturnPromise),
+         CAPPluginMethod(name: "queryWorkouts", returnType: CAPPluginReturnPromise),
+-        CAPPluginMethod(name: "queryRecords", returnType: CAPPluginReturnPromise)
++        CAPPluginMethod(name: "queryRecords", returnType: CAPPluginReturnPromise),
++        CAPPluginMethod(name: "querySleep", returnType: CAPPluginReturnPromise)
+     ]
+     
+     let healthStore = HKHealthStore()
+@@ -100,6 +101,16 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
              ].compactMap{$0}
          case "READ_MINDFULNESS":
              return [HKObjectType.categoryType(forIdentifier: .mindfulSession)!].compactMap{$0}
@@ -36,10 +71,12 @@ index 3c96dc2..659496f 100644
 +            return [HKObjectType.quantityType(forIdentifier: .restingHeartRate)].compactMap{$0}
 +        case "READ_VO2_MAX":
 +            return [HKObjectType.quantityType(forIdentifier: .vo2Max)].compactMap{$0}
++        case "READ_SLEEP":
++            return [HKObjectType.categoryType(forIdentifier: .sleepAnalysis)].compactMap{$0}
          default:
              return []
          }
-@@ -111,11 +119,33 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+@@ -111,11 +122,33 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
              return HKObjectType.quantityType(forIdentifier: .stepCount)
          case "active-calories":
              return HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)
@@ -73,7 +110,7 @@ index 3c96dc2..659496f 100644
      
      @objc func queryAggregated(_ call: CAPPluginCall) {
          guard let startDateString = call.getString("startDate"),
-@@ -154,10 +184,12 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+@@ -154,10 +187,12 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
                  return
              }
  
@@ -87,7 +124,7 @@ index 3c96dc2..659496f 100644
                  anchorDate: startDate,
                  intervalComponents: interval
              )
-@@ -171,17 +203,39 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+@@ -171,17 +206,39 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
                  var aggregatedSamples: [[String: Any]] = []
  
                  result?.enumerateStatistics(from: startDate, to: endDate) { statistics, stop in
@@ -131,3 +168,59 @@ index 3c96dc2..659496f 100644
                          }
  
  
+@@ -278,6 +335,55 @@ public class HealthPlugin: CAPPlugin, CAPBridgedPlugin {
+     
+     
+     
++    // Sleep analysis samples overlapping [startDate, endDate], oldest first.
++    // Each sample carries its stage as HealthKit reports it (HKCategoryValueSleepAnalysis
++    // raw value: 0 inBed, 1 asleepUnspecified, 2 awake, 3 asleepCore, 4 asleepDeep,
++    // 5 asleepREM) plus its source, so the app can pick one source per night and
++    // count only the asleep stages.
++    @objc func querySleep(_ call: CAPPluginCall) {
++        guard let startDateString = call.getString("startDate"),
++              let endDateString = call.getString("endDate"),
++              let startDate = self.isoDateFormatter.date(from: startDateString),
++              let endDate = self.isoDateFormatter.date(from: endDateString) else {
++            call.reject("Invalid parameters")
++            return
++        }
++
++        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
++            call.reject("Sleep analysis type not available")
++            return
++        }
++
++        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
++        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)
++
++        let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: [sortDescriptor]) { _, samples, error in
++            if let error = error {
++                call.reject("Error querying sleep: \(error.localizedDescription)")
++                return
++            }
++
++            guard let categorySamples = samples as? [HKCategorySample] else {
++                call.resolve(["samples": []])
++                return
++            }
++
++            let result: [[String: Any]] = categorySamples.map { sample in
++                return [
++                    "startDate": self.isoDateFormatter.string(from: sample.startDate),
++                    "endDate": self.isoDateFormatter.string(from: sample.endDate),
++                    "value": sample.value,
++                    "sourceBundleId": sample.sourceRevision.source.bundleIdentifier,
++                    "sourceName": sample.sourceRevision.source.name
++                ]
++            }
++
++            call.resolve(["samples": result])
++        }
++
++        healthStore.execute(query)
++    }
++
+     @objc func queryRecords(_ call: CAPPluginCall) {
+         guard let startDateString = call.getString("startDate"),
+               let endDateString = call.getString("endDate"),

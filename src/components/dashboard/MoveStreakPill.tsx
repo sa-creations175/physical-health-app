@@ -1,6 +1,6 @@
 import { Flame } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { getMoveStreak } from '../../lib/moveStreak';
+import { getMoveStreak } from '../../lib/bodySignals';
 import { useToast } from '../ui/Toast';
 
 // "Move goal streak: N" with a flame, on the eyebrow line of the Home and

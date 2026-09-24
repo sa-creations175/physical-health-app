@@ -288,6 +288,30 @@ export interface BodyGoal {
   updated_at: string;
 }
 
+// One night of sleep, read from HealthKit — added Dexie v21. A night belongs to
+// the morning it ends: the row for Wednesday is Tuesday night into Wednesday
+// morning. Written only by the sleep import (lib/sleepImport.ts); screens read
+// it through lib/bodySignals.ts. Minutes are time actually asleep unless named
+// otherwise.
+export interface SleepNight {
+  id: string; // `night-${date}` — one row per morning, so a re-import updates it
+  user_id: string;
+  date: string; // YYYY-MM-DD, the morning the night ends
+  asleep_minutes: number; // core + deep + REM + unspecified asleep, overlaps removed
+  core_minutes: number;
+  deep_minutes: number;
+  rem_minutes: number;
+  unspecified_minutes: number; // "asleep" with no stage (older watches, some apps)
+  awake_minutes: number; // awake stretches between falling asleep and waking up
+  in_bed_minutes: number | null; // from any source; null when none was recorded
+  sleep_start: string; // ISO datetime, first asleep moment
+  sleep_end: string; // ISO datetime, last asleep moment
+  nap_minutes: number; // asleep time starting between noon and 6 PM that day
+  source_name: string; // the one source the night was counted from
+  source_bundle_id: string;
+  updated_at: string;
+}
+
 // Directional goals (Phase 5 goals layer, unused so far). Not the body goals
 // above.
 export interface Goal {

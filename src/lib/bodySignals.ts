@@ -1,8 +1,14 @@
-// The move goal streak (Home and Fitness): consecutive days on which active calories
-// (HealthKit) were at or above the daily calories goal.
+// The shared per-day signals Home and Fitness read, in one place: the move
+// goal streak, this week's move goal days, and sleep nights. Each screen reads
+// these rather than keeping its own copy.
+//
+// Move goal streak: consecutive days on which active calories (HealthKit) were
+// at or above the daily calories goal.
 import { addDaysISO, currentWeekISODates, todayISODate } from './dateHelpers';
 import { getActiveCaloriesSince, getCaloriesByDay } from './healthkit';
 import { getGoals, goalFor } from './goals';
+import { db } from '../db/database';
+import type { SleepNight } from '../db/types';
 
 // Pure: count back from the most recent finished day (yesterday) while each
 // day is at or above the goal. Today adds one once it's at or above the goal,
@@ -82,4 +88,36 @@ export async function getMoveGoalWeek(): Promise<MoveGoalWeek | null> {
   const calories = await getCaloriesByDay();
   if (!calories) return null;
   return moveGoalDayStates(currentWeekISODates(), calories, goal, todayISODate());
+}
+
+// ---- Sleep ------------------------------------------------------------------------
+
+// Nights come from the sleep import (lib/sleepImport.ts), stored one per
+// morning, so these read the local table and are live: Home's Sleep card, a
+// Sleep tab and a sleep goal can all read them without asking HealthKit.
+// A night with no asleep time (a nap-only day) doesn't count as a night.
+
+async function nightOn(date: string): Promise<SleepNight | null> {
+  const n = await db.sleep_nights.get(`night-${date}`);
+  return n && n.asleep_minutes > 0 ? n : null;
+}
+
+// Last night: the night that ended this morning. null until it's been read.
+export async function getLastNight(): Promise<SleepNight | null> {
+  return nightOn(todayISODate());
+}
+
+// Each night this week, Sunday to Saturday by the morning it ended (Sunday's
+// is Saturday night into Sunday). null for nights with no sleep recorded or
+// still to come.
+export async function getNightsThisWeek(): Promise<(SleepNight | null)[]> {
+  return Promise.all(currentWeekISODates().map(nightOn));
+}
+
+// This week's average time asleep, in minutes, over the nights that have
+// sleep recorded. null when there are none.
+export async function getWeekSleepAverage(): Promise<number | null> {
+  const nights = (await getNightsThisWeek()).filter((n): n is SleepNight => n !== null);
+  if (nights.length === 0) return null;
+  return Math.round(nights.reduce((sum, n) => sum + n.asleep_minutes, 0) / nights.length);
 }

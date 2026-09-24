@@ -46,4 +46,5 @@ export const STORE_TO_PH: Record<string, string> = {
   nutrition_seasons: 'ph_nutrition_seasons',
   session_plans: 'ph_session_plans',
   body_goals: 'ph_body_goals',
+  sleep_nights: 'ph_sleep_nights',
 };

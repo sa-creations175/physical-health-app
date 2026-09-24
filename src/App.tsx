@@ -8,6 +8,7 @@ import { seedGoalsIfEmpty } from './lib/goals';
 import { Capacitor } from '@capacitor/core';
 import { isHealthKitAvailable } from './lib/healthkit';
 import { importWatchWorkouts, LAST_IMPORT_KEY } from './lib/watchImport';
+import { importSleepIfAvailable } from './lib/sleepImport';
 import AppLayout from './components/AppLayout';
 import { ToastProvider } from './components/ui/Toast';
 import Home from './pages/Home';
@@ -54,7 +55,7 @@ function App() {
     // then seed goals if there are none,
     // then save any strength session left unfinished on an earlier day, then
     // run startup prompt triggers (after the pull, so restored rows count),
-    // then auto-import Apple Watch workouts (iOS only). Each phase is
+    // then auto-import Apple Watch workouts and sleep (iOS only). Each phase is
     // best-effort and never blocks local boot.
     runSeedersIfNeeded()
       .then(() => runCloudSync())
@@ -64,6 +65,8 @@ function App() {
       .then(() => autoSaveUnfinishedSessions())
       .then(() => checkBodyMeasurementDue())
       .then(() => importWatchWorkoutsIfAvailable())
+      // Sleep nights from HealthKit (iOS only): 90 days the first time.
+      .then(() => importSleepIfAvailable())
       .catch((err) => {
         console.error('Startup (seed/sync/import) failed:', err);
       });

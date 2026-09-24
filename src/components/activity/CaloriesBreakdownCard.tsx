@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { getFitnessScore } from '../../lib/fitnessScore';
 import { Flame, Footprints } from 'lucide-react';
 import { getCaloriesByDay, getHealthSnapshot } from '../../lib/healthkit';
-import { getMoveGoalWeek } from '../../lib/moveStreak';
+import { getMoveGoalWeek } from '../../lib/bodySignals';
 import { getGoals, goalFor } from '../../lib/goals';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { COLOR } from '../../lib/brand';
