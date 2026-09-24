@@ -17,6 +17,7 @@ export default function HeaderStrip({
   title,
   subtitle,
   right,
+  badge,
   children,
   overlay = false,
 }: {
@@ -24,6 +25,9 @@ export default function HeaderStrip({
   title: ReactNode;
   subtitle?: ReactNode;
   right?: ReactNode;
+  // A small pill on the eyebrow's line, at its right end (the move goal
+  // streak on Home and Fitness).
+  badge?: ReactNode;
   children?: ReactNode;
   overlay?: boolean;
 }) {
@@ -36,8 +40,15 @@ export default function HeaderStrip({
       }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="eyebrow">{eyebrow}</p>
+        <div className="min-w-0 flex-1">
+          {badge ? (
+            <div className="flex items-center justify-between gap-2">
+              <p className="eyebrow">{eyebrow}</p>
+              {badge}
+            </div>
+          ) : (
+            <p className="eyebrow">{eyebrow}</p>
+          )}
           <h1 className="text-title text-ink mt-0.5">{title}</h1>
           {subtitle && <p className="text-label text-muted mt-1">{subtitle}</p>}
         </div>

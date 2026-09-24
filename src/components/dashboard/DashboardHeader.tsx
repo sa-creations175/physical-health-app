@@ -1,42 +1,22 @@
 import { Link } from 'react-router-dom';
 import { Settings as SettingsIcon } from 'lucide-react';
-import { useLiveQuery } from 'dexie-react-hooks';
 import HeaderStrip from '../ui/HeaderStrip';
 import WeekStrip from './WeekStrip';
-import { getMoveStreak } from '../../lib/moveStreak';
-import { useToast } from '../ui/Toast';
+import MoveStreakPill from './MoveStreakPill';
 import { dayName, dateLabel, weekNumber } from '../../lib/dateHelpers';
 
-// Home's header strip: where you are (week), what it is (the day), then the
-// date and the move goal streak on the subtitle line, then the week strip.
-// Settings sits top right.
+// Home's header strip: where you are (week) with the move goal streak pill,
+// what it is (the day), the date, then the week strip. Settings sits top
+// right.
 export default function DashboardHeader() {
-  const { showToast } = useToast();
-  // Re-read when the daily goals change (the calories goal drives the streak).
-  const streak = useLiveQuery(() => getMoveStreak(), [], null);
   const now = new Date();
 
   return (
     <HeaderStrip
       eyebrow={`Body · Week ${weekNumber(now)}`}
       title={dayName(now)}
-      subtitle={
-        <>
-          {dateLabel(now)}
-          {streak ? (
-            <>
-              {' · '}
-              <button
-                type="button"
-                onClick={() => showToast('Days at or above your calories goal')}
-                className="underline decoration-dotted underline-offset-4"
-              >
-                {streak}-day move goal streak
-              </button>
-            </>
-          ) : null}
-        </>
-      }
+      badge={<MoveStreakPill />}
+      subtitle={dateLabel(now)}
       right={
         <Link
           to="/settings"

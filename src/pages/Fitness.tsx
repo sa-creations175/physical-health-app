@@ -11,6 +11,7 @@ import AppleWatchActivityCard from '../components/activity/AppleWatchActivityCar
 import CaloriesBreakdownCard from '../components/activity/CaloriesBreakdownCard';
 import AutoSavedNotices from '../components/activity/AutoSavedNotices';
 import GoalsSheet from '../components/goals/GoalsSheet';
+import MoveStreakPill from '../components/dashboard/MoveStreakPill';
 import { getGoals } from '../lib/goals';
 import { startOfWeekISODate, addDaysISO } from '../lib/dateHelpers';
 import type { BodyGoal, GoalPeriod } from '../db/types';
@@ -87,7 +88,12 @@ function FitnessHeader({ onEditGoals }: { onEditGoals: () => void }) {
   const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 
   return (
-    <HeaderStrip eyebrow="Body · Fitness" title="This Week" subtitle={`${range} · ${weekday}`}>
+    <HeaderStrip
+      eyebrow="Body · Fitness"
+      badge={<MoveStreakPill />}
+      title="This Week"
+      subtitle={`${range} · ${weekday}`}
+    >
       <div className="mt-3 flex items-center gap-2">
         <button type="button" onClick={() => navigate('/history')} className="pill">
           History
