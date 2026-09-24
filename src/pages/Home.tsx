@@ -146,6 +146,7 @@ const DAILY_LABEL: Record<string, string> = {
   calories: 'cal/day',
   exercise_minutes: 'exercise min/day',
   steps: 'steps/day',
+  reps: 'reps/day',
 };
 
 // This week's average per day against each daily goal: the number, a label,
