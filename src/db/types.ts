@@ -38,6 +38,10 @@ export interface Session {
   // than reading either field directly: rows from before v19 (or pulled from
   // a cloud copy that predates the column) only carry feel_rating.
   completed_at?: string | null;
+  // "Heart rate was up" — added Dexie v22. Set by the person on a session with
+  // no heart-rate data (no watch on); the whole session's minutes then count as
+  // Active minutes, flagged "you said so", never as measured.
+  hr_was_up?: boolean | null;
   created_at: string; // ISO datetime
   updated_at: string;
 }
@@ -135,6 +139,8 @@ export interface CardioLog {
   // still runs off duration_minutes alone.
   distance_miles: number | null;
   notes: string | null;
+  // "Heart rate was up" — added Dexie v22. Same as on a session.
+  hr_was_up?: boolean | null;
   // Provenance — added Dexie v13. 'watch' for auto-imported Apple Watch
   // workouts, 'manual' for logger entries. null on rows that predate the
   // column. Non-indexed.
@@ -312,6 +318,29 @@ export interface SleepNight {
   updated_at: string;
 }
 
+// Heart rate during one Apple Watch workout — added Dexie v22. Written only by
+// the heart-rate import (lib/heartImport.ts). The samples themselves aren't
+// kept: each workout stores how many seconds it spent at each whole bpm, so
+// the Active minutes line can move (a birthday, a measured max) and every
+// workout's minutes above it are worked out again without re-reading
+// HealthKit. Sessions and cardio logs are matched to these rows at read time
+// (lib/heartRate.ts), so a session logged after the import still finds its
+// workout.
+export interface WorkoutHeartRate {
+  id: string; // `hr-${start}|${type}|${minutes}` — same identity as the Watch import
+  user_id: string;
+  date: string; // YYYY-MM-DD, local day the workout started
+  workout_start: string; // ISO datetime
+  workout_end: string; // ISO datetime
+  workout_type: string; // HealthKit activity type, e.g. 'traditionalStrengthTraining'
+  duration_minutes: number;
+  source_name: string;
+  sample_count: number; // 0 = a workout with no heart-rate readings
+  avg_bpm: number | null; // time-weighted; null with no readings
+  seconds_by_bpm: string; // JSON Record<bpm, seconds>
+  updated_at: string;
+}
+
 // Directional goals (Phase 5 goals layer, unused so far). Not the body goals
 // above.
 export interface Goal {
@@ -384,6 +413,10 @@ export interface UserPreferences {
   // the circle on a ghost set row logs it as "same as last time". Off: the
   // circle refuses until the set has been typed.
   one_tap_repeat: boolean;
+  // A measured maximum heart rate the person typed in — added Dexie v22, no
+  // screen yet. When set it replaces the age-based estimate for the Active
+  // minutes line.
+  measured_max_hr?: number | null;
   created_at: string;
   updated_at: string;
 }

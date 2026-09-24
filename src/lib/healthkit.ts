@@ -233,6 +233,7 @@ const READ_PERMISSIONS: HealthPermission[] = [
   'READ_RESTING_HEART_RATE',
   'READ_VO2_MAX',
   'READ_SLEEP',
+  'READ_HEART_RATE',
 ];
 
 // True only inside the native iOS app with the Health store reachable.
@@ -332,6 +333,44 @@ export async function getRecentWorkouts(daysBack = 7): Promise<HealthWorkout[]> 
       .sort((a, b) => b.startDate.localeCompare(a.startDate));
   } catch (e) {
     console.error('HK error at getRecentWorkouts:', e);
+    return [];
+  }
+}
+
+// A workout with the heart-rate readings the Watch took during it, for the
+// heart-rate import. Same shape as HealthWorkout plus the readings (each an
+// instant: ISO timestamp and bpm), oldest first.
+export interface HealthWorkoutWithHeartRate extends HealthWorkout {
+  heartRate: { timestamp: string; bpm: number }[];
+}
+
+// Workouts from the last `daysBack` days with their heart-rate readings.
+// Assumes permissions were already ensured by the caller.
+export async function getWorkoutsWithHeartRate(daysBack: number): Promise<HealthWorkoutWithHeartRate[]> {
+  const start = new Date();
+  start.setDate(start.getDate() - daysBack);
+  start.setHours(0, 0, 0, 0);
+  try {
+    const { workouts } = await Health.queryWorkouts({
+      startDate: start.toISOString(),
+      endDate: new Date().toISOString(),
+      includeHeartRate: true,
+      includeRoute: false,
+      includeSteps: false,
+    });
+    return workouts.map((w) => ({
+      startDate: w.startDate,
+      endDate: w.endDate,
+      workoutType: w.workoutType,
+      durationMinutes: Math.round((w.duration || 0) / 60),
+      calories: Math.round(w.calories || 0),
+      sourceName: w.sourceName,
+      heartRate: (w.heartRate ?? [])
+        .map((h) => ({ timestamp: String(h.timestamp), bpm: h.bpm }))
+        .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp)),
+    }));
+  } catch (e) {
+    console.error('HK error at getWorkoutsWithHeartRate:', e);
     return [];
   }
 }

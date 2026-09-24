@@ -29,6 +29,7 @@ import type {
   SessionPlan,
   BodyGoal,
   SleepNight,
+  WorkoutHeartRate,
 } from './types';
 
 export class PhysicalHealthDB extends Dexie {
@@ -52,6 +53,7 @@ export class PhysicalHealthDB extends Dexie {
   session_plans!: Table<SessionPlan, string>;
   body_goals!: Table<BodyGoal, string>;
   sleep_nights!: Table<SleepNight, string>;
+  workout_heart_rates!: Table<WorkoutHeartRate, string>;
 
   constructor() {
     super('physical_health_db');
@@ -834,6 +836,34 @@ export class PhysicalHealthDB extends Dexie {
       session_plans: 'id, user_id, type',
       body_goals: 'id, user_id, period, order_index',
       sleep_nights: 'id, user_id, date',
+    });
+
+    // v22: heart rate during Apple Watch workouts (one row per workout, see
+    // WorkoutHeartRate), plus three new optional fields that need no backfill:
+    // sessions.hr_was_up, cardio_logs.hr_was_up and
+    // user_preferences.measured_max_hr.
+    this.version(22).stores({
+      sessions: 'id, user_id, type, date, created_at',
+      exercises: 'id, user_id, name, muscle_group, last_used_at',
+      session_exercises: 'id, session_id, exercise_id, order_index',
+      sets: 'id, session_exercise_id, set_number, created_at',
+      cardio_types: 'id, user_id, name, last_used_at',
+      cardio_logs: 'id, user_id, started_at, created_at',
+      delivery_days: 'id, user_id, date',
+      bundle_logs: 'id, user_id, date',
+      nutrition_logs: 'id, user_id, date',
+      supplements: 'id, user_id, active',
+      health_checkins: 'id, user_id, type',
+      goals: 'id, user_id, pillar, parent_goal_id',
+      prompts: 'id, user_id, type, fired_at, dismissed_at',
+      user_preferences: 'id, user_id',
+      body_stats: 'id, user_id, recorded_at',
+      body_measurements: 'id, user_id, recorded_at',
+      nutrition_seasons: 'id, user_id, started_at, ended_at',
+      session_plans: 'id, user_id, type',
+      body_goals: 'id, user_id, period, order_index',
+      sleep_nights: 'id, user_id, date',
+      workout_heart_rates: 'id, user_id, date',
     });
   }
 }

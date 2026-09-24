@@ -1,5 +1,5 @@
 // The shared per-day signals Home and Fitness read, in one place: the move
-// goal streak, this week's move goal days, and sleep nights. Each screen reads
+// goal streak, this week's move goal days, sleep nights and Active minutes. Each screen reads
 // these rather than keeping its own copy.
 //
 // Move goal streak: consecutive days on which active calories (HealthKit) were
@@ -9,6 +9,14 @@ import { getActiveCaloriesSince, getCaloriesByDay } from './healthkit';
 import { getGoals, goalFor } from './goals';
 import { db } from '../db/database';
 import type { SleepNight } from '../db/types';
+import {
+  getActiveMinutesData,
+  getHeartRateLine,
+  thisWeekSpan,
+  toMinutes,
+  type HeartRateLine,
+  type SessionHeartRate,
+} from './heartRate';
 
 // Pure: count back from the most recent finished day (yesterday) while each
 // day is at or above the goal. Today adds one once it's at or above the goal,
@@ -121,3 +129,56 @@ export async function getWeekSleepAverage(): Promise<number | null> {
   if (nights.length === 0) return null;
   return Math.round(nights.reduce((sum, n) => sum + n.asleep_minutes, 0) / nights.length);
 }
+
+// ---- Active minutes -----------------------------------------------------------------
+
+// Minutes with heart rate at or above the line (64% of max), from Watch
+// workout readings, plus sessions marked "heart rate was up" that have no
+// readings ("you said so"). The Fitness score's Active min ring, the Details
+// card and each session's summary read these. See lib/heartRate.ts.
+
+export interface ActiveMinutesTotal {
+  minutes: number; // measured + said so
+  measuredMinutes: number;
+  saidSoMinutes: number;
+}
+
+function total(days: { measuredSeconds: number; saidSoMinutes: number }[]): ActiveMinutesTotal {
+  const measuredSeconds = days.reduce((s, d) => s + d.measuredSeconds, 0);
+  const saidSoMinutes = days.reduce((s, d) => s + d.saidSoMinutes, 0);
+  const measuredMinutes = toMinutes(measuredSeconds);
+  return { minutes: measuredMinutes + saidSoMinutes, measuredMinutes, saidSoMinutes };
+}
+
+// This week, Sunday to Saturday. `line` is null when there's no age or
+// measured max to draw the line from; measured minutes are then 0.
+export async function getActiveMinutesThisWeek(): Promise<ActiveMinutesTotal & { line: HeartRateLine | null }> {
+  const [from, to] = thisWeekSpan();
+  const data = await getActiveMinutesData(from, to);
+  return { ...total([...data.byDate.values()]), line: data.line };
+}
+
+// Each day this week, Sunday to Saturday.
+export async function getActiveMinutesByDay(): Promise<{ date: string; total: ActiveMinutesTotal }[]> {
+  const dates = currentWeekISODates();
+  const data = await getActiveMinutesData(dates[0], dates[6]);
+  return dates.map((date) => ({
+    date,
+    total: total([data.byDate.get(date) ?? { measuredSeconds: 0, saidSoMinutes: 0 }]),
+  }));
+}
+
+// One session's (or cardio log's) heart rate: average bpm and Active minutes,
+// measured or said so. null when there's neither readings nor the mark.
+export async function getSessionHeartRate(
+  kind: 'session' | 'cardio',
+  id: string,
+): Promise<SessionHeartRate | null> {
+  const row = kind === 'session' ? await db.sessions.get(id) : await db.cardio_logs.get(id);
+  if (!row) return null;
+  const date = kind === 'session' ? (row as { date: string }).date : new Date((row as { started_at: string }).started_at).toLocaleDateString('en-CA');
+  const data = await getActiveMinutesData(date, date);
+  return data.bySession.get(id) ?? null;
+}
+
+export { getHeartRateLine };
