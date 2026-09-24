@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
   Calendar as CalendarIcon,
@@ -157,7 +158,14 @@ function ViewButton({
 // One collapsible history row — used by both the list and the calendar's
 // day-detail panel. Manages its own expand state.
 function HistoryRow({ item }: { item: HistoryItem }) {
-  const [open, setOpen] = useState(false);
+  // ?open=<id> (a cardio row tapped on Fitness) opens that row and scrolls to it.
+  const [searchParams] = useSearchParams();
+  const target = searchParams.get('open') === item.id;
+  const [open, setOpen] = useState(target);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (target) ref.current?.scrollIntoView({ block: 'center' });
+  }, [target]);
 
   const Icon = item.kind === 'cardio' ? CardioIcon : STRENGTH_META[item.type].Icon;
   const label = item.kind === 'cardio' ? 'Cardio' : STRENGTH_META[item.type].label;
@@ -174,7 +182,7 @@ function HistoryRow({ item }: { item: HistoryItem }) {
       : null;
 
   return (
-    <div className="card px-4 py-3">
+    <div ref={ref} className="card px-4 py-3">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

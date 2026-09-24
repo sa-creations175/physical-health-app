@@ -98,6 +98,7 @@ export function MobilityRow({
   onChange,
   onAddLink,
   onDeleteLink,
+  linksOpen = false,
 }: {
   minutes: number;
   minMinutes: number;
@@ -105,6 +106,8 @@ export function MobilityRow({
   onChange: (next: number) => void | Promise<void>;
   onAddLink: (label: string, url: string) => void | Promise<void>;
   onDeleteLink: (id: string) => void | Promise<void>;
+  // Show the links open to start with (the Recovery sheet).
+  linksOpen?: boolean;
 }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(String(minutes));
@@ -196,7 +199,7 @@ export function MobilityRow({
         </button>
       </div>
 
-      <MobilityLinks links={links} onAdd={onAddLink} onDelete={onDeleteLink} />
+      <MobilityLinks links={links} onAdd={onAddLink} onDelete={onDeleteLink} initialOpen={linksOpen} />
     </div>
   );
 }
@@ -214,12 +217,14 @@ function MobilityLinks({
   links,
   onAdd,
   onDelete,
+  initialOpen,
 }: {
   links: MobilityLink[];
   onAdd: (label: string, url: string) => void | Promise<void>;
   onDelete: (id: string) => void | Promise<void>;
+  initialOpen: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState('');
   const [url, setUrl] = useState('');

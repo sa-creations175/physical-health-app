@@ -15,7 +15,7 @@ import {
 import { getWeeklyHealthAverages, getExerciseMinutesThisWeek } from './healthkit';
 import { fillFraction } from './progress';
 import { getGoals } from './goals';
-import { isSessionComplete } from './sessionPlans';
+import { getActiveMinutesData, thisWeekSpan, totalOf } from './heartRate';
 import type { BodyGoal, DailyGoalMetric, WeeklyGoalMetric } from '../db/types';
 
 export interface WeeklyProgress {
@@ -44,12 +44,13 @@ export interface FitnessScore {
 export async function getWeeklyActuals(): Promise<Record<WeeklyGoalMetric, number>> {
   const prefs = await getUserPreferences();
   const weekStart = startOfWeekISODate();
-  const [lower, upper, fullBody, cardio, bundleWeek] = await Promise.all([
+  const [lower, upper, fullBody, cardio, bundleWeek, active] = await Promise.all([
     getLiftingSummary('lower'),
     getLiftingSummary('upper'),
     getLiftingSummary('full_body'),
     getCardioSummary(prefs.cardio_threshold_minutes),
     getBundleWeek(weekStart),
+    getActiveMinutesData(...thisWeekSpan()),
   ]);
   return {
     bundle: bundleWeek.filter(isDayQualifying).length,
@@ -58,6 +59,8 @@ export async function getWeeklyActuals(): Promise<Record<WeeklyGoalMetric, numbe
     upper: upper?.thisWeekCount ?? 0,
     full_body: fullBody?.thisWeekCount ?? 0,
     mobility: getWeeklyTotals(bundleWeek, prefs.bundle_mobility_min_minutes).mobilityQualifyingDays,
+    // Minutes at or above the heart-rate line, measured plus "you said so".
+    active_minutes: totalOf([...active.byDate.values()]).minutes,
   };
 }
 
@@ -97,7 +100,11 @@ export async function getDailyAverages(daysElapsed: number): Promise<Record<Dail
     if (s.date >= weekStart && s.date <= weekEnd) appLogged += s.duration_minutes ?? 0;
   }
   for (const b of bundleWeek) appLogged += (b.watch_duration_minutes ?? 0) + (b.mobility_minutes ?? 0);
+  // Reps: push-ups, ab rolls and calf raises together, averaged over the week
+  // so far.
+  const reps = bundleWeek.reduce((n, b) => n + b.pushups + b.ab_rolls + b.calf_raises, 0);
   return {
+    reps: Math.round(reps / daysElapsed),
     calories: hk?.caloriesAvg ?? null,
     steps: hk?.stepsAvg ?? null,
     exercise_minutes: Math.round((hkExerciseWeek ?? appLogged) / daysElapsed),
@@ -138,23 +145,4 @@ export async function getFitnessScore(): Promise<FitnessScore> {
     : 0;
 
   return { dialPct, weekly, daily, daysElapsed, averages };
-}
-
-// Sessions per day this week (finished strength sessions plus cardio logs),
-// for the week strip under Home's header.
-export async function getWeekSessionCounts(): Promise<Map<string, number>> {
-  const dates = currentWeekISODates();
-  const [sessions, cardio] = await Promise.all([
-    db.sessions.where('date').between(dates[0], dates[6], true, true).toArray(),
-    db.cardio_logs.where('user_id').equals(LOCAL_USER_ID).toArray(),
-  ]);
-  const out = new Map<string, number>(dates.map((d) => [d, 0]));
-  for (const s of sessions) {
-    if (isSessionComplete(s)) out.set(s.date, (out.get(s.date) ?? 0) + 1);
-  }
-  for (const l of cardio) {
-    const d = new Date(l.started_at).toLocaleDateString('en-CA');
-    if (out.has(d)) out.set(d, (out.get(d) ?? 0) + 1);
-  }
-  return out;
 }

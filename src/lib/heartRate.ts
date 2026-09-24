@@ -86,6 +86,20 @@ export function secondsAtOrAbove(secondsByBpm: Record<number, number>, line: num
 
 export const toMinutes = (seconds: number) => Math.round(seconds / 60);
 
+// A span of days' Active minutes, added up in seconds first and rounded once.
+export interface ActiveMinutesTotal {
+  minutes: number; // measured + said so
+  measuredMinutes: number;
+  saidSoMinutes: number;
+}
+
+export function totalOf(days: { measuredSeconds: number; saidSoMinutes: number }[]): ActiveMinutesTotal {
+  const measuredSeconds = days.reduce((s, d) => s + d.measuredSeconds, 0);
+  const saidSoMinutes = days.reduce((s, d) => s + d.saidSoMinutes, 0);
+  const measuredMinutes = toMinutes(measuredSeconds);
+  return { minutes: measuredMinutes + saidSoMinutes, measuredMinutes, saidSoMinutes };
+}
+
 // ---- The line, from the profile -------------------------------------------------
 
 export interface HeartRateLine {
@@ -189,6 +203,9 @@ export interface SessionHeartRate {
   // up" and there were no readings, so the whole session's minutes count.
   basis: 'measured' | 'said-so';
   workoutId: string | null;
+  // The matched Watch workout's start and length, when there is one.
+  workoutStart: string | null;
+  workoutMinutes: number | null;
 }
 
 // Everything Active minutes needs for a span of days, matched once.
@@ -196,6 +213,9 @@ export interface ActiveMinutesData {
   line: HeartRateLine | null;
   byDate: Map<string, { measuredSeconds: number; saidSoMinutes: number }>;
   bySession: Map<string, SessionHeartRate>; // key: session id or cardio log id
+  // Watch workouts with readings that no session or cardio log matched (a
+  // short strength set, a workout you didn't log): they still count.
+  unmatched: WorkoutActive[];
 }
 
 export async function getActiveMinutesData(from: string, to: string): Promise<ActiveMinutesData> {
@@ -240,10 +260,19 @@ export async function getActiveMinutesData(from: string, to: string): Promise<Ac
         activeMinutes: toMinutes(activeSecs(matched)),
         basis: 'measured',
         workoutId: matched.id,
+        workoutStart: matched.workout_start,
+        workoutMinutes: matched.duration_minutes,
       });
     } else if (saidSo) {
       const m = minutes ?? matched?.duration_minutes ?? 0;
-      bySession.set(id, { avgBpm: null, activeMinutes: m, basis: 'said-so', workoutId: matched?.id ?? null });
+      bySession.set(id, {
+        avgBpm: null,
+        activeMinutes: m,
+        basis: 'said-so',
+        workoutId: matched?.id ?? null,
+        workoutStart: matched?.workout_start ?? null,
+        workoutMinutes: matched?.duration_minutes ?? null,
+      });
       bump(date, 0, m);
     }
   };
@@ -251,7 +280,11 @@ export async function getActiveMinutesData(from: string, to: string): Promise<Ac
   for (const l of logs) {
     record(l.id, new Date(l.started_at).toLocaleDateString('en-CA'), cardioMatch.get(l.id), !!l.hr_was_up, l.duration_minutes);
   }
-  return { line, byDate, bySession };
+  const used = new Set([...strengthMatch.values(), ...cardioMatch.values()].map((w) => w.id));
+  const unmatched = workouts
+    .filter((w) => w.sample_count > 0 && !used.has(w.id))
+    .map((w) => ({ workout: w, activeSeconds: activeSecs(w) }));
+  return { line, byDate, bySession, unmatched };
 }
 
 // Convenience: this week's span, Sunday to Saturday.

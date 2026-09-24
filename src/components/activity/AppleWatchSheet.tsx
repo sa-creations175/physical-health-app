@@ -1,38 +1,22 @@
 import { useEffect, useState } from 'react';
-import SharedActivityCard from './SharedActivityCard';
+import BottomSheet from '../ui/BottomSheet';
+import { COLOR } from '../../lib/brand';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { getGoals, goalFor } from '../../lib/goals';
 import { DOT_COLOR } from '../../lib/dotHelpers';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { App } from '@capacitor/app';
-import { getHealthSnapshot, type HealthSnapshot } from '../../lib/healthkit';
+import { formatWorkoutType, getHealthSnapshot, type HealthSnapshot } from '../../lib/healthkit';
 import { LAST_IMPORT_KEY } from '../../lib/watchImport';
 
+const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-// HealthKit returns workout types as raw HKWorkoutActivityType identifiers
-// ("stairClimbing", "traditionalStrengthTraining", "running", …). Map the
-// awkward ones explicitly; split the rest from camelCase into Title Case.
-const WORKOUT_TYPE_LABELS: Record<string, string> = {
-  traditionalStrengthTraining: 'Strength Training',
-  functionalStrengthTraining: 'Functional Training',
-  highIntensityIntervalTraining: 'HIIT',
-  other: 'Workout',
-};
 
-function formatWorkoutType(type: string): string {
-  if (WORKOUT_TYPE_LABELS[type]) return WORKOUT_TYPE_LABELS[type];
-  return type
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase boundaries
-    .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case each word
-}
-
-export default function AppleWatchActivityCard({
-  expanded,
-  onToggle,
-}: {
-  expanded: boolean;
-  onToggle: () => void;
-}) {
+// What the Apple Watch card showed, now in a sheet opened from Fitness's
+// History / Library / Apple Watch row: connected or not, today's dot, today's
+// steps, active calories and this week's workouts, recent workouts, and when
+// the Watch import last ran.
+export default function AppleWatchSheet({ onClose }: { onClose: () => void }) {
   // null = not connected (web / non-iOS / no permission); a snapshot = live
   // HealthKit data. undefined while the first read is in flight.
   const [snapshot, setSnapshot] = useState<HealthSnapshot | null | undefined>(
@@ -101,13 +85,34 @@ export default function AppleWatchActivityCard({
     );
 
   return (
-    <SharedActivityCard
-      label="Apple Watch"
-      badge={badge}
-      dots={dots}
-      expanded={expanded}
-      onToggle={onToggle}
-    >
+    <BottomSheet onClose={onClose} label="Apple Watch">
+      <div className="flex items-center justify-between gap-2 pr-10">
+        <p className="eyebrow">Apple Watch</p>
+        <span className="text-body font-bold whitespace-nowrap">{badge}</span>
+      </div>
+      <div className="mt-3 grid grid-cols-7">
+        {dots.map((d) => (
+          <div key={d.date} className="flex justify-center">
+            <span
+              className="rounded-full block"
+              style={{
+                width: 18,
+                height: 18,
+                background: d.color,
+                outline: d.date === today ? `2px solid ${COLOR.green700}` : undefined,
+                outlineOffset: 1,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 mb-3 grid grid-cols-7">
+        {DAY_INITIALS.map((letter, i) => (
+          <span key={i} className="text-micro text-hint text-center">
+            {letter}
+          </span>
+        ))}
+      </div>
       <div className="grid grid-cols-3 gap-2">
         <StatTile
           label="Steps"
@@ -170,7 +175,7 @@ export default function AppleWatchActivityCard({
           })}
         </p>
       )}
-    </SharedActivityCard>
+    </BottomSheet>
   );
 }
 

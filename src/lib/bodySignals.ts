@@ -13,7 +13,8 @@ import {
   getActiveMinutesData,
   getHeartRateLine,
   thisWeekSpan,
-  toMinutes,
+  totalOf,
+  type ActiveMinutesTotal,
   type HeartRateLine,
   type SessionHeartRate,
 } from './heartRate';
@@ -137,25 +138,12 @@ export async function getWeekSleepAverage(): Promise<number | null> {
 // readings ("you said so"). The Fitness score's Active min ring, the Details
 // card and each session's summary read these. See lib/heartRate.ts.
 
-export interface ActiveMinutesTotal {
-  minutes: number; // measured + said so
-  measuredMinutes: number;
-  saidSoMinutes: number;
-}
-
-function total(days: { measuredSeconds: number; saidSoMinutes: number }[]): ActiveMinutesTotal {
-  const measuredSeconds = days.reduce((s, d) => s + d.measuredSeconds, 0);
-  const saidSoMinutes = days.reduce((s, d) => s + d.saidSoMinutes, 0);
-  const measuredMinutes = toMinutes(measuredSeconds);
-  return { minutes: measuredMinutes + saidSoMinutes, measuredMinutes, saidSoMinutes };
-}
-
 // This week, Sunday to Saturday. `line` is null when there's no age or
 // measured max to draw the line from; measured minutes are then 0.
 export async function getActiveMinutesThisWeek(): Promise<ActiveMinutesTotal & { line: HeartRateLine | null }> {
   const [from, to] = thisWeekSpan();
   const data = await getActiveMinutesData(from, to);
-  return { ...total([...data.byDate.values()]), line: data.line };
+  return { ...totalOf([...data.byDate.values()]), line: data.line };
 }
 
 // Each day this week, Sunday to Saturday.
@@ -164,7 +152,7 @@ export async function getActiveMinutesByDay(): Promise<{ date: string; total: Ac
   const data = await getActiveMinutesData(dates[0], dates[6]);
   return dates.map((date) => ({
     date,
-    total: total([data.byDate.get(date) ?? { measuredSeconds: 0, saidSoMinutes: 0 }]),
+    total: totalOf([data.byDate.get(date) ?? { measuredSeconds: 0, saidSoMinutes: 0 }]),
   }));
 }
 
@@ -182,3 +170,29 @@ export async function getSessionHeartRate(
 }
 
 export { getHeartRateLine };
+export type { ActiveMinutesTotal };
+
+// ---- Training, reps and stretches --------------------------------------------------
+
+// What you did each day (sessions and cardio, with their heart rate), the
+// Fitness score's rings and dots, the day sheet, Quick reps and Recovery all
+// read from lib/training.ts, re-exported here so screens have one place to
+// import from.
+export {
+  getWorkouts,
+  getTrainingWeek,
+  getRecentWorkouts,
+  getWeekSessionCounts,
+  getRepsWeek,
+  getStretchWeek,
+  getStandardsWeek,
+  RING_LABEL,
+  type Workout,
+  type WorkoutKind,
+  type TrainingType,
+  type RingKey,
+  type TrainingWeek,
+  type RepsWeek,
+  type StretchWeek,
+  type StandardRow,
+} from './training';

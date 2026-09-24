@@ -275,8 +275,17 @@ export interface HealthCheckin {
 // what the app measures, so renaming "Daily Bundle" to "Morning set" keeps it
 // counting; a goal the person adds themselves has metric null.
 export type GoalPeriod = 'week' | 'day';
-export type WeeklyGoalMetric = 'bundle' | 'cardio' | 'lower' | 'upper' | 'full_body' | 'mobility';
-export type DailyGoalMetric = 'calories' | 'exercise_minutes' | 'steps';
+// active_minutes and reps were added in Build 4 (no schema change: metric is
+// a plain text column).
+export type WeeklyGoalMetric =
+  | 'bundle'
+  | 'cardio'
+  | 'lower'
+  | 'upper'
+  | 'full_body'
+  | 'mobility'
+  | 'active_minutes';
+export type DailyGoalMetric = 'calories' | 'exercise_minutes' | 'steps' | 'reps';
 export type GoalMetric = WeeklyGoalMetric | DailyGoalMetric;
 
 export interface BodyGoal {
@@ -285,7 +294,7 @@ export interface BodyGoal {
   name: string;
   metric: GoalMetric | null;
   target: number;
-  unit: string; // 'days' | 'sessions' | 'times' | 'calories' | 'minutes' | 'steps'
+  unit: string; // 'days' | 'sessions' | 'times' | 'calories' | 'minutes' | 'steps' | 'reps'
   period: GoalPeriod;
   // Daily goals can be unticked: the number stays on Home, the goal doesn't.
   active: boolean;

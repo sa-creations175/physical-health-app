@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useToast } from '../ui/Toast';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
-import { getWeekSessionCounts } from '../../lib/fitnessScore';
+import { getWeekSessionCounts } from '../../lib/bodySignals';
 import { getCaloriesByDay } from '../../lib/healthkit';
 
 const INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];

@@ -54,7 +54,12 @@ export default function LogStrength() {
   const [draftByType, setDraftByType] = useState<
     Record<StrengthValue, DraftSessionSummary | null>
   >({ upper: null, lower: null, full_body: null });
-  const [sessionDate, setSessionDate] = useState(() => todayISODate());
+  // ?date=YYYY-MM-DD (the Fitness day sheet's "Add a session to Sun") dates
+  // the new session; otherwise today.
+  const [sessionDate, setSessionDate] = useState(() => {
+    const d = searchParams.get('date');
+    return d && /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayISODate() ? d : todayISODate();
+  });
   // Full unfinished-session detail (with contents) for the stale-session
   // banner. Loaded on mount; locally pruned when one is discarded so the
   // banner updates without a refetch.

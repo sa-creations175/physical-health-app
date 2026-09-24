@@ -397,3 +397,20 @@ export async function getHealthSnapshot(): Promise<HealthSnapshot | null> {
 
   return { steps, activeCalories, workoutsThisWeek, recentWorkouts };
 }
+
+// HealthKit returns workout types as raw HKWorkoutActivityType identifiers
+// ("stairClimbing", "traditionalStrengthTraining", "running", …). Map the
+// awkward ones explicitly; split the rest from camelCase into Title Case.
+const WORKOUT_TYPE_LABELS: Record<string, string> = {
+  traditionalStrengthTraining: 'Strength Training',
+  functionalStrengthTraining: 'Functional Training',
+  highIntensityIntervalTraining: 'HIIT',
+  other: 'Workout',
+};
+
+export function formatWorkoutType(type: string): string {
+  if (WORKOUT_TYPE_LABELS[type]) return WORKOUT_TYPE_LABELS[type];
+  return type
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase boundaries
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // Title Case each word
+}

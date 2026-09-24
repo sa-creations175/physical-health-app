@@ -5,6 +5,7 @@ import { db } from '../db/database';
 import { syncedBulkDelete, syncedBulkPut } from '../db/syncedWrite';
 import { LOCAL_USER_ID } from './constants';
 import { getUserPreferences } from './userPreferences';
+import { DEFAULT_BUNDLE_CONFIG } from './defaults';
 import type {
   BodyGoal,
   DailyGoalMetric,
@@ -29,13 +30,41 @@ export const STANDARD_WEEKLY: (StandardGoal & { metric: WeeklyGoalMetric })[] = 
   { metric: 'upper', name: 'Upper Body', target: 2, unit: 'sessions' },
   { metric: 'full_body', name: 'Full Body', target: 1, unit: 'sessions' },
   { metric: 'mobility', name: 'Mobility', target: 4, unit: 'days' },
+  // Minutes at or above the heart-rate line (lib/heartRate.ts). 150 a week is
+  // the health standard.
+  { metric: 'active_minutes', name: 'Active Minutes', target: 150, unit: 'minutes' },
 ];
 
 export const STANDARD_DAILY: (StandardGoal & { metric: DailyGoalMetric })[] = [
   { metric: 'calories', name: 'Calories burned', target: 700, unit: 'calories' },
   { metric: 'exercise_minutes', name: 'Exercise minutes', target: 30, unit: 'minutes' },
   { metric: 'steps', name: 'Steps', target: 10000, unit: 'steps' },
+  // One daily total of push-ups, ab rolls and calf raises. The standard is the
+  // sum of the app's three default daily targets (100 + 60 + 120).
+  {
+    metric: 'reps',
+    name: 'Reps',
+    target:
+      DEFAULT_BUNDLE_CONFIG.pushup_target +
+      DEFAULT_BUNDLE_CONFIG.abroll_target +
+      DEFAULT_BUNDLE_CONFIG.calfraise_target,
+    unit: 'reps',
+  },
 ];
+
+// A new person's Reps goal starts small; someone who already logs the three
+// exercises starts at the sum of their own three daily targets.
+export const NEW_USER_REPS_TARGET = 50;
+
+// Health standards, shown under a goal in the goals sheet and counted in the
+// Fitness header's "Moving my body standards". Fixed guidance, not the
+// person's own number: 150 Active minutes a week, stretching on 2 days a
+// week, and 2 strength sessions a week (Lower, Upper and Full together).
+export const HEALTH_STANDARD = {
+  active_minutes: 150,
+  stretch_days: 2,
+  strength_sessions: 2,
+} as const;
 
 export function standardFor(period: GoalPeriod): StandardGoal[] {
   return period === 'week' ? STANDARD_WEEKLY : STANDARD_DAILY;
@@ -83,6 +112,8 @@ function carriedTarget(metric: GoalMetric, prefs: UserPreferences): number | nul
     calories: prefs.daily_calories_target,
     exercise_minutes: prefs.daily_exercise_minutes_target,
     steps: prefs.daily_steps_target,
+    active_minutes: undefined,
+    reps: undefined,
   };
   const n = v[metric];
   return typeof n === 'number' && n > 0 ? n : null;
@@ -95,10 +126,47 @@ export async function seedGoalsIfEmpty(): Promise<void> {
   const rows: BodyGoal[] = [];
   for (const period of ['week', 'day'] as GoalPeriod[]) {
     standardFor(period).forEach((g, i) =>
-      rows.push(row({ ...g, target: carriedTarget(g.metric, prefs) ?? g.target }, period, i, now)),
+      rows.push(
+        row(
+          {
+            ...g,
+            target: g.metric === 'reps' ? NEW_USER_REPS_TARGET : (carriedTarget(g.metric, prefs) ?? g.target),
+          },
+          period,
+          i,
+          now,
+        ),
+      ),
     );
   }
   await syncedBulkPut(db.body_goals, rows);
+}
+
+// Goals added after a person's goals were first seeded (Active minutes and
+// Reps, Build 4) are appended once, with their fixed ids so two devices land
+// on the same row. Reps starts at the sum of the person's three daily rep
+// targets. Runs after seedGoalsIfEmpty; does nothing for a brand-new person,
+// whose seed already has them.
+export async function addMissingGoals(): Promise<void> {
+  const all = await db.body_goals.toArray();
+  if (all.length === 0) return;
+  const prefs = await getUserPreferences();
+  const now = new Date().toISOString();
+  const rows: BodyGoal[] = [];
+  for (const period of ['week', 'day'] as GoalPeriod[]) {
+    const mine = all.filter((g) => g.period === period);
+    let order = mine.reduce((m, g) => Math.max(m, g.order_index + 1), 0);
+    for (const g of standardFor(period)) {
+      if (g.metric !== 'active_minutes' && g.metric !== 'reps') continue;
+      if (all.some((x) => x.metric === g.metric || x.id === standardGoalId(g.metric))) continue;
+      const target =
+        g.metric === 'reps'
+          ? prefs.bundle_pushup_target + prefs.bundle_abroll_target + prefs.bundle_calfraise_target
+          : g.target;
+      rows.push(row({ ...g, target }, period, order++, now));
+    }
+  }
+  if (rows.length > 0) await syncedBulkPut(db.body_goals, rows);
 }
 
 // ---- Reading ---------------------------------------------------------------------
@@ -150,11 +218,12 @@ export function standardDrafts(period: GoalPeriod): GoalDraft[] {
 }
 
 // Replace a period's goals with the edited list: add, rename, retarget, remove,
-// reorder and Reset all land here. Blank names and non-positive targets are
-// dropped, so an emptied row is a removal.
+// reorder and Reset all land here. Blank names and targets that aren't a
+// number are dropped, so an emptied row is a removal. A goal of 0 stays: it's
+// on the list, just not asked of you this week.
 export async function saveGoals(period: GoalPeriod, drafts: GoalDraft[]): Promise<void> {
   const now = new Date().toISOString();
-  const keep = drafts.filter((d) => d.name.trim() !== '' && d.target > 0);
+  const keep = drafts.filter((d) => d.name.trim() !== '' && Number.isFinite(d.target) && d.target >= 0);
   const rows = keep.map((d, i) =>
     row(
       {

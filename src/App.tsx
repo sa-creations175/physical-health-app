@@ -4,7 +4,7 @@ import { runSeedersIfNeeded } from './db';
 import { runCloudSync } from './lib/sync';
 import { checkBodyMeasurementDue } from './lib/promptOrchestration';
 import { autoSaveUnfinishedSessions } from './lib/sessionSets';
-import { seedGoalsIfEmpty } from './lib/goals';
+import { addMissingGoals, seedGoalsIfEmpty } from './lib/goals';
 import { Capacitor } from '@capacitor/core';
 import { isHealthKitAvailable } from './lib/healthkit';
 import { importWatchWorkouts, LAST_IMPORT_KEY } from './lib/watchImport';
@@ -64,6 +64,8 @@ function App() {
       // Goals seed after the pull: a device joining an existing cloud copy
       // takes its goals rather than pushing a fresh standard set over them.
       .then(() => seedGoalsIfEmpty())
+      // Goals added since (Active minutes, Reps) join an existing set once.
+      .then(() => addMissingGoals())
       .then(() => autoSaveUnfinishedSessions())
       .then(() => checkBodyMeasurementDue())
       .then(() => importWatchWorkoutsIfAvailable())

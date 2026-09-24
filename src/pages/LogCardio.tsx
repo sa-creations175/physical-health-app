@@ -1,6 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/database';
 import { useToast } from '../components/ui/Toast';
@@ -52,7 +52,16 @@ export default function LogCardio() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const initial = useMemo(() => startedAtFromDate(new Date()), []);
+  // ?date=YYYY-MM-DD (the Fitness day sheet's "Log cardio for Sun") dates the
+  // log; the time stays now's.
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get('date');
+  const initial = useMemo(() => {
+    const now = startedAtFromDate(new Date());
+    return dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) && dateParam <= now.date
+      ? { ...now, date: dateParam }
+      : now;
+  }, [dateParam]);
   const [dateISO, setDateISO] = useState(initial.date);
   const [timeHHMM, setTimeHHMM] = useState(initial.time);
   const [cardioTypeId, setCardioTypeId] = useState<string | null>(null);
