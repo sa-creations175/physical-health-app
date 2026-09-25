@@ -7,6 +7,7 @@ import { getMoveGoalWeek } from '../../lib/bodySignals';
 import { getGoals, goalFor } from '../../lib/goals';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { COLOR } from '../../lib/brand';
+import { CARD_PAD } from '../../lib/cardSizes';
 import { compactNumber } from '../../lib/fitnessFormat';
 import { CardHead, DayLetters, DotLabel } from './parts';
 
@@ -52,7 +53,7 @@ export default function DailyMovementCard({ onEditGoal }: { onEditGoal: () => vo
   const stepsAvg = score?.averages.steps ?? null;
 
   return (
-    <div className="card px-4 py-3">
+    <div className={`card ${CARD_PAD}`}>
       <CardHead icon={<Activity size={16} strokeWidth={2} />}>Daily Movement</CardHead>
 
       <div className="mt-2 flex gap-2.5">

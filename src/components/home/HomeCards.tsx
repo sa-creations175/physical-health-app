@@ -17,32 +17,50 @@ import { getFitnessScore } from '../../lib/fitnessScore';
 import { addDaysISO, shortDayLabel, todayISODate } from '../../lib/dateHelpers';
 import { COLOR } from '../../lib/brand';
 import { hoursLabel, ringFill } from '../../lib/fitnessFormat';
+import {
+  CAPTION,
+  CARD_PAD as CARD,
+  CORNER,
+  DOT_RULE,
+  RING,
+  RING_GAP,
+  RING_ROW_GAP,
+  SMALL_TEXT,
+  WIDE_RING as NUT_RING,
+} from '../../lib/cardSizes';
 import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring, type DotState } from '../fitness/parts';
 
 // Home's cards (body-home-shapes.html, B7). Each reads one shared place in
 // lib/bodySignals.ts; none queries on its own.
 
-// Sizes and spacing from body-home-headings.html (right phone, "Title Case,
-// line under"), so the whole of Home fits one iPhone screen without scrolling:
-// cards padded 5px top and bottom, rings 32px (34px on Nutrition) sitting
-// clear of the heading line, 10px dots, 10px labels.
-const CARD = 'px-3 py-[5px]';
-const RING = { size: 32, inner: 24, textClass: 'text-[8.5px]' };
-const NUT_RING = { size: 34, inner: 25, textClass: 'text-[8.5px]' };
-const CAPTION = 'text-[10px] leading-tight font-semibold text-muted';
+const DOT: Record<DayMark, DotState> = {
+  met: 'on',
+  some: 'half',
+  missed: 'miss',
+  none: 'none',
+};
+const dots = (days: { date: string; mark: DayMark }[]) =>
+  days.map((d) => ({ date: d.date, state: DOT[d.mark] }));
 
-const DOT: Record<DayMark, DotState> = { met: 'on', some: 'half', missed: 'miss', none: 'none' };
-const dots = (days: { date: string; mark: DayMark }[]) => days.map((d) => ({ date: d.date, state: DOT[d.mark] }));
-
-// The line shown on a card whose feature isn't built yet.
-function SetUpLine() {
-  return <p className="text-[10px] leading-tight text-hint mt-0.5">Set up in More</p>;
+// Shown in the heading corner of a card whose feature isn't built yet.
+function SetUpCorner() {
+  return <span className={`${SMALL_TEXT} text-hint whitespace-nowrap`}>Set up in More</span>;
 }
 
 // A ring over its caption, centred.
-function RingCaption({ fill, value, caption, onMint }: { fill: number; value: ReactNode; caption: string; onMint?: boolean }) {
+function RingCaption({
+  fill,
+  value,
+  caption,
+  onMint,
+}: {
+  fill: number;
+  value: ReactNode;
+  caption: string;
+  onMint?: boolean;
+}) {
   return (
-    <div className="mt-1 flex flex-col items-center gap-0.5">
+    <div className={`${RING_GAP} flex flex-col items-center gap-0.5`}>
       <Ring fill={fill} {...RING} onMint={onMint}>
         {value}
       </Ring>
@@ -53,7 +71,7 @@ function RingCaption({ fill, value, caption, onMint }: { fill: number; value: Re
 
 // A rule, then the dots.
 function DotRow({ children, mint }: { children: ReactNode; mint?: boolean }) {
-  return <div className={`mt-1 pt-1 border-t ${mint ? 'border-green-300' : 'border-hairline'}`}>{children}</div>;
+  return <div className={`${DOT_RULE} ${mint ? 'border-green-300' : 'border-hairline'}`}>{children}</div>;
 }
 
 // ---- Movement ---------------------------------------------------------------------
@@ -66,20 +84,28 @@ export function MovementCard() {
   const move = useLiveQuery(() => getMoveGoalWeek(), [], null);
   const today = todayISODate();
   const avg = score?.averages.calories ?? null;
-  const SHORT = { lower: 'Lower', upper: 'Upper', full_body: 'Full', cardio: 'Cardio' } as Record<string, string>;
+  const SHORT = {
+    lower: 'Lower',
+    upper: 'Upper',
+    full_body: 'Full',
+    cardio: 'Cardio',
+  } as Record<string, string>;
   return (
     <div className={`card ${CARD}`}>
       <CardHead
         icon={<DumbbellIcon />}
         right={
-          <span className="text-[12px] text-muted whitespace-nowrap">
-            Avg per day: <b className="font-bold text-ink tabular-nums">{avg === null ? '—' : `${avg.toLocaleString()} cals`}</b>
+          <span className={CORNER}>
+            Avg per day:{' '}
+            <b className="font-bold text-ink tabular-nums">
+              {avg === null ? '—' : `${avg.toLocaleString()} cals`}
+            </b>
           </span>
         }
       >
         Movement
       </CardHead>
-      <div className="mt-1.5 flex justify-between px-1">
+      <div className={`${RING_ROW_GAP} flex justify-between px-1`}>
         {(week?.rings ?? [])
           .filter((r) => r.key !== 'active_minutes')
           .map((r) => (
@@ -95,17 +121,29 @@ export function MovementCard() {
         {move ? (
           // A day at or past the calories goal fills; B7 shows no misses here.
           <DayDots
-            days={move.days.map((d) => ({ date: d.date, state: d.state === 'met' ? 'on' : 'none' }))}
+            days={move.days.map((d) => ({
+              date: d.date,
+              state: d.state === 'met' ? 'on' : 'none',
+            }))}
             today={today}
             small
           />
         ) : (
-          <DayDots days={(week?.dates ?? []).map((date) => ({ date, state: 'none' as const }))} today={today} small />
+          <DayDots
+            days={(week?.dates ?? []).map((date) => ({
+              date,
+              state: 'none' as const,
+            }))}
+            today={today}
+            small
+          />
         )}
         <DayLetters small />
       </DotRow>
       <p className="mt-0.5">
-        <DotLabel small label="Move goal days">{move ? `${move.met}/7` : undefined}</DotLabel>
+        <DotLabel small label="Move goal days">
+          {move ? `${move.met}/7` : undefined}
+        </DotLabel>
       </p>
     </div>
   );
@@ -113,8 +151,16 @@ export function MovementCard() {
 
 // ---- Nutrition --------------------------------------------------------------------
 
-const METRIC_LABEL: Record<NutritionMetric, string> = { calories: 'Calories', protein: 'Protein', water: 'Water' };
-const WEEK_UNIT: Record<NutritionMetric, string> = { calories: ' cals', protein: 'g', water: ' bottles' };
+const METRIC_LABEL: Record<NutritionMetric, string> = {
+  calories: 'Calories',
+  protein: 'Protein',
+  water: 'Water',
+};
+const WEEK_UNIT: Record<NutritionMetric, string> = {
+  calories: ' cals',
+  protein: 'g',
+  water: ' bottles',
+};
 
 // Calories, protein and water today against the season's targets. Tap a ring
 // and the dots follow that one's days on target (calories to start).
@@ -125,16 +171,18 @@ export function NutritionCard() {
   const track = week?.tracks[pick];
   return (
     <div className={`tile ${CARD}`}>
-      <CardHead icon={<Apple size={16} strokeWidth={2} />} right={<span className="text-[12px] text-muted">Today</span>}>
+      <CardHead icon={<Apple size={16} strokeWidth={2} />} right={<span className={CORNER}>Today</span>}>
         Nutrition
       </CardHead>
-      <div className="mt-1.5 flex justify-around">
+      <div className={`${RING_ROW_GAP} flex justify-around`}>
         {(['calories', 'protein', 'water'] as NutritionMetric[]).map((m) => {
           const t = week?.tracks[m];
           const on = pick === m;
           const value =
             m === 'water'
-              ? t?.target != null ? `${t.today}/${t.target}` : `${t?.today ?? 0}`
+              ? t?.target != null
+                ? `${t.today}/${t.target}`
+                : `${t?.today ?? 0}`
               : m === 'protein'
                 ? `${(t?.today ?? 0).toLocaleString()}g`
                 : (t?.today ?? 0).toLocaleString();
@@ -173,7 +221,9 @@ export function NutritionCard() {
           </DotLabel>
         )}
       </p>
-      {week && !week.hasSeason && <p className="text-[10px] leading-tight text-hint mt-0.5">Set up your plan in Nutrition</p>}
+      {week && !week.hasSeason && (
+        <p className={`${SMALL_TEXT} text-hint mt-0.5`}>Set up your plan in Nutrition</p>
+      )}
     </div>
   );
 }
@@ -210,7 +260,10 @@ export function SleepCard() {
         <DayDots days={dots(week?.days ?? [])} today={today} small />
       </DotRow>
       <p className="mt-0.5">
-        <DotLabel small label={goal ? `Nights ${hoursLabel(goal)}+` : 'Nights'}>{`${week?.met ?? 0}/7`}</DotLabel>
+        <DotLabel
+          small
+          label={goal ? `Nights ${hoursLabel(goal)}+` : 'Nights'}
+        >{`${week?.met ?? 0}/7`}</DotLabel>
       </p>
     </div>
   );
@@ -234,7 +287,10 @@ export function HomeRecoveryCard() {
       />
       <DotRow>
         <DayDots
-          days={(week?.days ?? []).map((d) => ({ date: d.date, state: d.state === 'met' ? 'on' : 'none' }))}
+          days={(week?.days ?? []).map((d) => ({
+            date: d.date,
+            state: d.state === 'met' ? 'on' : 'none',
+          }))}
           today={today}
           small
         />
@@ -255,7 +311,10 @@ export function HomeRecoveryCard() {
 function lastStretchLabel(date: string, today: string): string {
   if (date === today) return 'Today';
   if (date > addDaysISO(today, -7)) return shortDayLabel(date);
-  return new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 // ---- Hygiene ----------------------------------------------------------------------
@@ -267,16 +326,21 @@ export function HygieneCard() {
   const setUp = !!week?.setUp;
   return (
     <div className={`tile min-w-0 flex flex-col ${CARD}`}>
-      <CardHead icon={<Droplets size={16} strokeWidth={2} />}>Hygiene</CardHead>
+      <CardHead icon={<Droplets size={16} strokeWidth={2} />} right={week && !setUp && <SetUpCorner />}>
+        Hygiene
+      </CardHead>
       <div className="flex-1 flex flex-col justify-center gap-1 mt-1.5">
-        <DotLabel small label="Brushed 2×">{setUp ? `${week!.brushed.count}/7` : undefined}</DotLabel>
+        <DotLabel small label="Brushed 2×">
+          {setUp ? `${week!.brushed.count}/7` : undefined}
+        </DotLabel>
         <DayDots days={dots(week?.brushed.days ?? [])} today={today} small />
       </div>
       <div className="flex-1 flex flex-col justify-center gap-1 mt-1 pt-1 border-t border-green-300">
-        <DotLabel small label="Flossed">{setUp ? `${week!.flossed.count}/7` : undefined}</DotLabel>
+        <DotLabel small label="Flossed">
+          {setUp ? `${week!.flossed.count}/7` : undefined}
+        </DotLabel>
         <DayDots days={dots(week?.flossed.days ?? [])} today={today} small />
       </div>
-      {week && !setUp && <SetUpLine />}
     </div>
   );
 }
@@ -290,7 +354,9 @@ export function HabitsCard() {
   const setUp = !!week?.setUp;
   return (
     <div className={`tile min-w-0 ${CARD}`}>
-      <CardHead icon={<Wine size={16} strokeWidth={2} />}>Habits</CardHead>
+      <CardHead icon={<Wine size={16} strokeWidth={2} />} right={week && !setUp && <SetUpCorner />}>
+        Habits
+      </CardHead>
       <RingCaption
         onMint
         fill={setUp && week!.limit ? week!.count / week!.limit : 0}
@@ -301,9 +367,10 @@ export function HabitsCard() {
         <DayDots days={dots(week?.days ?? [])} today={today} small />
       </DotRow>
       <p className="mt-0.5">
-        <DotLabel small label="No-drink days">{setUp ? `${week!.drinkFreeDays}/7` : undefined}</DotLabel>
+        <DotLabel small label="No-drink days">
+          {setUp ? `${week!.drinkFreeDays}/7` : undefined}
+        </DotLabel>
       </p>
-      {week && !setUp && <SetUpLine />}
     </div>
   );
 }
@@ -321,26 +388,32 @@ export function CheckupsCard() {
       <CardHead
         icon={<Stethoscope size={16} strokeWidth={2} />}
         right={
-          // B7 shows a checkup coming due in Bronze Amber.
-          next &&
-          days !== null && (
-            <span className={`text-[12px] font-semibold ${days <= 31 ? 'text-amber' : 'text-muted'}`}>
-              {next.label}{' '}
-              {days < 0 ? `overdue by ${spanLabel(-days)}` : days === 0 ? 'due today' : `due in ${spanLabel(days)}`}
-            </span>
+          c && !c.setUp ? (
+            <SetUpCorner />
+          ) : (
+            // B7 shows a checkup coming due in Bronze Amber.
+            next &&
+            days !== null && (
+              <span className={`text-[12px] font-semibold ${days <= 31 ? 'text-amber' : 'text-muted'}`}>
+                {next.label}{' '}
+                {days < 0
+                  ? `overdue by ${spanLabel(-days)}`
+                  : days === 0
+                    ? 'due today'
+                    : `due in ${spanLabel(days)}`}
+              </span>
+            )
           )
         }
       >
         Checkups
       </CardHead>
-      {c && c.setUp ? (
-        <p className="text-[10px] leading-tight text-hint mt-[3px]">
+      {c?.setUp && (
+        <p className={`${SMALL_TEXT} text-hint mt-[3px]`}>
           {c.items
             .map((i) => (i.lastVisit ? `${i.label} ${agoLabel(i.lastVisit, today)}` : `${i.label} not yet`))
             .join(' · ')}
         </p>
-      ) : (
-        c && <SetUpLine />
       )}
     </div>
   );

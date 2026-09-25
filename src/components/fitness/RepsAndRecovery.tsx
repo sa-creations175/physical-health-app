@@ -11,6 +11,7 @@ import { parseMobilityLinks, upsertBundleLog, type BundleField, type MobilityLin
 import { addDaysISO, shortDayLabel, todayISODate } from '../../lib/dateHelpers';
 import { ringFill } from '../../lib/fitnessFormat';
 import { CardHead, DayDots, DotLabel, Ring } from './parts';
+import { CAPTION, CARD_PAD, DOT_RULE, RING, RING_GAP } from '../../lib/cardSizes';
 
 // Quick reps and Recovery, side by side, each with a + to log today.
 
@@ -28,7 +29,7 @@ function SmallCard({
   children: ReactNode;
 }) {
   return (
-    <div className="card min-w-0 px-3 py-2.5">
+    <div className={`card min-w-0 ${CARD_PAD}`}>
       <CardHead
         icon={icon}
         right={
@@ -63,13 +64,13 @@ export function QuickRepsCard() {
   const goal = reps?.goal ?? null;
   return (
     <SmallCard icon={<Zap size={16} strokeWidth={2} />} title="Quick Reps" onAdd={() => setOpen(true)} addLabel="Log reps">
-      <div className="mt-1.5 flex flex-col items-center gap-1">
-        <Ring fill={ringFill(reps?.today ?? 0, goal)} size={48}>
+      <div className={`${RING_GAP} flex flex-col items-center gap-0.5`}>
+        <Ring fill={ringFill(reps?.today ?? 0, goal)} {...RING}>
           {goal === null ? (reps?.today ?? 0) : `${reps?.today ?? 0}/${goal}`}
         </Ring>
-        <span className="text-micro font-semibold tracking-normal text-muted">Reps today</span>
+        <span className={CAPTION}>Reps today</span>
       </div>
-      <div className="mt-1.5 pt-0.5 border-t border-hairline">
+      <div className={`${DOT_RULE} border-hairline`}>
         {reps && (
           <DayDots
             days={reps.days.map((d) => ({
@@ -77,11 +78,12 @@ export function QuickRepsCard() {
               state: d.state === 'met' ? 'on' : d.state === 'some' ? 'half' : 'none',
             }))}
             today={today}
+            small
           />
         )}
       </div>
       <p className="mt-0.5">
-        <DotLabel label="Rep days">{reps?.met ?? 0}/7</DotLabel>
+        <DotLabel small label="Rep days">{reps?.met ?? 0}/7</DotLabel>
       </p>
       {open && <RepsSheet onClose={() => setOpen(false)} />}
     </SmallCard>
@@ -102,23 +104,24 @@ export function RecoveryCard() {
       onAdd={() => setOpen(true)}
       addLabel="Log a stretch"
     >
-      <div className="mt-1.5 flex flex-col items-center gap-1">
-        <Ring fill={ringFill(week?.count ?? 0, goal)} size={48}>
+      <div className={`${RING_GAP} flex flex-col items-center gap-0.5`}>
+        <Ring fill={ringFill(week?.count ?? 0, goal)} {...RING}>
           {goal === null ? (week?.count ?? 0) : `${week?.count ?? 0}/${goal}`}
         </Ring>
-        <span className="text-micro font-semibold tracking-normal text-muted">Stretches this week</span>
+        <span className={CAPTION}>Stretches this week</span>
       </div>
-      <div className="mt-1.5 pt-0.5 border-t border-hairline">
+      <div className={`${DOT_RULE} border-hairline`}>
         {week && (
           <DayDots
             days={week.days.map((d) => ({ date: d.date, state: d.state === 'met' ? 'on' : 'none' }))}
             today={today}
+            small
           />
         )}
       </div>
       <p className="mt-0.5 flex justify-between gap-1">
-        <DotLabel label="Stretch days" />
-        {week?.last && <DotLabel label="Last">{lastLabel(week.last, today)}</DotLabel>}
+        <DotLabel small label="Stretch days" />
+        {week?.last && <DotLabel small label="Last">{lastLabel(week.last, today)}</DotLabel>}
       </p>
       {open && <StretchSheet onClose={() => setOpen(false)} />}
     </SmallCard>

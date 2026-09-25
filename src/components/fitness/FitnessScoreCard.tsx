@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { COLOR } from '../../lib/brand';
+import { CAPTION, CARD_PAD, DOT_RULE, RING_ROW_GAP, SMALL_TEXT, WIDE_RING } from '../../lib/cardSizes';
 import { getTrainingWeek, RING_LABEL, type RingKey } from '../../lib/bodySignals';
 import { dayDateLabel, ringFill } from '../../lib/fitnessFormat';
 import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring } from './parts';
@@ -43,7 +44,7 @@ export default function FitnessScoreCard({
   const days = week?.days[which] ?? new Set<string>();
 
   return (
-    <div className="tile px-4 py-3">
+    <div className={`tile ${CARD_PAD}`}>
       <CardHead
         icon={<DumbbellIcon />}
         right={
@@ -58,7 +59,7 @@ export default function FitnessScoreCard({
         Fitness Score
       </CardHead>
 
-      <div className="mt-2 flex justify-between">
+      <div className={`${RING_ROW_GAP} flex justify-between`}>
         {(week?.rings ?? []).map((r) => {
           const on = selected === r.key;
           return (
@@ -75,11 +76,11 @@ export default function FitnessScoreCard({
                 className="rounded-full"
                 style={on ? { outline: `2px solid ${COLOR.green300}`, outlineOffset: 1 } : undefined}
               >
-                <Ring fill={ringFill(r.actual, r.target)} onMint>
+                <Ring fill={ringFill(r.actual, r.target)} {...WIDE_RING} onMint>
                   {r.key === 'active_minutes' || r.target === null ? r.actual : `${r.actual}/${r.target}`}
                 </Ring>
               </span>
-              <span className="text-micro font-semibold tracking-normal text-muted whitespace-nowrap">
+              <span className={`${CAPTION} whitespace-nowrap`}>
                 {RING_SHORT[r.key]}
               </span>
             </button>
@@ -87,29 +88,30 @@ export default function FitnessScoreCard({
         })}
       </div>
 
-      <div className="mt-2 pt-1 border-t border-hairline">
+      <div className={`${DOT_RULE} border-hairline`}>
         {week && (
           <DayDots
             days={week.dates.map((date) => ({ date, state: days.has(date) ? 'on' : 'none' }))}
             today={week.today}
             onTap={onOpenDay}
             label={(date) => `See ${dayDateLabel(date)}`}
+            small
           />
         )}
-        <DayLetters />
+        <DayLetters small />
       </div>
-      <div className="mt-1.5 flex items-baseline justify-between gap-2">
-        <DotLabel label={DAYS_LABEL[which]}>{days.size}/7</DotLabel>
+      <div className="mt-0.5 flex items-baseline justify-between gap-2">
+        <DotLabel small label={DAYS_LABEL[which]}>{days.size}/7</DotLabel>
         {selected ? (
           <button
             type="button"
             onClick={() => onShowDetails(selected)}
-            className="text-label font-bold text-green-700 whitespace-nowrap"
+            className={`${SMALL_TEXT} font-bold text-green-700 whitespace-nowrap`}
           >
             {RING_LABEL[selected]} details ›
           </button>
         ) : (
-          <span className="text-label text-hint whitespace-nowrap">Tap a ring or a day</span>
+          <span className={`${SMALL_TEXT} text-hint whitespace-nowrap`}>Tap a ring or a day</span>
         )}
       </div>
     </div>
