@@ -16,12 +16,14 @@ export function Card({
   );
 }
 
-export function SectionLabel({ children }: { children: ReactNode }) {
-  // All section micro-labels: Green 700, 9px, weight 600, tracked.
+// A section or card heading without an icon: Title Case, Green 900, over a
+// thin Green 300 line, with optional text on the right of the row.
+export function SectionLabel({ children, right }: { children: ReactNode; right?: ReactNode }) {
   return (
-    <p className="eyebrow">
-      {children}
-    </p>
+    <div className="card-head">
+      <p className="card-heading">{children}</p>
+      {right}
+    </div>
   );
 }
 

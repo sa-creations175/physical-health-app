@@ -100,11 +100,12 @@ export default function SharedActivityCard({
         aria-expanded={expanded}
         className="relative w-full text-left"
       >
-        <div className="flex items-center justify-between gap-2">
-          {/* Icon + label left-aligned; badge + chevron right-aligned. */}
-          <div className="flex items-center gap-2 min-w-0">
-            {icon && <span className="shrink-0 flex items-center">{icon}</span>}
-            <span className="eyebrow truncate">{label}</span>
+        <div className="card-head">
+          {/* The card heading (icon and label, Green 900) on the left; badge
+              and chevron on the right; a Green 300 line under the row. */}
+          <div className="card-heading min-w-0">
+            {icon && <span className="shrink-0 flex items-center [&_svg]:text-green-900">{icon}</span>}
+            <span className="truncate">{label}</span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-body font-bold text-ink tabular-nums whitespace-nowrap">

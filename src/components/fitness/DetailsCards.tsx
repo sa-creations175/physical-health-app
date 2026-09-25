@@ -5,7 +5,6 @@ import { ArrowDown, ArrowDownUp, ArrowUp, Heart } from 'lucide-react';
 import {
   getRecentWorkouts,
   getTrainingWeek,
-  RING_LABEL,
   type RingKey,
   type TrainingType,
   type Workout,
@@ -46,7 +45,8 @@ export default function DetailsCards({ flash, onTop }: { flash: RingKey | null; 
       ))}
       {week && (
         <DetailCard id={detailsId('active_minutes')} flash={flash === 'active_minutes'} onTop={onTop}
-          head={<CardHead icon={<Heart size={16} strokeWidth={2} />}>Active minutes</CardHead>}
+          icon={<Heart size={16} strokeWidth={2} />}
+          title="Active Minutes"
           count={
             <>
               <b className="font-bold text-ink">
@@ -66,14 +66,16 @@ export default function DetailsCards({ flash, onTop }: { flash: RingKey | null; 
 
 function DetailCard({
   id,
-  head,
+  icon,
+  title,
   count,
   flash,
   onTop,
   children,
 }: {
   id: string;
-  head: ReactNode;
+  icon: ReactNode;
+  title: string;
   count: ReactNode;
   flash: boolean;
   onTop: () => void;
@@ -85,10 +87,9 @@ function DetailCard({
       className="card px-3 py-2.5 mt-2 scroll-mt-4 transition-[outline-color] duration-300"
       style={{ outline: '2px solid', outlineColor: flash ? COLOR.green300 : 'transparent' }}
     >
-      <div className="flex items-center justify-between gap-2">
-        {head}
-        <span className="text-label text-muted whitespace-nowrap">{count}</span>
-      </div>
+      <CardHead icon={icon} right={<span className="text-label text-muted whitespace-nowrap">{count}</span>}>
+        {title}
+      </CardHead>
       {children}
       <div className="text-right">
         <button type="button" onClick={onTop} className="text-label text-green-700 min-h-[32px]">
@@ -150,22 +151,17 @@ function SessionDetails({
       id={detailsId(type)}
       flash={flash}
       onTop={onTop}
-      head={
-        <CardHead
-          icon={
-            strength ? (
-              <span className="inline-flex items-center gap-0.5">
-                <DumbbellIcon />
-                {ARROW[type]}
-              </span>
-            ) : (
-              <RunnerIcon />
-            )
-          }
-        >
-          {RING_LABEL[type]}
-        </CardHead>
+      icon={
+        strength ? (
+          <span className="inline-flex items-center gap-0.5">
+            <DumbbellIcon />
+            {ARROW[type]}
+          </span>
+        ) : (
+          <RunnerIcon />
+        )
       }
+      title={type === 'cardio' ? 'Cardio' : STRENGTH_TYPE_LABEL[type]}
       count={
         <>
           <b className="font-bold text-ink">

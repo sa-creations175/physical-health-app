@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Apple, Droplets, Moon, Stethoscope, Wine } from 'lucide-react';
+import { Apple, Droplets, Moon, PersonStanding, Stethoscope, Wine } from 'lucide-react';
 import {
   getCheckups,
   getDrinksWeek,
@@ -8,12 +8,13 @@ import {
   getMoveGoalWeek,
   getNutritionWeek,
   getSleepWeek,
+  getStretchWeek,
   getTrainingWeek,
   type DayMark,
   type NutritionMetric,
 } from '../../lib/bodySignals';
 import { getFitnessScore } from '../../lib/fitnessScore';
-import { todayISODate } from '../../lib/dateHelpers';
+import { addDaysISO, shortDayLabel, todayISODate } from '../../lib/dateHelpers';
 import { COLOR } from '../../lib/brand';
 import { hoursLabel, ringFill } from '../../lib/fitnessFormat';
 import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring, type DotState } from '../fitness/parts';
@@ -21,29 +22,38 @@ import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring, type DotSt
 // Home's cards (body-home-shapes.html, B7). Each reads one shared place in
 // lib/bodySignals.ts; none queries on its own.
 
+// Sizes and spacing from body-home-headings.html (right phone, "Title Case,
+// line under"), so the whole of Home fits one iPhone screen without scrolling:
+// cards padded 5px top and bottom, rings 32px (34px on Nutrition) sitting
+// clear of the heading line, 10px dots, 10px labels.
+const CARD = 'px-3 py-[5px]';
+const RING = { size: 32, inner: 24, textClass: 'text-[8.5px]' };
+const NUT_RING = { size: 34, inner: 25, textClass: 'text-[8.5px]' };
+const CAPTION = 'text-[10px] leading-tight font-semibold text-muted';
+
 const DOT: Record<DayMark, DotState> = { met: 'on', some: 'half', missed: 'miss', none: 'none' };
 const dots = (days: { date: string; mark: DayMark }[]) => days.map((d) => ({ date: d.date, state: DOT[d.mark] }));
 
 // The line shown on a card whose feature isn't built yet.
 function SetUpLine() {
-  return <p className="text-label text-hint mt-1">Set up in More</p>;
+  return <p className="text-[10px] leading-tight text-hint mt-0.5">Set up in More</p>;
 }
 
 // A ring over its caption, centred.
 function RingCaption({ fill, value, caption, onMint }: { fill: number; value: ReactNode; caption: string; onMint?: boolean }) {
   return (
-    <div className="mt-1.5 flex flex-col items-center gap-1">
-      <Ring fill={fill} size={48} onMint={onMint}>
+    <div className="mt-1 flex flex-col items-center gap-0.5">
+      <Ring fill={fill} {...RING} onMint={onMint}>
         {value}
       </Ring>
-      <span className="text-micro font-semibold tracking-normal text-muted">{caption}</span>
+      <span className={CAPTION}>{caption}</span>
     </div>
   );
 }
 
 // A rule, then the dots.
 function DotRow({ children, mint }: { children: ReactNode; mint?: boolean }) {
-  return <div className={`mt-1.5 pt-0.5 border-t ${mint ? 'border-green-300' : 'border-hairline'}`}>{children}</div>;
+  return <div className={`mt-1 pt-1 border-t ${mint ? 'border-green-300' : 'border-hairline'}`}>{children}</div>;
 }
 
 // ---- Movement ---------------------------------------------------------------------
@@ -58,20 +68,26 @@ export function MovementCard() {
   const avg = score?.averages.calories ?? null;
   const SHORT = { lower: 'Lower', upper: 'Upper', full_body: 'Full', cardio: 'Cardio' } as Record<string, string>;
   return (
-    <div className="card px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <CardHead icon={<DumbbellIcon />}>Movement</CardHead>
-        <span className="text-label text-muted whitespace-nowrap">
-          Avg per day: <b className="font-bold text-ink tabular-nums">{avg === null ? '—' : `${avg.toLocaleString()} cals`}</b>
-        </span>
-      </div>
-      <div className="mt-2 flex justify-around">
+    <div className={`card ${CARD}`}>
+      <CardHead
+        icon={<DumbbellIcon />}
+        right={
+          <span className="text-[12px] text-muted whitespace-nowrap">
+            Avg per day: <b className="font-bold text-ink tabular-nums">{avg === null ? '—' : `${avg.toLocaleString()} cals`}</b>
+          </span>
+        }
+      >
+        Movement
+      </CardHead>
+      <div className="mt-1.5 flex justify-between px-1">
         {(week?.rings ?? [])
           .filter((r) => r.key !== 'active_minutes')
           .map((r) => (
-            <div key={r.key} className="flex flex-col items-center gap-1">
-              <Ring fill={ringFill(r.actual, r.target)}>{r.target === null ? r.actual : `${r.actual}/${r.target}`}</Ring>
-              <span className="text-micro font-semibold tracking-normal text-muted">{SHORT[r.key]}</span>
+            <div key={r.key} className="flex flex-col items-center gap-px">
+              <Ring fill={ringFill(r.actual, r.target)} {...RING}>
+                {r.target === null ? r.actual : `${r.actual}/${r.target}`}
+              </Ring>
+              <span className={CAPTION}>{SHORT[r.key]}</span>
             </div>
           ))}
       </div>
@@ -81,14 +97,15 @@ export function MovementCard() {
           <DayDots
             days={move.days.map((d) => ({ date: d.date, state: d.state === 'met' ? 'on' : 'none' }))}
             today={today}
+            small
           />
         ) : (
-          <DayDots days={(week?.dates ?? []).map((date) => ({ date, state: 'none' as const }))} today={today} />
+          <DayDots days={(week?.dates ?? []).map((date) => ({ date, state: 'none' as const }))} today={today} small />
         )}
-        <DayLetters />
+        <DayLetters small />
       </DotRow>
-      <p className="mt-1">
-        <DotLabel label="Move goal days">{move ? `${move.met}/7` : undefined}</DotLabel>
+      <p className="mt-0.5">
+        <DotLabel small label="Move goal days">{move ? `${move.met}/7` : undefined}</DotLabel>
       </p>
     </div>
   );
@@ -107,12 +124,11 @@ export function NutritionCard() {
   const today = todayISODate();
   const track = week?.tracks[pick];
   return (
-    <div className="tile px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <CardHead icon={<Apple size={16} strokeWidth={2} />}>Nutrition</CardHead>
-        <span className="text-label text-muted">Today</span>
-      </div>
-      <div className="mt-2 flex justify-around">
+    <div className={`tile ${CARD}`}>
+      <CardHead icon={<Apple size={16} strokeWidth={2} />} right={<span className="text-[12px] text-muted">Today</span>}>
+        Nutrition
+      </CardHead>
+      <div className="mt-1.5 flex justify-around">
         {(['calories', 'protein', 'water'] as NutritionMetric[]).map((m) => {
           const t = week?.tracks[m];
           const on = pick === m;
@@ -128,36 +144,36 @@ export function NutritionCard() {
               type="button"
               onClick={() => setPick(m)}
               aria-pressed={on}
-              className={`flex flex-col items-center gap-1 transition-opacity ${on ? '' : 'opacity-75'}`}
+              className={`flex flex-col items-center gap-0.5 transition-opacity ${on ? '' : 'opacity-75'}`}
             >
               <span
                 className="rounded-full"
-                style={on ? { outline: `2px solid ${COLOR.green300}`, outlineOffset: 1 } : undefined}
+                style={on ? { outline: `2px solid ${COLOR.green300}` } : undefined}
               >
-                <Ring fill={ringFill(t?.today ?? 0, t?.target ?? null)} size={48} onMint>
+                <Ring fill={ringFill(t?.today ?? 0, t?.target ?? null)} {...NUT_RING} onMint>
                   {value}
                 </Ring>
               </span>
-              <span className="text-micro font-semibold tracking-normal text-muted">{METRIC_LABEL[m]}</span>
+              <span className={CAPTION}>{METRIC_LABEL[m]}</span>
             </button>
           );
         })}
       </div>
       <DotRow mint>
-        <DayDots days={dots(track?.days ?? [])} today={today} />
+        <DayDots days={dots(track?.days ?? [])} today={today} small />
       </DotRow>
-      <p className="mt-1 flex justify-between gap-2">
-        <DotLabel label="Days on target">
+      <p className="mt-0.5 flex justify-between gap-2">
+        <DotLabel small label="Days on target">
           · <i>{METRIC_LABEL[pick].toLowerCase()}</i>
         </DotLabel>
         {track?.weekTarget != null && (
-          <DotLabel label="Week">
+          <DotLabel small label="Week">
             {track.week.toLocaleString()} / {track.weekTarget.toLocaleString()}
             {WEEK_UNIT[pick]}
           </DotLabel>
         )}
       </p>
-      {week && !week.hasSeason && <p className="text-label text-hint mt-1">Set up your plan in Nutrition</p>}
+      {week && !week.hasSeason && <p className="text-[10px] leading-tight text-hint mt-0.5">Set up your plan in Nutrition</p>}
     </div>
   );
 }
@@ -172,28 +188,74 @@ export function SleepCard() {
   const last = week?.lastNight?.asleep_minutes ?? null;
   const goal = week?.goal ?? null;
   return (
-    <div className="card min-w-0 px-3 py-2.5">
-      <div className="flex items-center justify-between gap-1">
-        <CardHead icon={<Moon size={16} strokeWidth={2} />}>Sleep</CardHead>
-        {week?.average != null && (
-          <span className="text-micro font-medium tracking-normal text-muted whitespace-nowrap">
-            Avg: <b className="font-bold text-ink">{hoursLabel(week.average)}</b>
-          </span>
-        )}
-      </div>
+    <div className={`card min-w-0 ${CARD}`}>
+      <CardHead
+        icon={<Moon size={16} strokeWidth={2} />}
+        right={
+          week?.average != null && (
+            <span className="text-[10px] font-medium text-muted whitespace-nowrap">
+              Avg: <b className="font-bold text-ink">{hoursLabel(week.average)}</b>
+            </span>
+          )
+        }
+      >
+        Sleep
+      </CardHead>
       <RingCaption
         fill={last !== null && goal ? last / goal : 0}
         value={last !== null ? hoursLabel(last) : ''}
         caption="Last night"
       />
       <DotRow>
-        <DayDots days={dots(week?.days ?? [])} today={today} />
+        <DayDots days={dots(week?.days ?? [])} today={today} small />
       </DotRow>
       <p className="mt-0.5">
-        <DotLabel label={goal ? `Nights ${hoursLabel(goal)}+` : 'Nights'}>{`${week?.met ?? 0}/7`}</DotLabel>
+        <DotLabel small label={goal ? `Nights ${hoursLabel(goal)}+` : 'Nights'}>{`${week?.met ?? 0}/7`}</DotLabel>
       </p>
     </div>
   );
+}
+
+// ---- Recovery ---------------------------------------------------------------------
+
+// Stretches this week and stretch days, from the same shared place as
+// Fitness's Recovery card, at Home's size (no +; logging stays on Fitness).
+export function HomeRecoveryCard() {
+  const week = useLiveQuery(() => getStretchWeek(), []);
+  const today = todayISODate();
+  const goal = week?.goal ?? null;
+  return (
+    <div className={`card min-w-0 ${CARD}`}>
+      <CardHead icon={<PersonStanding size={16} strokeWidth={2} />}>Recovery</CardHead>
+      <RingCaption
+        fill={ringFill(week?.count ?? 0, goal)}
+        value={goal === null ? (week?.count ?? 0) : `${week?.count ?? 0}/${goal}`}
+        caption="Stretches this week"
+      />
+      <DotRow>
+        <DayDots
+          days={(week?.days ?? []).map((d) => ({ date: d.date, state: d.state === 'met' ? 'on' : 'none' }))}
+          today={today}
+          small
+        />
+      </DotRow>
+      <p className="mt-0.5 flex justify-between gap-1">
+        <DotLabel small label="Stretch days" />
+        {week?.last && (
+          <DotLabel small label="Last">
+            {lastStretchLabel(week.last, today)}
+          </DotLabel>
+        )}
+      </p>
+    </div>
+  );
+}
+
+// "Today", "Sat" within the last week, else "Sep 12".
+function lastStretchLabel(date: string, today: string): string {
+  if (date === today) return 'Today';
+  if (date > addDaysISO(today, -7)) return shortDayLabel(date);
+  return new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 // ---- Hygiene ----------------------------------------------------------------------
@@ -204,15 +266,15 @@ export function HygieneCard() {
   const today = todayISODate();
   const setUp = !!week?.setUp;
   return (
-    <div className="tile min-w-0 px-3 py-2.5 flex flex-col">
+    <div className={`tile min-w-0 flex flex-col ${CARD}`}>
       <CardHead icon={<Droplets size={16} strokeWidth={2} />}>Hygiene</CardHead>
-      <div className="flex-1 flex flex-col justify-center mt-1.5">
-        <DotLabel label="Brushed 2×">{setUp ? `${week!.brushed.count}/7` : undefined}</DotLabel>
-        <DayDots days={dots(week?.brushed.days ?? [])} today={today} />
+      <div className="flex-1 flex flex-col justify-center gap-1 mt-1.5">
+        <DotLabel small label="Brushed 2×">{setUp ? `${week!.brushed.count}/7` : undefined}</DotLabel>
+        <DayDots days={dots(week?.brushed.days ?? [])} today={today} small />
       </div>
-      <div className="flex-1 flex flex-col justify-center mt-1 pt-1 border-t border-green-300">
-        <DotLabel label="Flossed">{setUp ? `${week!.flossed.count}/7` : undefined}</DotLabel>
-        <DayDots days={dots(week?.flossed.days ?? [])} today={today} />
+      <div className="flex-1 flex flex-col justify-center gap-1 mt-1 pt-1 border-t border-green-300">
+        <DotLabel small label="Flossed">{setUp ? `${week!.flossed.count}/7` : undefined}</DotLabel>
+        <DayDots days={dots(week?.flossed.days ?? [])} today={today} small />
       </div>
       {week && !setUp && <SetUpLine />}
     </div>
@@ -227,7 +289,7 @@ export function HabitsCard() {
   const today = todayISODate();
   const setUp = !!week?.setUp;
   return (
-    <div className="tile min-w-0 px-3 py-2.5">
+    <div className={`tile min-w-0 ${CARD}`}>
       <CardHead icon={<Wine size={16} strokeWidth={2} />}>Habits</CardHead>
       <RingCaption
         onMint
@@ -236,10 +298,10 @@ export function HabitsCard() {
         caption="Drinks this week"
       />
       <DotRow mint>
-        <DayDots days={dots(week?.days ?? [])} today={today} />
+        <DayDots days={dots(week?.days ?? [])} today={today} small />
       </DotRow>
       <p className="mt-0.5">
-        <DotLabel label="No-drink days">{setUp ? `${week!.drinkFreeDays}/7` : undefined}</DotLabel>
+        <DotLabel small label="No-drink days">{setUp ? `${week!.drinkFreeDays}/7` : undefined}</DotLabel>
       </p>
       {week && !setUp && <SetUpLine />}
     </div>
@@ -255,18 +317,24 @@ export function CheckupsCard() {
   const next = c?.next ?? null;
   const days = next?.due ? Math.round((Date.parse(next.due) - Date.parse(today)) / 86_400_000) : null;
   return (
-    <div className="card px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <CardHead icon={<Stethoscope size={16} strokeWidth={2} />}>Checkups</CardHead>
-        {next && days !== null && (
+    <div className={`card ${CARD}`}>
+      <CardHead
+        icon={<Stethoscope size={16} strokeWidth={2} />}
+        right={
           // B7 shows a checkup coming due in Bronze Amber.
-          <span className={`text-label font-semibold ${days <= 31 ? 'text-amber' : 'text-muted'}`}>
-            {next.label} {days < 0 ? `overdue by ${spanLabel(-days)}` : days === 0 ? 'due today' : `due in ${spanLabel(days)}`}
-          </span>
-        )}
-      </div>
+          next &&
+          days !== null && (
+            <span className={`text-[12px] font-semibold ${days <= 31 ? 'text-amber' : 'text-muted'}`}>
+              {next.label}{' '}
+              {days < 0 ? `overdue by ${spanLabel(-days)}` : days === 0 ? 'due today' : `due in ${spanLabel(days)}`}
+            </span>
+          )
+        }
+      >
+        Checkups
+      </CardHead>
       {c && c.setUp ? (
-        <p className="text-label text-hint mt-1">
+        <p className="text-[10px] leading-tight text-hint mt-[3px]">
           {c.items
             .map((i) => (i.lastVisit ? `${i.label} ${agoLabel(i.lastVisit, today)}` : `${i.label} not yet`))
             .join(' · ')}

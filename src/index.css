@@ -68,6 +68,16 @@ body {
     @apply text-micro uppercase;
   }
 
+  /* Card heading (body-home-headings.html, 24 Sep): Title Case, Green 900,
+     13px at 700, the icon in front in Green 900. The heading row, with any
+     corner text, sits over a thin Green 300 line. */
+  .card-head {
+    @apply flex items-center justify-between gap-2 border-b border-green-300 pb-0.5;
+  }
+  .card-heading {
+    @apply inline-flex items-center gap-1.5 text-label leading-tight font-bold text-green-900 whitespace-nowrap;
+  }
+
   /* Card: white, 14px corners, one hairline, no shadow. */
   .card {
     @apply bg-white border border-hairline rounded-card;

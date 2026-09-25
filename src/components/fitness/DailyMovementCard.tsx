@@ -53,7 +53,7 @@ export default function DailyMovementCard({ onEditGoal }: { onEditGoal: () => vo
 
   return (
     <div className="card px-4 py-3">
-      <CardHead icon={<Activity size={16} strokeWidth={2} />}>Daily movement</CardHead>
+      <CardHead icon={<Activity size={16} strokeWidth={2} />}>Daily Movement</CardHead>
 
       <div className="mt-2 flex gap-2.5">
         <TodayTile

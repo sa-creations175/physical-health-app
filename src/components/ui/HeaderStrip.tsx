@@ -20,6 +20,7 @@ export default function HeaderStrip({
   badge,
   children,
   overlay = false,
+  compact = false,
 }: {
   eyebrow: ReactNode;
   title: ReactNode;
@@ -30,10 +31,12 @@ export default function HeaderStrip({
   badge?: ReactNode;
   children?: ReactNode;
   overlay?: boolean;
+  // Home: a tighter bottom edge so the whole screen fits without scrolling.
+  compact?: boolean;
 }) {
   return (
     <header
-      className="shrink-0 bg-green-100 border-b border-hairline px-4 pb-4"
+      className={`shrink-0 bg-green-100 border-b border-hairline px-4 ${compact ? 'pb-1.5' : 'pb-4'}`}
       style={{
         marginTop: overlay ? 0 : 'calc(-1 * env(safe-area-inset-top))',
         paddingTop: 'calc(max(env(safe-area-inset-top), 47px) + 12px)',

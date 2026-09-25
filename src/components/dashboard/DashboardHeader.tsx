@@ -17,6 +17,7 @@ export default function DashboardHeader({ onSeeStandards }: { onSeeStandards: ()
 
   return (
     <HeaderStrip
+      compact
       eyebrow={`Body · Week ${weekNumber(now)}`}
       title={now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
       badge={<MoveStreakPill />}

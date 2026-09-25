@@ -102,8 +102,8 @@ export default function SessionComplete() {
       <HeaderStrip eyebrow={`Body · Fitness · ${typeLabel}`} title="Session Saved" subtitle={subtitle} />
       <div className="px-4">
         <div className="card p-4 mt-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="eyebrow">What You Did</p>
+          <div className="card-head">
+            <p className="card-heading">What You Did</p>
             <button
               type="button"
               onClick={() => navigate(`/log/strength/active/${sessionId}`)}
@@ -129,7 +129,9 @@ export default function SessionComplete() {
 
         {type && week && week.target > 0 && (
           <div className="card p-4 mt-3">
-            <p className="eyebrow">This Week</p>
+            <div className="card-head">
+              <p className="card-heading">This Week</p>
+            </div>
             <p className="text-body text-ink mt-2">
               {typeLabel}{' '}
               <span className="font-bold tabular-nums">

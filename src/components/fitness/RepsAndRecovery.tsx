@@ -23,27 +23,31 @@ function SmallCard({
 }: {
   icon: ReactNode;
   title: string;
-  onAdd?: () => void; // no + when there's nothing to log from here (Home)
+  onAdd?: () => void;
   addLabel: string;
   children: ReactNode;
 }) {
   return (
     <div className="card min-w-0 px-3 py-2.5">
-      <div className="flex items-center justify-between gap-1">
-        <CardHead icon={icon}>{title}</CardHead>
-        {onAdd && (
-          <button
-            type="button"
-            onClick={onAdd}
-            aria-label={addLabel}
-            className="w-11 h-11 -my-3 -mr-3 flex items-center justify-center shrink-0"
-          >
-            <span className="w-6 h-6 rounded-full border border-green-300 bg-white text-green-700 flex items-center justify-center">
-              <Plus size={14} strokeWidth={2.5} />
-            </span>
-          </button>
-        )}
-      </div>
+      <CardHead
+        icon={icon}
+        right={
+          onAdd && (
+            <button
+              type="button"
+              onClick={onAdd}
+              aria-label={addLabel}
+              className="w-11 h-11 -my-3 -mr-3 flex items-center justify-center shrink-0"
+            >
+              <span className="w-6 h-6 rounded-full border border-green-300 bg-white text-green-700 flex items-center justify-center">
+                <Plus size={14} strokeWidth={2.5} />
+              </span>
+            </button>
+          )
+        }
+      >
+        {title}
+      </CardHead>
       {children}
     </div>
   );
@@ -58,7 +62,7 @@ export function QuickRepsCard() {
   const today = todayISODate();
   const goal = reps?.goal ?? null;
   return (
-    <SmallCard icon={<Zap size={16} strokeWidth={2} />} title="Quick reps" onAdd={() => setOpen(true)} addLabel="Log reps">
+    <SmallCard icon={<Zap size={16} strokeWidth={2} />} title="Quick Reps" onAdd={() => setOpen(true)} addLabel="Log reps">
       <div className="mt-1.5 flex flex-col items-center gap-1">
         <Ring fill={ringFill(reps?.today ?? 0, goal)} size={48}>
           {goal === null ? (reps?.today ?? 0) : `${reps?.today ?? 0}/${goal}`}
@@ -86,7 +90,7 @@ export function QuickRepsCard() {
 
 // "Stretches this week": days with at least the Mobility minimum, against the
 // Stretches goal, and the last day you stretched.
-export function RecoveryCard({ canLog = true }: { canLog?: boolean }) {
+export function RecoveryCard() {
   const week = useLiveQuery(() => getStretchWeek(), []);
   const [open, setOpen] = useState(false);
   const today = todayISODate();
@@ -95,7 +99,7 @@ export function RecoveryCard({ canLog = true }: { canLog?: boolean }) {
     <SmallCard
       icon={<PersonStanding size={16} strokeWidth={2} />}
       title="Recovery"
-      onAdd={canLog ? () => setOpen(true) : undefined}
+      onAdd={() => setOpen(true)}
       addLabel="Log a stretch"
     >
       <div className="mt-1.5 flex flex-col items-center gap-1">

@@ -10,11 +10,15 @@ export function Ring({
   fill,
   children,
   size = 44,
+  inner,
+  textClass = 'text-micro',
   onMint = false,
 }: {
   fill: number;
   children: ReactNode;
   size?: number;
+  inner?: number; // the centre's diameter; 10px less than the ring by default
+  textClass?: string;
   onMint?: boolean; // the centre matches a Mint card
 }) {
   const pct = Math.max(0, Math.min(1, fill)) * 100;
@@ -28,10 +32,10 @@ export function Ring({
       }}
     >
       <span
-        className={`rounded-full flex items-center justify-center text-micro text-ink tabular-nums ${
+        className={`rounded-full flex items-center justify-center font-bold text-ink tabular-nums ${textClass} ${
           onMint ? 'bg-green-100' : 'bg-white'
         }`}
-        style={{ width: size - 10, height: size - 10 }}
+        style={{ width: inner ?? size - 10, height: inner ?? size - 10 }}
       >
         {children}
       </span>
@@ -53,18 +57,20 @@ export function DayDots({
   today,
   onTap,
   label,
+  small = false,
 }: {
   days: { date: string; state: DotState }[];
   today: string;
   onTap?: (date: string) => void;
   label?: (date: string) => string;
+  small?: boolean; // Home: 10px dots, no padding
 }) {
   return (
     <div className="flex">
       {days.map((d) => {
         const dot = (
           <span
-            className="block w-3 h-3 rounded-full"
+            className={`block rounded-full ${small ? 'w-2.5 h-2.5' : 'w-3 h-3'}`}
             style={{
               background:
                 d.state === 'on'
@@ -74,7 +80,9 @@ export function DayDots({
                     : d.state === 'half'
                       ? `linear-gradient(90deg, ${COLOR.green700} 50%, ${COLOR.stone} 50%)`
                       : COLOR.stone,
-              outline: d.date === today ? `1.5px solid ${COLOR.green300}` : undefined,
+              // Today's ring: 3px out from the dot at most (1px ring, 2px gap on
+              // Home's small dots), so it never touches the rule above.
+              outline: d.date === today ? `${small ? 1 : 1.5}px solid ${COLOR.green300}` : undefined,
               outlineOffset: 2,
             }}
           />
@@ -91,7 +99,11 @@ export function DayDots({
             {dot}
           </button>
         ) : (
-          <span key={d.date} className={`flex-1 flex justify-center ${onTap ? 'py-2' : 'py-1'}`} aria-hidden="true">
+          <span
+            key={d.date}
+            className={`flex-1 flex justify-center ${onTap ? 'py-2' : small ? '' : 'py-1'}`}
+            aria-hidden="true"
+          >
             {dot}
           </span>
         );
@@ -102,11 +114,16 @@ export function DayDots({
 
 const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-export function DayLetters() {
+export function DayLetters({ small = false }: { small?: boolean }) {
   return (
-    <div className="flex" aria-hidden="true">
+    <div className={`flex ${small ? 'mt-[3px]' : ''}`} aria-hidden="true">
       {DAY_INITIALS.map((d, i) => (
-        <span key={i} className="flex-1 text-center text-micro font-semibold tracking-normal text-hint">
+        <span
+          key={i}
+          className={`flex-1 text-center font-semibold text-hint ${
+            small ? 'text-[9px] leading-none' : 'text-micro tracking-normal'
+          }`}
+        >
           {d}
         </span>
       ))}
@@ -114,20 +131,34 @@ export function DayLetters() {
   );
 }
 
-// A card heading: an icon, then the eyebrow.
-export function CardHead({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+// A card's heading row: the icon and Title Case heading in Green 900, any
+// corner text on the right, and a thin Green 300 line under the row.
+export function CardHead({
+  icon,
+  children,
+  right,
+  className = '',
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  right?: ReactNode;
+  className?: string;
+}) {
   return (
-    <span className="eyebrow inline-flex items-center gap-1.5 whitespace-nowrap">
-      <span className="shrink-0 flex items-center text-green-700">{icon}</span>
-      {children}
-    </span>
+    <div className={`card-head ${className}`}>
+      <span className="card-heading">
+        <span className="shrink-0 flex items-center">{icon}</span>
+        {children}
+      </span>
+      {right}
+    </div>
   );
 }
 
 // "Move goal days 3/7": a bold label, then the count.
-export function DotLabel({ label, children }: { label: string; children?: ReactNode }) {
+export function DotLabel({ label, children, small = false }: { label: string; children?: ReactNode; small?: boolean }) {
   return (
-    <span className="text-label text-hint whitespace-nowrap">
+    <span className={`text-hint whitespace-nowrap ${small ? 'text-[10px] leading-tight' : 'text-label'}`}>
       <b className="font-bold text-muted">{label}</b>
       {children !== undefined && <> {children}</>}
     </span>

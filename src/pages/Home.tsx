@@ -4,10 +4,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import WeekStrip from '../components/dashboard/WeekStrip';
 import StandardsSheet from '../components/fitness/StandardsSheet';
-import { RecoveryCard } from '../components/fitness/RepsAndRecovery';
 import {
   CheckupsCard,
   HabitsCard,
+  HomeRecoveryCard,
   HygieneCard,
   MovementCard,
   NutritionCard,
@@ -37,14 +37,14 @@ export default function Home() {
   return (
     <>
       <DashboardHeader onSeeStandards={() => setStandardsOpen(true)} />
-      <div className="px-4 mt-3 space-y-2.5">
+      <div className="px-4 mt-[5px] space-y-[5px]">
         <MovementCard />
         <NutritionCard />
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2">
           <SleepCard />
-          <RecoveryCard canLog={false} />
+          <HomeRecoveryCard />
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-2">
           <HygieneCard />
           <HabitsCard />
         </div>
@@ -143,8 +143,8 @@ function FitnessSummary({ onEditGoals }: { onEditGoals: () => void }) {
 
   return (
     <div className="card p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">Fitness Score</p>
+      <div className="card-head">
+        <p className="card-heading">Fitness Score</p>
         <button type="button" onClick={onEditGoals} className="pill pill-soft py-1 px-2.5">
           Edit goals
         </button>
@@ -198,8 +198,8 @@ function DailyAverages({ onEditGoals }: { onEditGoals: () => void }) {
   const daily = score?.daily ?? [];
   return (
     <div className="tile p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">This Week, Average Per Day</p>
+      <div className="card-head">
+        <p className="card-heading">This Week, Average Per Day</p>
         <button type="button" onClick={onEditGoals} className="pill pill-soft py-1 px-2.5 shrink-0">
           Edit goals
         </button>
@@ -260,8 +260,8 @@ function NutritionSummary() {
 
   return (
     <Link to="/nutrition" className="card block p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">Nutrition</p>
+      <div className="card-head">
+        <p className="card-heading">Nutrition</p>
         <span className="text-label font-bold text-green-700">Log →</span>
       </div>
       <p className="mt-2 text-body text-ink">
@@ -293,8 +293,8 @@ function NutritionSummary() {
 function HealthSummary() {
   return (
     <Link to="/health" className="tile block p-4">
-      <div className="flex items-center justify-between gap-2">
-        <p className="eyebrow">Health</p>
+      <div className="card-head">
+        <p className="card-heading">Health</p>
         <span className="text-label font-bold text-green-700">Set up →</span>
       </div>
       <p className="mt-2 text-body text-hint">No check-ins configured yet</p>

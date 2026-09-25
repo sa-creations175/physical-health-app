@@ -44,15 +44,19 @@ export default function FitnessScoreCard({
 
   return (
     <div className="tile px-4 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <CardHead icon={<DumbbellIcon />}>Fitness score</CardHead>
-        <button type="button" onClick={onOpenGoals} className="text-label text-muted whitespace-nowrap min-h-[32px]">
-          Sessions:{' '}
-          <b className="font-bold text-ink tabular-nums">
-            {week ? `${week.sessions.done} of ${week.sessions.target}` : '—'}
-          </b>
-        </button>
-      </div>
+      <CardHead
+        icon={<DumbbellIcon />}
+        right={
+          <button type="button" onClick={onOpenGoals} className="text-label text-muted whitespace-nowrap min-h-[32px]">
+              Sessions:{' '}
+              <b className="font-bold text-ink tabular-nums">
+                {week ? `${week.sessions.done} of ${week.sessions.target}` : '—'}
+              </b>
+            </button>
+        }
+      >
+        Fitness Score
+      </CardHead>
 
       <div className="mt-2 flex justify-between">
         {(week?.rings ?? []).map((r) => {

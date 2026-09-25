@@ -213,12 +213,15 @@ function WaterCard({
   const slots = Math.max(target, bottles);
   return (
     <div className="card p-4">
-      <div className="flex items-center justify-between">
-        <SectionLabel>Water</SectionLabel>
-        <span className="text-label text-muted">
-          <span className="text-ink font-medium">{bottles}</span> / {target} bottles
-        </span>
-      </div>
+      <SectionLabel
+        right={
+          <span className="text-label text-muted">
+            <span className="text-ink font-medium">{bottles}</span> / {target} bottles
+          </span>
+        }
+      >
+        Water
+      </SectionLabel>
       <div className="mt-3 flex flex-wrap gap-2">
         {Array.from({ length: slots }, (_, i) => {
           const filled = i < bottles;
