@@ -6,7 +6,8 @@
 // at or above the daily calories goal.
 import { addDaysISO, currentWeekISODates, todayISODate } from './dateHelpers';
 import { getActiveCaloriesSince, getCaloriesByDay } from './healthkit';
-import { getGoals, goalFor } from './goals';
+import { getGoals, goalFor, getSleepGoalMinutes } from './goals';
+import type { DayMark } from './dailyTrackers';
 import { db } from '../db/database';
 import type { SleepNight } from '../db/types';
 import {
@@ -131,6 +132,35 @@ export async function getWeekSleepAverage(): Promise<number | null> {
   return Math.round(nights.reduce((sum, n) => sum + n.asleep_minutes, 0) / nights.length);
 }
 
+// ---- Sleep week, against the sleep goal ------------------------------------------------------------------------
+
+export interface SleepWeek {
+  goal: number | null; // minutes a night
+  lastNight: SleepNight | null;
+  average: number | null; // minutes asleep, nights with sleep this week
+  days: { date: string; mark: DayMark }[];
+  met: number; // nights at or past the goal
+}
+
+// Nights from Build 2's sleep import against the sleep goal. A night belongs
+// to the morning it ends, so each day's dot is that morning's night.
+export async function getSleepWeek(): Promise<SleepWeek> {
+  const dates = currentWeekISODates();
+  const today = todayISODate();
+  const [goal, lastNight, nights, average] = await Promise.all([
+    getSleepGoalMinutes(),
+    getLastNight(),
+    getNightsThisWeek(),
+    getWeekSleepAverage(),
+  ]);
+  const days = dates.map((date, i) => {
+    const n = nights[i];
+    const met = !!n && goal !== null && n.asleep_minutes >= goal;
+    return { date, mark: (date > today || !met ? 'none' : 'met') as DayMark };
+  });
+  return { goal, lastNight, average, days, met: days.filter((d) => d.mark === 'met').length };
+}
+
 // ---- Active minutes -----------------------------------------------------------------
 
 // Minutes with heart rate at or above the line (64% of max), from Watch
@@ -196,3 +226,24 @@ export {
   type StretchWeek,
   type StandardRow,
 } from './training';
+
+// ---- Nutrition, Hygiene, Habits and Checkups ---------------------------------------
+
+export {
+  getEatenByDay,
+  getNutritionWeek,
+  getHygieneByDay,
+  getHygieneWeek,
+  getDrinksByDay,
+  getDrinksLimit,
+  getDrinksWeek,
+  getCheckups,
+  type DayMark,
+  type NutritionMetric,
+  type NutritionTrack,
+  type NutritionWeek,
+  type HygieneWeek,
+  type DrinksWeek,
+  type CheckupItem,
+  type CheckupsSummary,
+} from './dailyTrackers';

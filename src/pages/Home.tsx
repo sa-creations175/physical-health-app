@@ -2,6 +2,17 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
+import WeekStrip from '../components/dashboard/WeekStrip';
+import StandardsSheet from '../components/fitness/StandardsSheet';
+import { RecoveryCard } from '../components/fitness/RepsAndRecovery';
+import {
+  CheckupsCard,
+  HabitsCard,
+  HygieneCard,
+  MovementCard,
+  NutritionCard,
+  SleepCard,
+} from '../components/home/HomeCards';
 import { ProgressBar } from '../components/ui/primitives';
 import { getUserPreferences } from '../lib/userPreferences';
 import { getFitnessScore, type WeeklyProgress } from '../lib/fitnessScore';
@@ -19,18 +30,48 @@ import { DEFAULT_DAILY_NUTRITION_TARGETS } from '../lib/defaults';
 import { COLOR } from '../lib/brand';
 
 export default function Home() {
-  // The sheet edits a snapshot of the goals, loaded before it opens.
+  // The old sheets edit a snapshot of the goals, loaded before they open.
   const [sheet, setSheet] = useState<{ period: GoalPeriod; goals: BodyGoal[] } | null>(null);
   const openGoals = async (period: GoalPeriod) => setSheet({ period, goals: await getGoals(period) });
+  const [standardsOpen, setStandardsOpen] = useState(false);
   return (
     <>
-      <DashboardHeader />
-      <div className="px-4 mt-4 space-y-3">
-        <FitnessSummary onEditGoals={() => void openGoals('week')} />
-        <DailyAverages onEditGoals={() => void openGoals('day')} />
-        <NutritionSummary />
-        <HealthSummary />
+      <DashboardHeader onSeeStandards={() => setStandardsOpen(true)} />
+      <div className="px-4 mt-3 space-y-2.5">
+        <MovementCard />
+        <NutritionCard />
+        <div className="grid grid-cols-2 gap-2.5">
+          <SleepCard />
+          <RecoveryCard canLog={false} />
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <HygieneCard />
+          <HabitsCard />
+        </div>
+        <CheckupsCard />
       </div>
+
+      {/* What the old Home showed that B7 doesn't place yet, working as
+          before: the Fitness Score dial, its rows and one-liner, the daily
+          averages, the week strip, the no-delivery streak, both Edit goals
+          buttons and their sheets, and the Health tile. */}
+      <section className="px-4 mt-8">
+        <div className="pt-3.5 border-t border-hairline">
+          <p className="eyebrow text-hint">Still to place</p>
+          <p className="text-label text-muted mt-1">From the old Home, working as before, until each has a place.</p>
+        </div>
+        <div className="mt-3 space-y-3">
+          <FitnessSummary onEditGoals={() => void openGoals('week')} />
+          <DailyAverages onEditGoals={() => void openGoals('day')} />
+          <div className="tile px-4 pt-1 pb-3">
+            <WeekStrip />
+          </div>
+          <NutritionSummary />
+          <HealthSummary />
+        </div>
+      </section>
+
+      {standardsOpen && <StandardsSheet onClose={() => setStandardsOpen(false)} />}
       {sheet && (
         <GoalsSheet
           key={sheet.period}

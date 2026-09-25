@@ -77,7 +77,7 @@ export function standardGoalId(metric: GoalMetric): string {
 }
 
 function row(
-  g: Pick<BodyGoal, 'name' | 'metric' | 'target' | 'unit'> & { id?: string; active?: boolean },
+  g: Pick<BodyGoal, 'name' | 'target' | 'unit'> & { metric: GoalMetric | null; id?: string; active?: boolean },
   period: GoalPeriod,
   order: number,
   now: string,
@@ -142,6 +142,37 @@ export async function seedGoalsIfEmpty(): Promise<void> {
   await syncedBulkPut(db.body_goals, rows);
 }
 
+// ---- The sleep goal -------------------------------------------------------------------
+
+// A night's sleep goal: 7 hours to start. Stored as a goal row (period 'night')
+// so the future Sleep tab changes it in one place and Home's Sleep card follows.
+export const SLEEP_GOAL_ID = 'goal-sleep_minutes';
+export const DEFAULT_SLEEP_GOAL_MINUTES = 7 * 60;
+
+// Minutes, or null when the goal has been switched off.
+export async function getSleepGoalMinutes(): Promise<number | null> {
+  const g = await db.body_goals.get(SLEEP_GOAL_ID);
+  if (!g) return DEFAULT_SLEEP_GOAL_MINUTES;
+  return g.active && g.target > 0 ? g.target : null;
+}
+
+async function sleepGoalRow(now: string): Promise<BodyGoal | null> {
+  if (await db.body_goals.get(SLEEP_GOAL_ID)) return null;
+  return {
+    id: SLEEP_GOAL_ID,
+    user_id: LOCAL_USER_ID,
+    name: 'Sleep',
+    metric: 'sleep_minutes',
+    target: DEFAULT_SLEEP_GOAL_MINUTES,
+    unit: 'minutes',
+    period: 'night',
+    active: true,
+    order_index: 0,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
 // Goals added after a person's goals were first seeded (Active minutes and
 // Reps, Build 4) are appended once, with their fixed ids so two devices land
 // on the same row. Reps starts at the sum of the person's three daily rep
@@ -166,6 +197,8 @@ export async function addMissingGoals(): Promise<void> {
       rows.push(row({ ...g, target }, period, order++, now));
     }
   }
+  const sleep = await sleepGoalRow(now);
+  if (sleep) rows.push(sleep);
   if (rows.length > 0) await syncedBulkPut(db.body_goals, rows);
 }
 
@@ -198,7 +231,7 @@ export function draftsFrom(goals: BodyGoal[]): GoalDraft[] {
   return goals.map((g) => ({
     id: g.id,
     name: g.name,
-    metric: g.metric,
+    metric: g.metric as GoalMetric | null, // week and day goals only
     target: g.target,
     unit: g.unit,
     active: g.active,

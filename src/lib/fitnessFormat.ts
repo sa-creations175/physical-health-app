@@ -37,3 +37,10 @@ export function openPath(w: Workout): string {
   if (w.kind === 'cardio') return `/history?open=${w.id}`;
   return w.complete ? `/log/strength/complete/${w.id}` : `/log/strength/active/${w.id}`;
 }
+
+// "7h12"; whole hours as "7h".
+export function hoursLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
+}

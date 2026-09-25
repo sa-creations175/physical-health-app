@@ -1,22 +1,36 @@
 import { Link } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { Settings as SettingsIcon } from 'lucide-react';
 import HeaderStrip from '../ui/HeaderStrip';
-import WeekStrip from './WeekStrip';
 import MoveStreakPill from './MoveStreakPill';
-import { dayName, dateLabel, weekNumber } from '../../lib/dateHelpers';
+import { getStandardsWeek } from '../../lib/bodySignals';
+import { weekNumber } from '../../lib/dateHelpers';
 
-// Home's header strip: where you are (week) with the move goal streak pill,
-// what it is (the day), the date, then the week strip. Settings sits top
-// right.
-export default function DashboardHeader() {
+// Home's header strip (B7): where you are (the week) with the move goal
+// streak pill, the date, and "Standards this week: N of M met · see which ›",
+// counted from the shared standards list, so a standard added there changes
+// this line too. Settings sits top right until the More tab exists.
+export default function DashboardHeader({ onSeeStandards }: { onSeeStandards: () => void }) {
   const now = new Date();
+  const standards = useLiveQuery(() => getStandardsWeek(), []);
+  const met = standards?.filter((s) => s.met).length ?? 0;
 
   return (
     <HeaderStrip
       eyebrow={`Body · Week ${weekNumber(now)}`}
-      title={dayName(now)}
+      title={now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
       badge={<MoveStreakPill />}
-      subtitle={dateLabel(now)}
+      subtitle={
+        standards && (
+          <button type="button" onClick={onSeeStandards} className="text-left">
+            Standards this week:{' '}
+            <b className="font-bold text-ink">
+              {met} of {standards.length}
+            </b>{' '}
+            met · see which ›
+          </button>
+        )
+      }
       right={
         <Link
           to="/settings"
@@ -26,8 +40,6 @@ export default function DashboardHeader() {
           <SettingsIcon size={18} strokeWidth={2} />
         </Link>
       }
-    >
-      <WeekStrip />
-    </HeaderStrip>
+    />
   );
 }

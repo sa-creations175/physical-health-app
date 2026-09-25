@@ -292,10 +292,13 @@ export interface BodyGoal {
   id: string;
   user_id: string;
   name: string;
-  metric: GoalMetric | null;
+  // 'sleep_minutes' is the night's sleep goal (Build 5), period 'night'.
+  metric: GoalMetric | 'sleep_minutes' | null;
   target: number;
   unit: string; // 'days' | 'sessions' | 'times' | 'calories' | 'minutes' | 'steps' | 'reps'
-  period: GoalPeriod;
+  // 'night' holds the sleep goal (Build 5); it never shows among the Moving my
+  // body goals, which read 'week' and 'day' only.
+  period: GoalPeriod | 'night';
   // Daily goals can be unticked: the number stays on Home, the goal doesn't.
   active: boolean;
   order_index: number;
