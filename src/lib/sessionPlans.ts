@@ -6,7 +6,7 @@
 // exercise changes the instance only; the type's list changes only when the
 // user accepts the "make it part of the usual list" nudge (keepSwapInPlan).
 import { db } from '../db/database';
-import { syncedAdd, syncedDelete, syncedPut, syncedUpdate } from '../db/syncedWrite';
+import { syncedAdd, syncedBulkDelete, syncedDelete, syncedPut, syncedUpdate } from '../db/syncedWrite';
 import { LOCAL_USER_ID } from './constants';
 import type {
   Session,
@@ -209,6 +209,20 @@ export async function swapExerciseInInstance(
     notes: null,
   });
   await syncedUpdate(db.exercises, exerciseId, { last_used_at: new Date().toISOString() });
+}
+
+// "Remove": take an exercise out of today's session, with any sets already
+// logged for it. Like swap and add, it changes this instance only; the type's
+// standing list is never touched, so the next session still includes it.
+// Both deletes land in one transaction: deleting the sets and then the link
+// as two separate writes left the session screen's live exercise list showing
+// the removed card until the next reload.
+export async function removeExerciseFromInstance(linkId: string): Promise<void> {
+  await db.transaction('rw', db.sets, db.session_exercises, async () => {
+    const setIds = (await db.sets.where('session_exercise_id').equals(linkId).primaryKeys()) as string[];
+    await syncedBulkDelete(db.sets, setIds);
+    await syncedDelete(db.session_exercises, linkId);
+  });
 }
 
 // Reorder today's open exercises (long press and drag). Like a swap, it changes

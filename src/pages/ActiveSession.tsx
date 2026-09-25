@@ -14,6 +14,7 @@ import {
   isSessionComplete,
   isStrengthType,
   keepSwapInPlan,
+  removeExerciseFromInstance,
   reorderOpenExercises,
   repeatSwapLinkIds,
   resolveNudge,
@@ -50,6 +51,9 @@ export default function ActiveSession() {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
+  // Only one card is swiped open at a time; one card at a time asks "Remove?".
+  const [swipedId, setSwipedId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const session = useLiveQuery(() => db.sessions.get(sessionId), [sessionId]);
   const links = useLiveQuery(
@@ -272,6 +276,21 @@ export default function ActiveSession() {
         showToast(`${ex.name} is now part of ${typeLabel}`);
       },
       onJustToday: () => void resolveNudge(link.id),
+      onSwipe: (open: boolean) => setSwipedId(open ? link.id : null),
+      onAskRemove: () => {
+        setSwipedId(null);
+        setConfirmId(link.id);
+      },
+      onCancelRemove: () => setConfirmId(null),
+      // Today only: sets logged for it go too, and "N of M exercises done"
+      // follows. The type's usual list is untouched.
+      onConfirmRemove: async () => {
+        await rowsApi.settle(link.id);
+        await removeExerciseFromInstance(link.id);
+        setLinkRows(link.id, undefined);
+        setConfirmId(null);
+        if (openId === link.id) setOpenId(null);
+      },
     };
   }
 
@@ -290,6 +309,8 @@ export default function ActiveSession() {
         nudge={repeatSwaps.has(link.id)}
         typeLabel={typeLabel}
         h={handlersFor(link, ex)}
+        swiped={swipedId === link.id}
+        confirming={confirmId === link.id}
         ghostFor={(row) => ghostFor(ex, row)}
         drag={
           link.finished_order == null

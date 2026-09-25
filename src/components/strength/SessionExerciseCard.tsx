@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Check, ChevronDown, GripVertical, X } from 'lucide-react';
 import LastTimeBlock from './LastTimeBlock';
 import { summarizeSets, type LastTimeEntry, type SetValues } from '../../lib/sessionSets';
@@ -19,25 +19,61 @@ export interface CardHandlers {
   onReopen: () => void;
   onKeep: () => void;
   onJustToday: () => void;
+  // Removing from today: swipe the card left or tap Remove, then confirm in place.
+  onSwipe: (open: boolean) => void;
+  onAskRemove: () => void;
+  onCancelRemove: () => void;
+  onConfirmRemove: () => void;
 }
 
 // One exercise in a session, in one of three states:
 //   closed   — one line: name and last time's summary
-//   open     — swap, last time, set rows, add set, finish exercise
+//   open     — swap, remove, last time, set rows, add set, finish exercise
 //   finished — folded on Mint: name, today's summary, a green check
-export default function SessionExerciseCard({
-  link,
-  exercise,
-  open,
-  rows,
-  setsById,
-  lastTimes,
-  nudge,
-  typeLabel,
-  h,
-  drag,
-  ghostFor,
-}: {
+// In any state, swiping left slides out a Bronze Amber "Remove". Remove (from
+// the swipe or the open card's link) turns the card, in place, into a "Remove
+// <exercise>?" box on the amber tint with Keep it and Remove.
+export default function SessionExerciseCard(props: CardProps) {
+  const { link, exercise, typeLabel, h, drag, swiped, confirming } = props;
+  const shift = drag?.offset
+    ? { transform: `translateY(${drag.offset}px)`, transition: drag.held ? 'none' : 'transform 150ms ease' }
+    : { transition: 'transform 150ms ease' };
+
+  if (confirming) {
+    return (
+      <div id={`ex-${link.id}`} className="mt-3 rounded-card border border-amber-edge bg-amber-tint px-4 py-3">
+        <p className="text-body font-bold text-ink">Remove {exercise.name}?</p>
+        <p className="text-label text-muted mt-0.5">
+          Today only. Your next {typeLabel} still includes it.
+        </p>
+        <div className="flex gap-2 mt-3">
+          <button type="button" onClick={h.onCancelRemove} className="btn-secondary flex-1">
+            Keep it
+          </button>
+          <button type="button" onClick={h.onConfirmRemove} className="btn flex-1 bg-amber text-white">
+            Remove
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SwipeRow
+      id={`ex-${link.id}`}
+      style={shift}
+      held={!!drag?.held}
+      open={swiped}
+      onOpenChange={h.onSwipe}
+      onRemove={h.onAskRemove}
+      label={exercise.name}
+    >
+      <CardBody {...props} />
+    </SwipeRow>
+  );
+}
+
+interface CardProps {
   link: SessionExercise;
   exercise: Exercise;
   open: boolean;
@@ -52,10 +88,23 @@ export default function SessionExerciseCard({
   drag?: { offset: number; held: boolean; onLongPress: (clientY: number) => void };
   // Placeholder values for a ghost row, when the screen overrides them.
   ghostFor?: (row: Row) => SetValues | null;
-}) {
-  const shift = drag?.offset
-    ? { transform: `translateY(${drag.offset}px)`, transition: drag.held ? 'none' : 'transform 150ms ease' }
-    : { transition: 'transform 150ms ease' };
+  swiped: boolean; // the Remove strip is showing
+  confirming: boolean; // showing "Remove <exercise>?"
+}
+
+function CardBody({
+  link,
+  exercise,
+  open,
+  rows,
+  setsById,
+  lastTimes,
+  nudge,
+  typeLabel,
+  h,
+  drag,
+  ghostFor,
+}: CardProps) {
   const finished = link.finished_order != null;
 
   if (finished) {
@@ -64,12 +113,7 @@ export default function SessionExerciseCard({
       .filter((s): s is SetEntry => !!s);
     const logged = done.length > 0 ? done : [...setsById.values()];
     return (
-      <button
-        type="button"
-        id={`ex-${link.id}`}
-        onClick={h.onReopen}
-        className="tile w-full text-left px-4 py-3 mt-3 block"
-      >
+      <button type="button" onClick={h.onReopen} className="tile w-full text-left px-4 py-3 block select-none">
         <span className="flex items-center justify-between gap-2">
           <span className="text-body font-bold text-ink">{exercise.name}</span>
           <span className="w-[22px] h-[22px] rounded-full bg-green-700 text-white flex items-center justify-center shrink-0">
@@ -87,13 +131,9 @@ export default function SessionExerciseCard({
     const last = lastTimes[0];
     return (
       <LongPressButton
-        id={`ex-${link.id}`}
         onClick={h.onOpen}
         onLongPress={drag?.onLongPress}
-        style={shift}
-        className={`card w-full text-left px-4 py-3.5 mt-3 block select-none ${
-          drag?.held ? 'relative z-10 border-green-700' : ''
-        }`}
+        className={`card w-full text-left px-4 py-3.5 block select-none ${drag?.held ? 'border-green-700' : ''}`}
       >
         <span className="flex items-center justify-between gap-2">
           <span className="text-heading text-ink">{exercise.name}</span>
@@ -111,18 +151,25 @@ export default function SessionExerciseCard({
   }
 
   return (
-    <div id={`ex-${link.id}`} className="card px-4 py-3.5 mt-3" style={shift}>
+    <div className="card px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={h.onClose}
           aria-expanded="true"
-          className="flex-1 text-left text-heading text-ink min-h-[36px]"
+          className="flex-1 min-w-0 text-left text-heading text-ink min-h-[36px]"
         >
           {exercise.name}
         </button>
         <button type="button" onClick={h.onSwap} className="pill py-1 px-2.5 shrink-0">
           Swap exercise
+        </button>
+        <button
+          type="button"
+          onClick={h.onAskRemove}
+          className="text-label font-bold text-muted min-h-[36px] pl-1 shrink-0"
+        >
+          Remove
         </button>
       </div>
 
@@ -219,6 +266,7 @@ function SetRowView({
 
   return (
     <div
+      data-noswipe
       className="flex items-center gap-1.5 py-1 tabular-nums transition-transform"
       style={{ transform: dx ? `translateX(${dx}px)` : undefined }}
       onTouchStart={(e) => {
@@ -340,7 +388,6 @@ function LongPressButton({
   children,
   ...rest
 }: {
-  id: string;
   className: string;
   style?: React.CSSProperties;
   onClick: () => void;
@@ -383,5 +430,110 @@ function LongPressButton({
     >
       {children}
     </button>
+  );
+}
+
+// Swipe left to slide out a Bronze Amber "Remove". Past about half its width
+// the card stays open; less, it springs back. Swipes that start on a set row
+// (which swipes on its own to delete a set) or in a text field are left alone.
+// A tap on an open card just closes it.
+const STRIP_W = 96;
+function SwipeRow({
+  id,
+  style,
+  held,
+  open,
+  onOpenChange,
+  onRemove,
+  label,
+  children,
+}: {
+  id: string;
+  style: CSSProperties;
+  held: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onRemove: () => void;
+  label: string;
+  children: ReactNode;
+}) {
+  const [dx, setDx] = useState<number | null>(null);
+  const start = useRef<{ x: number; y: number; swiping: boolean } | null>(null);
+  const swallowClick = useRef(false);
+  const offset = dx ?? (open ? -STRIP_W : 0);
+
+  return (
+    <div id={id} style={style} className={`relative mt-3 rounded-card overflow-hidden ${held ? 'z-10' : ''}`}>
+      {offset < 0 && (
+        <div className="absolute inset-0 bg-amber flex justify-end rounded-card">
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Remove ${label}`}
+            className="h-full text-body font-bold text-white"
+            style={{ width: STRIP_W }}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+      <div
+        style={{
+          transform: offset ? `translateX(${offset}px)` : undefined,
+          transition: dx === null ? 'transform 200ms ease' : 'none',
+          touchAction: 'pan-y',
+        }}
+        onPointerDown={(e) => {
+          const t = e.target as HTMLElement;
+          if (t.closest('input, textarea, [data-noswipe]')) return;
+          start.current = { x: e.clientX, y: e.clientY, swiping: false };
+        }}
+        onPointerMove={(e) => {
+          const s = start.current;
+          if (!s) return;
+          const mx = e.clientX - s.x;
+          const my = e.clientY - s.y;
+          if (!s.swiping) {
+            if (Math.abs(my) > 10 && Math.abs(my) > Math.abs(mx)) {
+              start.current = null; // scrolling
+              return;
+            }
+            if (Math.abs(mx) < 8) return;
+            s.swiping = true;
+          }
+          const base = open ? -STRIP_W : 0;
+          setDx(Math.max(-STRIP_W - 14, Math.min(0, base + mx)));
+        }}
+        onPointerUp={() => {
+          const s = start.current;
+          start.current = null;
+          if (!s) return;
+          if (!s.swiping) {
+            if (open) {
+              swallowClick.current = true;
+              onOpenChange(false);
+            }
+            return;
+          }
+          swallowClick.current = true;
+          const next = (dx ?? 0) < -STRIP_W / 2;
+          setDx(null);
+          onOpenChange(next);
+        }}
+        onPointerCancel={() => {
+          start.current = null;
+          setDx(null);
+        }}
+        onClickCapture={(e) => {
+          if (swallowClick.current) {
+            swallowClick.current = false;
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
