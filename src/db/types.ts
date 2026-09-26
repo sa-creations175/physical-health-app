@@ -428,6 +428,9 @@ export interface UserPreferences {
   // Show the move goal streak on Fitness's Daily Movement card — added Build 9.
   // Off unless switched on in Settings; undefined on older rows reads as off.
   show_move_streak?: boolean | null;
+  // Show Active minutes in hours ("2h 30m") instead of minutes — added
+  // Build 15. Display only; goals and counts stay in minutes.
+  active_minutes_as_hours?: boolean | null;
   // A measured maximum heart rate the person typed in — added Dexie v22, no
   // screen yet. When set it replaces the age-based estimate for the Active
   // minutes line.

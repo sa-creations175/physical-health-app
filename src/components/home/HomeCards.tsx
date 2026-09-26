@@ -99,12 +99,6 @@ export function MovementCard() {
   const avg = score?.averages.calories ?? null;
   // The session rings you have goals for (Active minutes lives on Fitness).
   const sessionRings = (week?.rings ?? []).filter((r) => r.key !== 'active_minutes');
-  const SHORT = {
-    lower: 'Lower',
-    upper: 'Upper',
-    full_body: 'Full',
-    cardio: 'Cardio',
-  } as Record<string, string>;
   return (
     <div className={`card ${CARD}`}>
       <CardHead
@@ -126,7 +120,7 @@ export function MovementCard() {
             <Ring fill={ringFill(r.actual, r.target)} {...RING}>
               {`${r.actual}/${r.target}`}
             </Ring>
-            <span className={CAPTION}>{SHORT[r.key]}</span>
+            <span className={CAPTION}>{r.names.short}</span>
           </div>
         ))}
       </RingRow>

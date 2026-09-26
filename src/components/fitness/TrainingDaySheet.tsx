@@ -5,8 +5,8 @@ import BottomSheet from '../ui/BottomSheet';
 import { useToast } from '../ui/Toast';
 import {
   getWorkouts,
-  RING_LABEL,
   RING_ORDER,
+  ringNames,
   ringsFor,
   type TrainingType,
   type Workout,
@@ -90,7 +90,9 @@ function WorkoutBox({ w, onOpen }: { w: Workout; onOpen: () => void }) {
   const types = RING_ORDER.filter(
     (k): k is TrainingType => k !== 'active_minutes' && (ringsFor(goals).includes(k) || k === w.type),
   );
-  const typeLabel = RING_LABEL[w.type];
+  // Names from your goals: a renamed goal shows your name here too.
+  const names = ringNames(goals);
+  const typeLabel = names[w.type].name;
   const sameName = w.name.toLowerCase() === typeLabel.toLowerCase();
   const stats = statsLine(w);
 
@@ -99,7 +101,7 @@ function WorkoutBox({ w, onOpen }: { w: Workout; onOpen: () => void }) {
     setBusy(true);
     try {
       await reclassifyTo({ kind: w.kind, id: w.id, date: w.date, minutes: w.minutes ?? 0 }, t);
-      showToast(`Counted as ${RING_LABEL[t]}`);
+      showToast(`Counted as ${names[t].name}`);
     } catch (e) {
       console.error('Change type failed:', e);
     } finally {
@@ -158,7 +160,7 @@ function WorkoutBox({ w, onOpen }: { w: Workout; onOpen: () => void }) {
                   onClick={() => void changeTo(t)}
                   className={`pill py-1 ${t === w.type ? 'pill-on' : ''}`}
                 >
-                  {RING_LABEL[t]}
+                  {names[t].name}
                 </button>
               ))}
             </div>

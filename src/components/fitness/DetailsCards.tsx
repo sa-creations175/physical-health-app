@@ -12,7 +12,6 @@ import {
 import { formatWorkoutType } from '../../lib/healthkit';
 import { toMinutes } from '../../lib/heartRate';
 import { shortDayLabel } from '../../lib/dateHelpers';
-import { STRENGTH_TYPE_LABEL } from '../../lib/sessionPlans';
 import { COLOR } from '../../lib/brand';
 import { dayDateLabel, detailsId, openPath } from '../../lib/fitnessFormat';
 import { CardHead, DumbbellIcon, RunnerIcon } from './parts';
@@ -40,6 +39,7 @@ export default function DetailsCards({ flash, onTop }: { flash: RingKey | null; 
           type={t}
           actual={ring(t)?.actual ?? 0}
           target={ring(t)?.target ?? null}
+          heading={week?.names[t].heading ?? ''}
           flash={flash === t}
           onTop={onTop}
         />
@@ -47,7 +47,7 @@ export default function DetailsCards({ flash, onTop }: { flash: RingKey | null; 
       {week && ring('active_minutes') && (
         <DetailCard id={detailsId('active_minutes')} flash={flash === 'active_minutes'} onTop={onTop}
           icon={<Heart size={16} strokeWidth={2} />}
-          title="Active Minutes"
+          title={week.names.active_minutes.heading}
           count={
             <>
               <b className="font-bold text-ink">
@@ -135,12 +135,14 @@ function SessionDetails({
   type,
   actual,
   target,
+  heading,
   flash,
   onTop,
 }: {
   type: TrainingType;
   actual: number;
   target: number | null;
+  heading: string; // the goal's name (renamed or built in)
   flash: boolean;
   onTop: () => void;
 }) {
@@ -162,7 +164,7 @@ function SessionDetails({
           <RunnerIcon />
         )
       }
-      title={type === 'cardio' ? 'Cardio' : STRENGTH_TYPE_LABEL[type]}
+      title={heading}
       count={
         <>
           <b className="font-bold text-ink">
@@ -197,7 +199,7 @@ function SessionDetails({
         onClick={() => navigate(strength ? `/log/strength?type=${type}` : '/log/cardio')}
         className="pill pill-soft border-hairline mt-1.5"
       >
-        {strength ? `Start ${STRENGTH_TYPE_LABEL[type]}` : 'Log cardio'}
+        {strength ? `Start ${heading}` : 'Log cardio'}
       </button>
     </DetailCard>
   );

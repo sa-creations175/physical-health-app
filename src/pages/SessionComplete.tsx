@@ -5,7 +5,8 @@ import { db } from '../db/database';
 import HeaderStrip from '../components/ui/HeaderStrip';
 import { getLiftingSummary } from '../lib/dashboardQueries';
 import { getGoals, goalFor } from '../lib/goals';
-import { isStrengthType, STRENGTH_TYPE_LABEL } from '../lib/sessionPlans';
+import { isStrengthType } from '../lib/sessionPlans';
+import { useRingNames } from '../lib/useGoalNames';
 import { formatSetList } from '../lib/sessionSets';
 import { getWatchDurationForSession } from '../lib/sessionDuration';
 import { pillarCallout } from '../lib/pillarNarrative';
@@ -59,6 +60,8 @@ export default function SessionComplete() {
     [type],
   );
 
+  const names = useRingNames();
+
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -78,7 +81,7 @@ export default function SessionComplete() {
     return <div className="px-4 pt-8 text-muted text-label">Loading session…</div>;
   }
 
-  const typeLabel = type ? STRENGTH_TYPE_LABEL[type] : 'Session';
+  const typeLabel = type ? names[type].heading : 'Session';
   const dateLabel = new Date(session.date + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',

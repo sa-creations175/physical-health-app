@@ -21,14 +21,11 @@ import CardioActivityCard from '../components/activity/CardioActivityCard';
 import MobilityActivityCard from '../components/activity/MobilityActivityCard';
 import BundleActivityCard from '../components/activity/BundleActivityCard';
 import CustomGoalCard from '../components/activity/CustomGoalCard';
-import AutoSavedNotices from '../components/activity/AutoSavedNotices';
-import GoalsSheet from '../components/goals/GoalsSheet';
-import { DailyAverages, FitnessSummary } from '../components/fitness/OldScoreCards';
 import { getGoals, goalFor } from '../lib/goals';
 import { getFitnessScore } from '../lib/fitnessScore';
 import { getStandardsWeek, type RingKey } from '../lib/bodySignals';
 import { weekNumber } from '../lib/dateHelpers';
-import type { BodyGoal, GoalPeriod } from '../db/types';
+import type { BodyGoal } from '../db/types';
 
 // The Fitness tab (body-fitness-proto.html, with the Fitness score card and
 // day sheet from body-fitness-dayview-proto.html): Daily movement, the
@@ -149,22 +146,18 @@ function ToolTile({ icon, label, onClick }: { icon: React.ReactNode; label: stri
 }
 
 // Everything the old Fitness tab showed that the new screen doesn't place
-// yet, working exactly as it did, plus the two old Home cards whose % dial,
-// one-liner across goals, averages against goals and full goals sheets have
-// no other home yet (moved here from Home in Build 8): the "saved for you" notices, one card per
-// weekly goal (with its one-liner, its day dots and per-day editing, the
-// Daily Bundle's day grid and weekly totals, Cardio's qualifying minutes,
-// short sessions and Watch count, a card for a goal you added such as Swim),
-// and the average exercise minutes a day.
+// yet, working exactly as it did: one card per weekly goal (with its
+// one-liner, its day dots and per-day editing, the Daily Bundle's day grid and
+// weekly totals, Cardio's qualifying minutes, short sessions and Watch count,
+// a card for a goal you added such as Swim), and the average exercise minutes
+// a day. Goals are set in the one goals sheet, behind the Goals pill; the
+// "saved for you" line sits in the Fitness Score card.
 function StillToPlace() {
   const weekly = useLiveQuery(() => getGoals('week'), [], [] as BodyGoal[]);
   const daily = useLiveQuery(() => getGoals('day'), [], [] as BodyGoal[]);
   const score = useLiveQuery(() => getFitnessScore(), []);
   const [open, setOpen] = useState<string | null>(null);
   const toggle = (key: string) => setOpen((cur) => (cur === key ? null : key));
-  // The old goals sheets edit a snapshot of the goals, loaded before they open.
-  const [sheet, setSheet] = useState<{ period: GoalPeriod; goals: BodyGoal[] } | null>(null);
-  const openOldGoals = async (period: GoalPeriod) => setSheet({ period, goals: await getGoals(period) });
   const exerciseGoal = goalFor(daily, 'exercise_minutes')?.target ?? null;
 
   function card(goal: BodyGoal) {
@@ -192,9 +185,6 @@ function StillToPlace() {
       <p className="eyebrow text-hint">Still to place</p>
       <p className="text-label text-muted mt-1">From the old Fitness tab, working as before, until each has a place.</p>
       <div className="mt-3 space-y-3">
-        <AutoSavedNotices />
-        <FitnessSummary onEditGoals={() => void openOldGoals('week')} />
-        <DailyAverages onEditGoals={() => void openOldGoals('day')} />
         {weekly.filter((g) => g.active && g.target > 0).map(card)}
         <div className="card px-4 py-3 flex items-baseline justify-between gap-2">
           <span className="text-label text-muted">Exercise minutes a day</span>
@@ -204,9 +194,6 @@ function StillToPlace() {
           </span>
         </div>
       </div>
-      {sheet && (
-        <GoalsSheet key={sheet.period} period={sheet.period} goals={sheet.goals} onClose={() => setSheet(null)} />
-      )}
     </section>
   );
 }

@@ -9,6 +9,7 @@ import SessionExerciseCard from '../components/strength/SessionExerciseCard';
 import ExerciseSheet from '../components/strength/ExerciseSheet';
 import { discardSession, updateSessionDate } from '../lib/strengthHelpers';
 import DateBlock from '../components/ui/DateBlock';
+import { useRingNames } from '../lib/useGoalNames';
 import {
   addExerciseToInstance,
   isSessionComplete,
@@ -18,7 +19,6 @@ import {
   reorderOpenExercises,
   repeatSwapLinkIds,
   resolveNudge,
-  STRENGTH_TYPE_LABEL,
   swapExerciseInInstance,
 } from '../lib/sessionPlans';
 import {
@@ -124,6 +124,7 @@ export default function ActiveSession() {
     pendingOrder.every((id) => liveOpenIds.includes(id))
       ? pendingOrder
       : liveOpenIds;
+  const names = useRingNames();
   const reorder = useDragReorder(openIds, (order) => {
     setPendingOrder(order);
     reorderOpenExercises(sessionId, order).catch(() => setPendingOrder(null));
@@ -134,7 +135,7 @@ export default function ActiveSession() {
   }
 
   const type = isStrengthType(session.type) ? session.type : 'full_body';
-  const typeLabel = STRENGTH_TYPE_LABEL[type];
+  const typeLabel = names[type].heading;
   const editing = isSessionComplete(session);
   const exById = new Map(exercises.map((e) => [e.id, e]));
   const history = (exerciseId: string): LastTimeEntry[] =>

@@ -7,7 +7,8 @@ import { currentWeekISODates, todayISODate } from './dateHelpers';
 import { getGoals, goalFor, HEALTH_STANDARD } from './goals';
 import { getUserPreferences } from './userPreferences';
 import { getWeeklyActuals } from './fitnessScore';
-import { isSessionComplete, isStrengthType, STRENGTH_TYPE_LABEL } from './sessionPlans';
+import { isSessionComplete, isStrengthType } from './sessionPlans';
+import { builtInNames, namesFor, type GoalNames } from './goalNames';
 import {
   getActiveMinutesData,
   totalOf,
@@ -67,12 +68,14 @@ export async function getWorkouts(
   to: string,
   active?: ActiveMinutesData,
 ): Promise<Workout[]> {
-  const [sessions, logs, types, hrData] = await Promise.all([
+  const [sessions, logs, types, hrData, weekly] = await Promise.all([
     db.sessions.where('date').between(from, to, true, true).toArray(),
     db.cardio_logs.toArray(),
     db.cardio_types.toArray(),
     active ?? getActiveMinutesData(from, to),
+    getGoals('week'),
   ]);
+  const typeNames = ringNames(weekly);
   const strength = sessions.filter((s) => isStrengthType(s.type));
   const names = await exerciseNames(strength.map((s) => s.id));
   const typeName = new Map(types.map((t) => [t.id, t.name]));
@@ -84,7 +87,7 @@ export async function getWorkouts(
       id: s.id,
       date: s.date,
       type: s.type as StrengthType,
-      name: STRENGTH_TYPE_LABEL[s.type as StrengthType],
+      name: typeNames[s.type as StrengthType].heading,
       exercises: names.get(s.id) ?? [],
       distance: null,
       minutes: s.duration_minutes ?? hr?.workoutMinutes ?? null,
@@ -143,19 +146,22 @@ export async function getRecentWorkouts(type: TrainingType, limit = 3): Promise<
 
 export type RingKey = TrainingType | 'active_minutes';
 
-export const RING_LABEL: Record<RingKey, string> = {
-  lower: 'Lower body',
-  upper: 'Upper body',
-  full_body: 'Full body',
-  cardio: 'Cardio',
-  active_minutes: 'Active minutes',
-};
-
 // The rings, in their fixed order. Which of them you see comes from your
 // goals alone (ringsFor below), so removing a goal (setting it to 0 or
 // switching it off) takes its ring away everywhere, and adding it back puts
 // the ring back in the same place.
 export const RING_ORDER: RingKey[] = ['lower', 'upper', 'full_body', 'cardio', 'active_minutes'];
+
+// Every ring's names, from your goals (lib/goalNames.ts): a renamed goal
+// carries your name to its ring, its Details card and the day sheet.
+export function ringNames(weekly: BodyGoal[]): Record<RingKey, GoalNames> {
+  const out = {} as Record<RingKey, GoalNames>;
+  for (const key of RING_ORDER) {
+    const g = weekly.find((x) => x.metric === key);
+    out[key] = g ? namesFor(g) : builtInNames(key);
+  }
+  return out;
+}
 
 export function ringsFor(weekly: BodyGoal[]): RingKey[] {
   return RING_ORDER.filter((key) => {
@@ -168,8 +174,10 @@ export interface TrainingWeek {
   dates: string[]; // Sun..Sat
   today: string;
   workouts: Workout[];
-  // One ring per goal you have (ringsFor): this week's count against it.
-  rings: { key: RingKey; actual: number; target: number }[];
+  // One ring per goal you have (ringsFor): this week's count against it, and
+  // its names (your own if you renamed it).
+  rings: { key: RingKey; actual: number; target: number; names: GoalNames }[];
+  names: Record<RingKey, GoalNames>;
   // The session kinds among those rings (Lower, Upper, Full, Cardio), for the
   // Details cards and the day sheet's Change type.
   sessionTypes: TrainingType[];
@@ -195,6 +203,7 @@ export async function getTrainingWeek(): Promise<TrainingWeek> {
   ]);
   const target = (metric: RingKey) => goalFor(weekly, metric)?.target ?? 0;
   const ringKeys = ringsFor(weekly);
+  const names = ringNames(weekly);
   const done = workouts.filter(counts);
   const daysOf = (pred: (w: Workout) => boolean) => new Set(done.filter(pred).map((w) => w.date));
   const activeDays = new Set(
@@ -209,7 +218,8 @@ export async function getTrainingWeek(): Promise<TrainingWeek> {
     dates,
     today: todayISODate(),
     workouts,
-    rings: ringKeys.map((key) => ({ key, actual: actuals[key], target: target(key) })),
+    rings: ringKeys.map((key) => ({ key, actual: actuals[key], target: target(key), names: names[key] })),
+    names,
     sessionTypes: sessionKeys,
     sessions: {
       done: sessionKeys.reduce((n, k) => n + actuals[k], 0) + customDone.reduce((n, c) => n + c, 0),
@@ -264,6 +274,9 @@ export interface RepsWeek {
   today: number;
   days: { date: string; reps: number; state: RepDayState }[];
   met: number;
+  // Daily goals you added yourself ("Push-ups, 20 a day"), each its own ring
+  // beside Reps. Nothing logs them yet, so today is always 0 for now.
+  own: { id: string; name: string; target: number; today: number }[];
 }
 
 export async function getRepsWeek(): Promise<RepsWeek> {
@@ -273,7 +286,11 @@ export async function getRepsWeek(): Promise<RepsWeek> {
     db.bundle_logs.where('date').anyOf(dates).toArray(),
     getGoals('day'),
   ]);
-  const goal = goalFor(daily, 'reps')?.target ?? null;
+  const repsGoal = goalFor(daily, 'reps');
+  const goal = repsGoal && repsGoal.active && repsGoal.target > 0 ? repsGoal.target : null;
+  const own = daily
+    .filter((g) => g.metric === null && g.active && g.target > 0)
+    .map((g) => ({ id: g.id, name: g.name, target: g.target, today: 0 }));
   const reps = new Map(rows.map((r) => [r.date, r.pushups + r.ab_rolls + r.calf_raises]));
   const days = dates.map((date) => {
     const n = reps.get(date) ?? 0;
@@ -281,7 +298,7 @@ export async function getRepsWeek(): Promise<RepsWeek> {
       date > today ? 'future' : n <= 0 ? 'none' : goal && n >= goal ? 'met' : 'some';
     return { date, reps: n, state };
   });
-  return { goal, today: reps.get(today) ?? 0, days, met: days.filter((d) => d.state === 'met').length };
+  return { goal, today: reps.get(today) ?? 0, days, met: days.filter((d) => d.state === 'met').length, own };
 }
 
 // ---- Recovery ---------------------------------------------------------------------

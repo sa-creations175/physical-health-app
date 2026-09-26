@@ -20,12 +20,8 @@ import { formatSetMagnitude } from '../lib/setFormat';
 import DateBlock from '../components/ui/DateBlock';
 import type { SessionType } from '../db/types';
 import HeaderStrip from '../components/ui/HeaderStrip';
+import { useRingNames } from '../lib/useGoalNames';
 
-const STRENGTH_TYPE_LABEL: Record<'upper' | 'lower' | 'full_body', string> = {
-  upper: 'Upper Body',
-  lower: 'Lower Body',
-  full_body: 'Full Body',
-};
 
 // Strength tiles: a tap resumes that type's unfinished session if there is
 // one, otherwise starts a new instance, which opens as a copy of the type's
@@ -34,17 +30,14 @@ const STRENGTH_TYPE_LABEL: Record<'upper' | 'lower' | 'full_body', string> = {
 type StrengthValue = 'upper' | 'lower' | 'full_body';
 type TypeValue = StrengthValue | 'cardio';
 
-const TYPE_OPTIONS: { value: TypeValue; label: string }[] = [
-  { value: 'lower', label: 'Lower Body' },
-  { value: 'upper', label: 'Upper Body' },
-  { value: 'full_body', label: 'Full Body' },
-  { value: 'cardio', label: 'Cardio' },
-];
+// Each tile reads with its goal's own name (renamed or built in).
+const TYPE_OPTIONS: TypeValue[] = ['lower', 'upper', 'full_body', 'cardio'];
 
 const STRENGTH_VALUES: StrengthValue[] = ['upper', 'lower', 'full_body'];
 
 export default function LogStrength() {
   const navigate = useNavigate();
+  const names = useRingNames();
   const [searchParams] = useSearchParams();
   // Suggestion math is strength-only (cross-pillar logic deferred). Cardio
   // never receives a "Due Next" badge.
@@ -212,7 +205,8 @@ export default function LogStrength() {
       )}
 
       <div className="grid grid-cols-1 gap-2 mt-4">
-        {TYPE_OPTIONS.map((opt) => {
+        {TYPE_OPTIONS.map((value) => {
+          const opt = { value, label: names[value].heading };
           const isInFlight = routing === opt.value;
           // Dim the other tiles while one is routing.
           const muted = routing !== null && routing !== opt.value;
@@ -300,7 +294,7 @@ function StaleDraftCard({
   const [date, setDate] = useState(() => todayISODate());
 
   const totalSets = draft.exercises.reduce((n, e) => n + e.sets.length, 0);
-  const label = STRENGTH_TYPE_LABEL[draft.type];
+  const label = useRingNames()[draft.type].heading;
 
   return (
     <div className="card p-4">

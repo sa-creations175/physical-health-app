@@ -11,7 +11,7 @@ import { parseMobilityLinks, upsertBundleLog, type BundleField, type MobilityLin
 import { addDaysISO, shortDayLabel, todayISODate } from '../../lib/dateHelpers';
 import { ringFill } from '../../lib/fitnessFormat';
 import { CardHead, DayDots, DotLabel, PairCard, Ring } from './parts';
-import { CAPTION, CARD_PAD_ROOMY, DOT_RULE, RING_ROW_GAP, ROW_RING } from '../../lib/cardSizes';
+import { CAPTION, CARD_PAD_ROOMY, DOT_RULE, RING_ROW_GAP, ROW_RING, WIDE_RING } from '../../lib/cardSizes';
 
 // Quick reps and Recovery, side by side, each with a + to log today
 // (body-fitness-options.html, "Collapsed"): the ring with its label beside
@@ -34,7 +34,7 @@ function SmallCard({
   onAdd: () => void;
   addLabel: string;
   ring: ReactNode;
-  caption: string;
+  caption?: string; // beside a single ring; several rings carry their own
   dots: ReactNode;
   count: ReactNode;
   sheet: ReactNode; // the log sheet, kept outside the tappable card
@@ -76,9 +76,9 @@ function SmallCard({
         >
           {title}
         </CardHead>
-        <div className={`${RING_ROW_GAP} mb-2 flex items-center justify-center gap-2`}>
+        <div className={`${RING_ROW_GAP} ${caption ? 'mb-2' : 'mb-1'} flex items-center justify-center gap-2`}>
           {ring}
-          <span className={`${CAPTION} text-left`}>{caption}</span>
+          {caption && <span className={`${CAPTION} text-left`}>{caption}</span>}
         </div>
         {/* The dots row is always one of the pair's rows (empty when closed),
             so the count lines stay level whichever card is open. */}
@@ -106,6 +106,12 @@ export function QuickRepsCard() {
   const [logging, setLogging] = useState(false);
   const today = todayISODate();
   const goal = reps?.goal ?? null;
+  const own = reps?.own ?? [];
+  const repsRing = (
+    <Ring fill={ringFill(reps?.today ?? 0, goal)} {...ROW_RING}>
+      {goal === null ? (reps?.today ?? 0) : `${reps?.today ?? 0}/${goal}`}
+    </Ring>
+  );
   return (
     <SmallCard
       icon={<Zap size={16} strokeWidth={2} />}
@@ -113,11 +119,28 @@ export function QuickRepsCard() {
       onAdd={() => setLogging(true)}
       addLabel="Log reps"
       ring={
-        <Ring fill={ringFill(reps?.today ?? 0, goal)} {...ROW_RING}>
-          {goal === null ? (reps?.today ?? 0) : `${reps?.today ?? 0}/${goal}`}
-        </Ring>
+        own.length === 0 ? (
+          repsRing
+        ) : (
+          // With daily goals of your own, every ring is the Fitness Score's
+          // size with its caption under it, so the card stays the same height.
+          <>
+            <Captioned caption="Reps today">
+              <Ring fill={ringFill(reps?.today ?? 0, goal)} {...WIDE_RING}>
+                {goal === null ? (reps?.today ?? 0) : `${reps?.today ?? 0}/${goal}`}
+              </Ring>
+            </Captioned>
+            {own.map((g) => (
+              <Captioned key={g.id} caption={g.name}>
+                <Ring fill={ringFill(g.today, g.target)} {...WIDE_RING}>
+                  {`${g.today}/${g.target}`}
+                </Ring>
+              </Captioned>
+            ))}
+          </>
+        )
       }
-      caption="Reps today"
+      caption={own.length === 0 ? 'Reps today' : undefined}
       dots={
         reps && (
           <DayDots
@@ -137,6 +160,15 @@ export function QuickRepsCard() {
       }
       sheet={logging && <RepsSheet onClose={() => setLogging(false)} />}
     />
+  );
+}
+
+function Captioned({ caption, children }: { caption: string; children: ReactNode }) {
+  return (
+    <span className="flex flex-col items-center gap-0.5 min-w-0 flex-1">
+      {children}
+      <span className={`${CAPTION} max-w-full truncate`}>{caption}</span>
+    </span>
   );
 }
 

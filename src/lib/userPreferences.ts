@@ -74,6 +74,7 @@ function buildDefaultPreferences(): UserPreferences {
     dexa_nudge_dismissed: false,
     one_tap_repeat: true,
     show_move_streak: false,
+    active_minutes_as_hours: false,
     measured_max_hr: null,
     created_at: now,
     updated_at: now,

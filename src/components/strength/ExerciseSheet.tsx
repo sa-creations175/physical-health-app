@@ -3,9 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../db/database';
 import BottomSheet from '../ui/BottomSheet';
 import { createNewExercise } from '../../lib/strengthHelpers';
+import { useRingNames } from '../../lib/useGoalNames';
 import {
   getTopCandidates,
-  STRENGTH_TYPE_LABEL,
   type Candidate,
 } from '../../lib/sessionPlans';
 import type { Exercise, MuscleGroup, Session, StrengthType } from '../../db/types';
@@ -44,7 +44,7 @@ export default function ExerciseSheet({
   onPick: (exercise: Exercise) => void;
   onClose: () => void;
 }) {
-  const typeLabel = STRENGTH_TYPE_LABEL[type];
+  const typeLabel = useRingNames()[type].heading;
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState(false);
 

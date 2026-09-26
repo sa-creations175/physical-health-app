@@ -44,3 +44,15 @@ export function hoursLabel(minutes: number): string {
   const m = Math.round(minutes % 60);
   return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
 }
+
+// Active minutes as shown: "150" in minutes, or "2h 30m" in hours (the
+// Goals sheet's min | hours switch). `tight` drops the space for a ring
+// ("2h30m"). Only the display changes; everything is stored in minutes.
+export function activeMinutesLabel(minutes: number, asHours: boolean, tight = false): string {
+  if (!asHours) return minutes.toLocaleString();
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return tight ? `${h}h${m}m` : `${h}h ${m}m`;
+}

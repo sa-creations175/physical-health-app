@@ -14,7 +14,7 @@ import {
 } from './sessionPlans';
 import { todayISODate } from './dateHelpers';
 import { formatSetMagnitude } from './setFormat';
-import type { Session, SessionExercise, SetEntry, SetType } from '../db/types';
+import type { Session, SessionExercise, SetEntry, SetType, StrengthType } from '../db/types';
 
 // One previous session's sets for an exercise.
 export interface LastTimeEntry {
@@ -283,6 +283,11 @@ export function droppedMessage(dropped: string[]): string {
 export interface AutoSavedNotice {
   sessionId: string;
   text: string; // "Monday's Lower Body was saved with 2 exercises. Tap to edit"
+  // Newer notices also carry the parts, so the line can use the session
+  // type's own name (renamed or built in) when it is shown.
+  date?: string;
+  type?: StrengthType;
+  kept?: number;
 }
 
 export const AUTOSAVED_NOTICES_KEY = 'ph_autosaved_session_notices';
@@ -332,6 +337,9 @@ export async function autoSaveUnfinishedSessions(): Promise<void> {
     const weekday = new Date(s.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' });
     notices.push({
       sessionId: s.id,
+      date: s.date,
+      type: s.type,
+      kept: result.kept,
       text: `${weekday}'s ${STRENGTH_TYPE_LABEL[s.type]} was saved with ${result.kept} exercise${
         result.kept === 1 ? '' : 's'
       }. Tap to edit`,
