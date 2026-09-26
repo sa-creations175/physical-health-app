@@ -9,6 +9,12 @@ import FitnessScoreCard from '../components/fitness/FitnessScoreCard';
 import { QuickRepsCard, RecoveryCard } from '../components/fitness/RepsAndRecovery';
 import TrainingDaySheet from '../components/fitness/TrainingDaySheet';
 import { PairRow } from '../components/fitness/parts';
+import {
+  FIRST_SCREEN_CARD_GAP,
+  FITNESS_GAP_ABOVE_TAB_ICONS,
+  TAB_BAR,
+  TAB_BAR_ICON_TOP,
+} from '../lib/cardSizes';
 import StandardsSheet from '../components/fitness/StandardsSheet';
 import DetailsCards from '../components/fitness/DetailsCards';
 import { detailsId } from '../lib/fitnessFormat';
@@ -58,28 +64,39 @@ export default function Fitness() {
 
   return (
     <div className="pb-4" ref={topRef}>
-      <FitnessHeader onSeeStandards={() => setStandardsOpen(true)} onOpenGoals={() => void openGoals()} />
-
-      <div className="px-4 mt-2.5 space-y-[9px]">
-        <DailyMovementCard onEditGoal={() => void openGoals('daily')} />
-        <FitnessScoreCard
-          selected={ring}
-          onSelect={setRing}
-          onOpenDay={setDay}
-          onOpenGoals={() => void openGoals('sess')}
-          onShowDetails={showDetails}
-          onStart={() => navigate('/log/strength')}
-        />
-
-        <PairRow rows={4} gapClass="gap-x-2.5">
-          <QuickRepsCard />
-          <RecoveryCard />
-        </PairRow>
-        <div className="grid grid-cols-3 gap-2">
-          <ToolTile icon={<HistoryIcon size={20} strokeWidth={2} />} label="History" onClick={() => navigate('/history')} />
-          <ToolTile icon={<Library size={20} strokeWidth={2} />} label="Library" onClick={() => navigate('/library')} />
-          <ToolTile icon={<Watch size={20} strokeWidth={2} />} label="Apple Watch" onClick={() => setWatchOpen(true)} />
+      {/* The first screen: header, Daily Movement, Fitness Score, then Quick
+          Reps and Recovery, filling exactly one screen with the cards spread
+          down it and ending 20pt above the tab bar's icons. Everything after
+          (History, Library, Apple Watch, Details) starts below the bottom of
+          the screen. Sizes come from lib/cardSizes.ts, shared with Home. */}
+      <div className="flex flex-col" style={{ minHeight: 'calc(100dvh - env(safe-area-inset-top))' }}>
+        <FitnessHeader onSeeStandards={() => setStandardsOpen(true)} onOpenGoals={() => void openGoals()} />
+        <div
+          className={`flex-1 px-4 pt-2.5 flex flex-col justify-between ${FIRST_SCREEN_CARD_GAP}`}
+          style={{
+            paddingBottom: `calc(env(safe-area-inset-bottom) + ${TAB_BAR + FITNESS_GAP_ABOVE_TAB_ICONS - TAB_BAR_ICON_TOP}px)`,
+          }}
+        >
+          <DailyMovementCard onEditGoal={() => void openGoals('daily')} />
+          <FitnessScoreCard
+            selected={ring}
+            onSelect={setRing}
+            onOpenDay={setDay}
+            onOpenGoals={() => void openGoals('sess')}
+            onShowDetails={showDetails}
+            onStart={() => navigate('/log/strength')}
+          />
+          <PairRow rows={4} gapClass="gap-x-2.5">
+            <QuickRepsCard />
+            <RecoveryCard />
+          </PairRow>
         </div>
+      </div>
+
+      <div className="px-4 mt-3 grid grid-cols-3 gap-2">
+        <ToolTile icon={<HistoryIcon size={20} strokeWidth={2} />} label="History" onClick={() => navigate('/history')} />
+        <ToolTile icon={<Library size={20} strokeWidth={2} />} label="Library" onClick={() => navigate('/library')} />
+        <ToolTile icon={<Watch size={20} strokeWidth={2} />} label="Apple Watch" onClick={() => setWatchOpen(true)} />
       </div>
 
       <div className="px-4">

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import StandardsSheet from '../components/fitness/StandardsSheet';
 import { PairRow } from '../components/fitness/parts';
+import { HOME_MARGIN_ABOVE_TAB_BAR, LAYOUT_BOTTOM_PAD, TAB_BAR } from '../lib/cardSizes';
 import {
   CheckupsCard,
   HabitsCard,
@@ -17,14 +18,12 @@ import {
 // 15px margin above the tab bar, and the cards spread evenly down it, so they
 // breathe on a tall phone and pack closer on a shorter one. The layout keeps
 // 96px under every page for the tab bar; the tab bar is 57px, so Home takes
-// back the difference with a negative bottom margin.
-const TAB_BAR = 57;
-const MARGIN_ABOVE_TAB_BAR = 15;
-const LAYOUT_BOTTOM_PAD = 96;
+// back the difference with a negative bottom margin. The sizes are shared
+// with Fitness (lib/cardSizes.ts).
 
 export default function Home() {
   const [standardsOpen, setStandardsOpen] = useState(false);
-  const reserve = TAB_BAR + MARGIN_ABOVE_TAB_BAR;
+  const reserve = TAB_BAR + HOME_MARGIN_ABOVE_TAB_BAR;
   return (
     <div
       className="flex flex-col"
