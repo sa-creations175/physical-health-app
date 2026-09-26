@@ -29,15 +29,11 @@ export const CORNER = 'text-[12px] text-muted whitespace-nowrap';
 export const SMALL_TEXT = 'text-[10px] leading-tight';
 
 // ---- First screens ------------------------------------------------------------------
-// Home and Fitness each fill exactly one screen above the tab bar. Both read
-// the tab bar's size from here.
+// Home and Fitness each fill exactly one screen: the screen frame's content
+// area, between the locked header and the tab bar (Build 14).
 
-// The tab bar's height above the iPhone's home-indicator area (Build 9), and
-// how far below its top line its icons start.
-export const TAB_BAR = 57;
+// How far below the tab bar's top line its icons start.
 export const TAB_BAR_ICON_TOP = 11;
-// The room the app layout keeps under every page for the tab bar.
-export const LAYOUT_BOTTOM_PAD = 96;
 // Home: Checkups ends this far above the tab bar's line.
 export const HOME_MARGIN_ABOVE_TAB_BAR = 15;
 // Fitness: Quick Reps and Recovery end this far above the tab bar's icons

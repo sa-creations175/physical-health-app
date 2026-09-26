@@ -9,12 +9,8 @@ import FitnessScoreCard from '../components/fitness/FitnessScoreCard';
 import { QuickRepsCard, RecoveryCard } from '../components/fitness/RepsAndRecovery';
 import TrainingDaySheet from '../components/fitness/TrainingDaySheet';
 import { PairRow } from '../components/fitness/parts';
-import {
-  FIRST_SCREEN_CARD_GAP,
-  FITNESS_GAP_ABOVE_TAB_ICONS,
-  TAB_BAR,
-  TAB_BAR_ICON_TOP,
-} from '../lib/cardSizes';
+import { FIRST_SCREEN_CARD_GAP, FITNESS_GAP_ABOVE_TAB_ICONS, TAB_BAR_ICON_TOP } from '../lib/cardSizes';
+import { useScreenFrame } from '../lib/screenFrame';
 import StandardsSheet from '../components/fitness/StandardsSheet';
 import DetailsCards from '../components/fitness/DetailsCards';
 import { detailsId } from '../lib/fitnessFormat';
@@ -60,7 +56,9 @@ export default function Fitness() {
     setFlash(key);
     window.setTimeout(() => setFlash((f) => (f === key ? null : f)), 1200);
   }
-  const backToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  // The content area scrolls, not the page.
+  const { scrollArea } = useScreenFrame();
+  const backToTop = () => scrollArea?.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
     <div className="pb-4" ref={topRef}>
@@ -68,14 +66,14 @@ export default function Fitness() {
           Reps and Recovery, filling exactly one screen with the cards spread
           down it and ending 20pt above the tab bar's icons. Everything after
           (History, Library, Apple Watch, Details) starts below the bottom of
-          the screen. Sizes come from lib/cardSizes.ts, shared with Home. */}
-      <div className="flex flex-col" style={{ minHeight: 'calc(100dvh - env(safe-area-inset-top))' }}>
+          the content area. It's at least the content area's visible height
+          (100cqh, from the screen frame), and the sizes come from lib/cardSizes.ts, shared with
+          Home. */}
+      <div className="flex flex-col" style={{ minHeight: '100cqh' }}>
         <FitnessHeader onSeeStandards={() => setStandardsOpen(true)} onOpenGoals={() => void openGoals()} />
         <div
           className={`flex-1 px-4 pt-2.5 flex flex-col justify-between ${FIRST_SCREEN_CARD_GAP}`}
-          style={{
-            paddingBottom: `calc(env(safe-area-inset-bottom) + ${TAB_BAR + FITNESS_GAP_ABOVE_TAB_ICONS - TAB_BAR_ICON_TOP}px)`,
-          }}
+          style={{ paddingBottom: FITNESS_GAP_ABOVE_TAB_ICONS - TAB_BAR_ICON_TOP }}
         >
           <DailyMovementCard onEditGoal={() => void openGoals('daily')} />
           <FitnessScoreCard

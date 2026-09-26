@@ -44,12 +44,12 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Keep page content clear of the notch / home indicator (viewport-fit=cover
-     lets the app draw edge-to-edge). The header strip re-bleeds its Mint up
-     into the top inset with a negative margin so it fills behind the status
-     bar; the fixed bottom nav carries its own bottom inset. */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* The page itself never scrolls or bounces: the screen frame
+     (components/AppLayout.tsx) fills the screen, with the header on top, one
+     scrolling content area, and the tab bar at the bottom. The header and the
+     tab bar carry the notch and home-indicator insets themselves. */
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 

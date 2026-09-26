@@ -17,7 +17,7 @@ const tabs = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 bg-white border-t border-hairline"
+      className="shrink-0 bg-white border-t border-hairline"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="grid grid-cols-5">

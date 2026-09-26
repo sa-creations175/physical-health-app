@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { useScreenFrame } from '../../lib/screenFrame';
 
 // The header strip every screen opens with (PERSONAL_OS_BRAND.md sections 5
 // and 6): a Mint band holding eyebrow, title and subtitle, in that order,
@@ -7,12 +9,13 @@ import type { ReactNode } from 'react';
 // whatever sits under the subtitle (`children`). May not differ: colours,
 // type, order.
 //
-// On a page, the negative top margin cancels the body's safe-area padding so
-// the Mint reaches behind the notch; the top padding brings the text back
-// below it. Full-screen overlays are position:fixed and ignore the body's
-// padding, so they pass `overlay` and skip the negative margin. env() can
-// read 0 inside the WebView before viewport-fit=cover settles, so it's
-// floored against a physical fallback that clears the Dynamic Island.
+// On a screen, the strip places itself in the screen frame's header area
+// (components/AppLayout.tsx), above the scrolling content, so it never moves
+// when the content scrolls or bounces. Full-screen overlays pass `overlay` and
+// draw it where they are. The Mint runs up behind the status bar; the top
+// padding brings the text below it. env() can read 0 inside the WebView
+// before viewport-fit=cover settles, so it's floored against a physical
+// fallback that clears the Dynamic Island.
 export default function HeaderStrip({
   eyebrow,
   title,
@@ -35,11 +38,11 @@ export default function HeaderStrip({
   // Home: a tighter bottom edge so the whole screen fits without scrolling.
   compact?: boolean;
 }) {
-  return (
+  const { headerSlot } = useScreenFrame();
+  const strip = (
     <header
       className={`relative shrink-0 bg-green-100 px-4 ${compact ? 'pb-1.5' : 'pb-4'}`}
       style={{
-        marginTop: overlay ? 0 : 'calc(-1 * env(safe-area-inset-top))',
         paddingTop: 'calc(max(env(safe-area-inset-top), 47px) + 12px)',
       }}
     >
@@ -65,4 +68,7 @@ export default function HeaderStrip({
       <span aria-hidden="true" className="absolute inset-x-0 bottom-0 bg-green-700" style={{ height: 1.5 }} />
     </header>
   );
+  if (overlay) return strip;
+  // Until the frame's header area exists (the first render), draw nothing.
+  return headerSlot ? createPortal(strip, headerSlot) : null;
 }
