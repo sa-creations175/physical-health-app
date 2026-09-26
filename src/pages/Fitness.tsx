@@ -8,6 +8,7 @@ import DailyMovementCard from '../components/fitness/DailyMovementCard';
 import FitnessScoreCard from '../components/fitness/FitnessScoreCard';
 import { QuickRepsCard, RecoveryCard } from '../components/fitness/RepsAndRecovery';
 import TrainingDaySheet from '../components/fitness/TrainingDaySheet';
+import { PairRow } from '../components/fitness/parts';
 import StandardsSheet from '../components/fitness/StandardsSheet';
 import DetailsCards from '../components/fitness/DetailsCards';
 import { detailsId } from '../lib/fitnessFormat';
@@ -70,10 +71,10 @@ export default function Fitness() {
           onStart={() => navigate('/log/strength')}
         />
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <PairRow rows={4} gapClass="gap-x-2.5">
           <QuickRepsCard />
           <RecoveryCard />
-        </div>
+        </PairRow>
         <div className="grid grid-cols-3 gap-2">
           <ToolTile icon={<HistoryIcon size={20} strokeWidth={2} />} label="History" onClick={() => navigate('/history')} />
           <ToolTile icon={<Library size={20} strokeWidth={2} />} label="Library" onClick={() => navigate('/library')} />

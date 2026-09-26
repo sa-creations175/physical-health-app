@@ -217,7 +217,7 @@ export default function Settings() {
       </section>
 
       <section className="mt-6">
-        <SectionLabel>Fitness</SectionLabel>
+        <SectionLabel>Movement</SectionLabel>
         <button
           type="button"
           role="switch"

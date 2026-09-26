@@ -183,3 +183,53 @@ export function RunnerIcon({ size = 16 }: { size?: number }) {
     </svg>
   );
 }
+
+// Two cards side by side that line up row by row: the pair shares one grid,
+// and each card takes its rows from it (CSS subgrid), so headings, rings,
+// dividing lines, dot rows and bottom lines sit level across the pair,
+// whatever each card holds. A card gives exactly `rows` children, one per row
+// (an empty one keeps its place). Alignment is the pair's, not tuned per card.
+export function PairRow({
+  rows,
+  gapClass = 'gap-x-2',
+  children,
+}: {
+  rows: number;
+  gapClass?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`grid grid-cols-2 ${gapClass}`} style={{ gridTemplateRows: `repeat(${rows}, auto)` }}>
+      {children}
+    </div>
+  );
+}
+
+export function PairCard({
+  rows,
+  className = '',
+  children,
+  ...rest
+}: {
+  rows: number;
+  className?: string;
+  children: ReactNode;
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'children'>) {
+  return (
+    <div
+      {...rest}
+      className={`grid min-w-0 ${className}`}
+      style={{ gridRow: `span ${rows}`, gridTemplateRows: 'subgrid' }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// A card's bottom line ("Nights 7h+ 1/7", "Stretch days · Last Sat"): one
+// layout for every card, so the small text sits on the same baseline across
+// a pair (plain text in a paragraph would ride on the paragraph's taller line
+// and sit lower).
+export function BottomLine({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={`mt-0.5 flex items-center justify-between gap-1 ${className}`}>{children}</div>;
+}

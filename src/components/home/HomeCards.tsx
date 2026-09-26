@@ -28,7 +28,18 @@ import {
   SMALL_TEXT,
   WIDE_RING as NUT_RING,
 } from '../../lib/cardSizes';
-import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring, type DotState } from '../fitness/parts';
+import {
+  CardHead,
+  DayDots,
+  DayLetters,
+  DotLabel,
+  DumbbellIcon,
+  BottomLine,
+  PairCard,
+  Ring,
+  type DotState,
+} from '../fitness/parts';
+import MoveStreak from '../ui/MoveStreak';
 
 // Home's cards (body-home-shapes.html, B7). Each reads one shared place in
 // lib/bodySignals.ts; none queries on its own.
@@ -77,7 +88,8 @@ function DotRow({ children, mint }: { children: ReactNode; mint?: boolean }) {
 // ---- Movement ---------------------------------------------------------------------
 
 // The four session rings from the Fitness score, the week's average calories a
-// day, and Move goal days with the day letters.
+// day, and Move goal days with the day letters (and the move streak, when
+// it's switched on in Settings).
 export function MovementCard() {
   const week = useLiveQuery(() => getTrainingWeek(), []);
   const score = useLiveQuery(() => getFitnessScore(), []);
@@ -140,10 +152,12 @@ export function MovementCard() {
         )}
         <DayLetters small />
       </DotRow>
-      <p className="mt-0.5">
+      {/* With "Show move streak" on, the streak sits at the right of this line. */}
+      <p className="mt-0.5 flex items-center justify-between gap-2">
         <DotLabel small label="Move goal days">
           {move ? `${move.met}/7` : undefined}
         </DotLabel>
+        <MoveStreak />
       </p>
     </div>
   );
@@ -238,7 +252,7 @@ export function SleepCard() {
   const last = week?.lastNight?.asleep_minutes ?? null;
   const goal = week?.goal ?? null;
   return (
-    <div className={`card min-w-0 ${CARD}`}>
+    <PairCard rows={4} className={`card ${CARD}`}>
       <CardHead
         icon={<Moon size={16} strokeWidth={2} />}
         right={
@@ -259,13 +273,13 @@ export function SleepCard() {
       <DotRow>
         <DayDots days={dots(week?.days ?? [])} today={today} small />
       </DotRow>
-      <p className="mt-0.5">
+      <BottomLine>
         <DotLabel
           small
           label={goal ? `Nights ${hoursLabel(goal)}+` : 'Nights'}
         >{`${week?.met ?? 0}/7`}</DotLabel>
-      </p>
-    </div>
+      </BottomLine>
+    </PairCard>
   );
 }
 
@@ -278,7 +292,7 @@ export function HomeRecoveryCard() {
   const today = todayISODate();
   const goal = week?.goal ?? null;
   return (
-    <div className={`card min-w-0 ${CARD}`}>
+    <PairCard rows={4} className={`card ${CARD}`}>
       <CardHead icon={<PersonStanding size={16} strokeWidth={2} />}>Recovery</CardHead>
       <RingCaption
         fill={ringFill(week?.count ?? 0, goal)}
@@ -295,15 +309,15 @@ export function HomeRecoveryCard() {
           small
         />
       </DotRow>
-      <p className="mt-0.5 flex justify-between gap-1">
+      <BottomLine>
         <DotLabel small label="Stretch days" />
         {week?.last && (
           <DotLabel small label="Last">
             {lastStretchLabel(week.last, today)}
           </DotLabel>
         )}
-      </p>
-    </div>
+      </BottomLine>
+    </PairCard>
   );
 }
 
@@ -325,23 +339,25 @@ export function HygieneCard() {
   const today = todayISODate();
   const setUp = !!week?.setUp;
   return (
-    <div className={`tile min-w-0 flex flex-col ${CARD}`}>
+    <PairCard rows={4} className={`tile ${CARD}`}>
       <CardHead icon={<Droplets size={16} strokeWidth={2} />} right={week && !setUp && <SetUpCorner />}>
         Hygiene
       </CardHead>
-      <div className="flex-1 flex flex-col justify-center gap-1 mt-1.5">
+      <div className="flex flex-col justify-center gap-1 mt-1.5">
         <DotLabel small label="Brushed 2×">
           {setUp ? `${week!.brushed.count}/7` : undefined}
         </DotLabel>
         <DayDots days={dots(week?.brushed.days ?? [])} today={today} small />
       </div>
-      <div className="flex-1 flex flex-col justify-center gap-1 mt-1 pt-1 border-t border-green-300">
+      {/* Flossed takes the pair's last two rows and sits at their bottom, so
+          its dots end level with Habits' bottom line. */}
+      <div className="row-span-2 self-end flex flex-col gap-1 mt-1 pt-1 border-t border-green-300">
         <DotLabel small label="Flossed">
           {setUp ? `${week!.flossed.count}/7` : undefined}
         </DotLabel>
         <DayDots days={dots(week?.flossed.days ?? [])} today={today} small />
       </div>
-    </div>
+    </PairCard>
   );
 }
 
@@ -353,7 +369,7 @@ export function HabitsCard() {
   const today = todayISODate();
   const setUp = !!week?.setUp;
   return (
-    <div className={`tile min-w-0 ${CARD}`}>
+    <PairCard rows={4} className={`tile ${CARD}`}>
       <CardHead icon={<Wine size={16} strokeWidth={2} />} right={week && !setUp && <SetUpCorner />}>
         Habits
       </CardHead>
@@ -366,12 +382,12 @@ export function HabitsCard() {
       <DotRow mint>
         <DayDots days={dots(week?.days ?? [])} today={today} small />
       </DotRow>
-      <p className="mt-0.5">
+      <BottomLine>
         <DotLabel small label="No-drink days">
           {setUp ? `${week!.drinkFreeDays}/7` : undefined}
         </DotLabel>
-      </p>
-    </div>
+      </BottomLine>
+    </PairCard>
   );
 }
 

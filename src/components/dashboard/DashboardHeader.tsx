@@ -2,12 +2,10 @@ import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Settings as SettingsIcon } from 'lucide-react';
 import HeaderStrip from '../ui/HeaderStrip';
-import MoveStreakPill from './MoveStreakPill';
 import { getStandardsWeek } from '../../lib/bodySignals';
 import { weekNumber } from '../../lib/dateHelpers';
 
-// Home's header strip (B7): where you are (the week) with the move goal
-// streak pill, the date, and "Standards this week: N of M met · see which ›",
+// Home's header strip (B7): where you are (the week), the date, and "Standards this week: N of M met · see which ›",
 // counted from the shared standards list, so a standard added there changes
 // this line too. Settings sits top right until the More tab exists.
 export default function DashboardHeader({ onSeeStandards }: { onSeeStandards: () => void }) {
@@ -20,7 +18,6 @@ export default function DashboardHeader({ onSeeStandards }: { onSeeStandards: ()
       compact
       eyebrow={`Body · Week ${weekNumber(now)}`}
       title={now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-      badge={<MoveStreakPill />}
       subtitle={
         standards && (
           <button type="button" onClick={onSeeStandards} className="text-left">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import StandardsSheet from '../components/fitness/StandardsSheet';
+import { PairRow } from '../components/fitness/parts';
 import {
   CheckupsCard,
   HabitsCard,
@@ -36,14 +37,14 @@ export default function Home() {
       <div className="flex-1 min-h-0 px-4 pt-2 flex flex-col justify-between gap-1.5">
         <MovementCard />
         <NutritionCard />
-        <div className="grid grid-cols-2 gap-2">
+        <PairRow rows={4}>
           <SleepCard />
           <HomeRecoveryCard />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+        </PairRow>
+        <PairRow rows={4}>
           <HygieneCard />
           <HabitsCard />
-        </div>
+        </PairRow>
         <CheckupsCard />
       </div>
       {standardsOpen && <StandardsSheet onClose={() => setStandardsOpen(false)} />}

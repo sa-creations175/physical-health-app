@@ -10,7 +10,7 @@ import { getUserPreferences, updateUserPreferences } from '../../lib/userPrefere
 import { parseMobilityLinks, upsertBundleLog, type BundleField, type MobilityLink } from '../../lib/bundleHelpers';
 import { addDaysISO, shortDayLabel, todayISODate } from '../../lib/dateHelpers';
 import { ringFill } from '../../lib/fitnessFormat';
-import { CardHead, DayDots, DotLabel, Ring } from './parts';
+import { CardHead, DayDots, DotLabel, PairCard, Ring } from './parts';
 import { CAPTION, CARD_PAD_ROOMY, DOT_RULE, RING_ROW_GAP, ROW_RING } from '../../lib/cardSizes';
 
 // Quick reps and Recovery, side by side, each with a + to log today
@@ -42,7 +42,8 @@ function SmallCard({
   const [open, setOpen] = useState(false);
   return (
     <>
-      <div
+      <PairCard
+        rows={4}
         role="button"
         tabIndex={0}
         aria-expanded={open}
@@ -53,7 +54,7 @@ function SmallCard({
             setOpen((o) => !o);
           }
         }}
-        className={`card min-w-0 cursor-pointer select-none ${CARD_PAD_ROOMY}`}
+        className={`card cursor-pointer select-none ${CARD_PAD_ROOMY}`}
       >
         <CardHead
           icon={icon}
@@ -75,11 +76,13 @@ function SmallCard({
         >
           {title}
         </CardHead>
-        <div className={`${RING_ROW_GAP} mb-1 flex items-center justify-center gap-2`}>
+        <div className={`${RING_ROW_GAP} mb-2 flex items-center justify-center gap-2`}>
           {ring}
           <span className={`${CAPTION} text-left`}>{caption}</span>
         </div>
-        {open && <div className={`${DOT_RULE} border-hairline`}>{dots}</div>}
+        {/* The dots row is always one of the pair's rows (empty when closed),
+            so the count lines stay level whichever card is open. */}
+        <div className={open ? `${DOT_RULE} border-hairline` : ''}>{open && dots}</div>
         <div className={`${DOT_RULE} border-hairline flex items-center justify-between gap-1`}>
           {count}
           <ChevronDown
@@ -89,7 +92,7 @@ function SmallCard({
             className={`text-hint shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
           />
         </div>
-      </div>
+      </PairCard>
       {sheet}
     </>
   );
@@ -166,7 +169,7 @@ export function RecoveryCard() {
         )
       }
       count={
-        <span className="min-w-0 truncate">
+        <span className="min-w-0 truncate text-[10px] leading-tight">
           <DotLabel small label="Stretch days" />
           {week?.last && (
             <>
