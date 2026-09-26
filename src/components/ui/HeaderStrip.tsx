@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 
 // The header strip every screen opens with (PERSONAL_OS_BRAND.md sections 5
 // and 6): a Mint band holding eyebrow, title and subtitle, in that order,
-// ending in a hairline. May differ per screen: a control on the right and
+// ending in a 1.5px Green 700 line edge to edge, as Mind's header strip draws
+// it (mind-app/Mind/DesignSystem/BrandHeaderStrip.swift). May differ per screen: a control on the right and
 // whatever sits under the subtitle (`children`). May not differ: colours,
 // type, order.
 //
@@ -26,8 +27,8 @@ export default function HeaderStrip({
   title: ReactNode;
   subtitle?: ReactNode;
   right?: ReactNode;
-  // A small pill on the eyebrow's line, at its right end (the move goal
-  // streak on Home and Fitness).
+  // A small pill on the eyebrow's line, at its right end (Fitness's Goals
+  // pill).
   badge?: ReactNode;
   children?: ReactNode;
   overlay?: boolean;
@@ -36,7 +37,7 @@ export default function HeaderStrip({
 }) {
   return (
     <header
-      className={`shrink-0 bg-green-100 border-b border-hairline px-4 ${compact ? 'pb-1.5' : 'pb-4'}`}
+      className={`relative shrink-0 bg-green-100 px-4 ${compact ? 'pb-1.5' : 'pb-4'}`}
       style={{
         marginTop: overlay ? 0 : 'calc(-1 * env(safe-area-inset-top))',
         paddingTop: 'calc(max(env(safe-area-inset-top), 47px) + 12px)',
@@ -58,6 +59,10 @@ export default function HeaderStrip({
         {right && <div className="shrink-0 flex items-center gap-2">{right}</div>}
       </div>
       {children}
+      {/* The Green 700 line along the bottom, 1.5px, edge to edge. Drawn as a
+          bar over the bottom edge like Mind's (a 1.5px border would be snapped
+          to whole device pixels). */}
+      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 bg-green-700" style={{ height: 1.5 }} />
     </header>
   );
 }
