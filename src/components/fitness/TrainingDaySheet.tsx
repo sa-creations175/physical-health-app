@@ -3,12 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import BottomSheet from '../ui/BottomSheet';
 import { useToast } from '../ui/Toast';
-import { getWorkouts, RING_LABEL, type TrainingType, type Workout } from '../../lib/bodySignals';
+import {
+  getWorkouts,
+  RING_LABEL,
+  RING_ORDER,
+  ringsFor,
+  type TrainingType,
+  type Workout,
+} from '../../lib/bodySignals';
+import { getGoals } from '../../lib/goals';
 import { reclassifyTo } from '../../lib/dayDetailHelpers';
 import { todayISODate } from '../../lib/dateHelpers';
 import { clockLabel, dayDateLabel, openPath } from '../../lib/fitnessFormat';
 
-const CHANGE_TO: TrainingType[] = ['cardio', 'lower', 'upper', 'full_body'];
 
 // One day of training: each workout in its own box (what it was, what you
 // did, then time · average bpm · Active minutes), and buttons to add to that
@@ -77,6 +84,12 @@ function WorkoutBox({ w, onOpen }: { w: Workout; onOpen: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const [changing, setChanging] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Change type offers the session kinds you have goals for (the same list as
+  // the rings), plus whatever this workout counts as now.
+  const goals = useLiveQuery(() => getGoals('week'), [], []);
+  const types = RING_ORDER.filter(
+    (k): k is TrainingType => k !== 'active_minutes' && (ringsFor(goals).includes(k) || k === w.type),
+  );
   const typeLabel = RING_LABEL[w.type];
   const sameName = w.name.toLowerCase() === typeLabel.toLowerCase();
   const stats = statsLine(w);
@@ -137,7 +150,7 @@ function WorkoutBox({ w, onOpen }: { w: Workout; onOpen: () => void }) {
           </p>
           {changing && (
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {CHANGE_TO.map((t) => (
+              {types.map((t) => (
                 <button
                   key={t}
                   type="button"

@@ -37,6 +37,7 @@ import {
   BottomLine,
   PairCard,
   Ring,
+  RingRow,
   type DotState,
 } from '../fitness/parts';
 import MoveStreak from '../ui/MoveStreak';
@@ -96,6 +97,8 @@ export function MovementCard() {
   const move = useLiveQuery(() => getMoveGoalWeek(), [], null);
   const today = todayISODate();
   const avg = score?.averages.calories ?? null;
+  // The session rings you have goals for (Active minutes lives on Fitness).
+  const sessionRings = (week?.rings ?? []).filter((r) => r.key !== 'active_minutes');
   const SHORT = {
     lower: 'Lower',
     upper: 'Upper',
@@ -117,18 +120,16 @@ export function MovementCard() {
       >
         Movement
       </CardHead>
-      <div className={`${RING_ROW_GAP} flex justify-between px-1`}>
-        {(week?.rings ?? [])
-          .filter((r) => r.key !== 'active_minutes')
-          .map((r) => (
-            <div key={r.key} className="flex flex-col items-center gap-px">
-              <Ring fill={ringFill(r.actual, r.target)} {...RING}>
-                {r.target === null ? r.actual : `${r.actual}/${r.target}`}
-              </Ring>
-              <span className={CAPTION}>{SHORT[r.key]}</span>
-            </div>
-          ))}
-      </div>
+      <RingRow count={sessionRings.length} className={RING_ROW_GAP}>
+        {sessionRings.map((r) => (
+          <div key={r.key} className="flex flex-col items-center gap-px">
+            <Ring fill={ringFill(r.actual, r.target)} {...RING}>
+              {`${r.actual}/${r.target}`}
+            </Ring>
+            <span className={CAPTION}>{SHORT[r.key]}</span>
+          </div>
+        ))}
+      </RingRow>
       <DotRow>
         {move ? (
           // A day at or past the calories goal fills; B7 shows no misses here.

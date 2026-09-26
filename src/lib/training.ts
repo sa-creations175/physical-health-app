@@ -151,14 +151,30 @@ export const RING_LABEL: Record<RingKey, string> = {
   active_minutes: 'Active minutes',
 };
 
+// The rings, in their fixed order. Which of them you see comes from your
+// goals alone (ringsFor below), so removing a goal (setting it to 0 or
+// switching it off) takes its ring away everywhere, and adding it back puts
+// the ring back in the same place.
+export const RING_ORDER: RingKey[] = ['lower', 'upper', 'full_body', 'cardio', 'active_minutes'];
+
+export function ringsFor(weekly: BodyGoal[]): RingKey[] {
+  return RING_ORDER.filter((key) => {
+    const g = goalFor(weekly, key);
+    return !!g && g.target > 0;
+  });
+}
+
 export interface TrainingWeek {
   dates: string[]; // Sun..Sat
   today: string;
   workouts: Workout[];
-  // Each ring: this week's count against the goal (null = no goal set).
-  rings: { key: RingKey; actual: number; target: number | null }[];
-  // "Sessions: N of M": the four session rings plus any session types you
-  // added yourself (Swim), finished this week against their goals.
+  // One ring per goal you have (ringsFor): this week's count against it.
+  rings: { key: RingKey; actual: number; target: number }[];
+  // The session kinds among those rings (Lower, Upper, Full, Cardio), for the
+  // Details cards and the day sheet's Change type.
+  sessionTypes: TrainingType[];
+  // "Sessions: N of M": the session rings plus any session types you added
+  // yourself (Swim), finished this week against their goals.
   sessions: { done: number; target: number };
   // Days with something, for the dots: all training, or one ring's kind.
   days: Record<RingKey | 'all', Set<string>>;
@@ -177,7 +193,8 @@ export async function getTrainingWeek(): Promise<TrainingWeek> {
     getWeeklyActuals(),
     getGoals('week'),
   ]);
-  const target = (metric: RingKey) => goalFor(weekly, metric)?.target ?? null;
+  const target = (metric: RingKey) => goalFor(weekly, metric)?.target ?? 0;
+  const ringKeys = ringsFor(weekly);
   const done = workouts.filter(counts);
   const daysOf = (pred: (w: Workout) => boolean) => new Set(done.filter(pred).map((w) => w.date));
   const activeDays = new Set(
@@ -187,19 +204,16 @@ export async function getTrainingWeek(): Promise<TrainingWeek> {
   );
   const custom = weekly.filter((g) => g.active && g.metric === null);
   const customDone = await Promise.all(custom.map((g) => customCount(g)));
-  const sessionKeys: TrainingType[] = ['lower', 'upper', 'full_body', 'cardio'];
+  const sessionKeys = ringKeys.filter((k): k is TrainingType => k !== 'active_minutes');
   return {
     dates,
     today: todayISODate(),
     workouts,
-    rings: [
-      ...sessionKeys.map((key) => ({ key, actual: actuals[key], target: target(key) })),
-      { key: 'active_minutes' as const, actual: actuals.active_minutes, target: target('active_minutes') },
-    ],
+    rings: ringKeys.map((key) => ({ key, actual: actuals[key], target: target(key) })),
+    sessionTypes: sessionKeys,
     sessions: {
       done: sessionKeys.reduce((n, k) => n + actuals[k], 0) + customDone.reduce((n, c) => n + c, 0),
-      target:
-        sessionKeys.reduce((n, k) => n + (target(k) ?? 0), 0) + custom.reduce((n, g) => n + g.target, 0),
+      target: sessionKeys.reduce((n, k) => n + target(k), 0) + custom.reduce((n, g) => n + g.target, 0),
     },
     days: {
       all: daysOf(() => true),

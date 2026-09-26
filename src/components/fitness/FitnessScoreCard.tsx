@@ -3,7 +3,7 @@ import { COLOR } from '../../lib/brand';
 import { CAPTION, CARD_PAD, DOT_RULE, RING_ROW_GAP, SMALL_TEXT, WIDE_RING } from '../../lib/cardSizes';
 import { getTrainingWeek, RING_LABEL, type RingKey } from '../../lib/bodySignals';
 import { dayDateLabel, ringFill } from '../../lib/fitnessFormat';
-import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring } from './parts';
+import { CardHead, DayDots, DayLetters, DotLabel, DumbbellIcon, Ring, RingRow } from './parts';
 
 const RING_SHORT: Record<RingKey, string> = {
   lower: 'Lower',
@@ -61,7 +61,7 @@ export default function FitnessScoreCard({
         Fitness Score
       </CardHead>
 
-      <div className={`${RING_ROW_GAP} flex justify-between`}>
+      <RingRow count={week?.rings.length ?? 0} className={RING_ROW_GAP}>
         {(week?.rings ?? []).map((r) => {
           const on = selected === r.key;
           return (
@@ -79,7 +79,7 @@ export default function FitnessScoreCard({
                 style={on ? { outline: `2px solid ${COLOR.green300}`, outlineOffset: 1 } : undefined}
               >
                 <Ring fill={ringFill(r.actual, r.target)} {...WIDE_RING} onMint>
-                  {r.key === 'active_minutes' || r.target === null ? r.actual : `${r.actual}/${r.target}`}
+                  {r.key === 'active_minutes' ? r.actual : `${r.actual}/${r.target}`}
                 </Ring>
               </span>
               <span className={`${CAPTION} whitespace-nowrap`}>
@@ -88,7 +88,7 @@ export default function FitnessScoreCard({
             </button>
           );
         })}
-      </div>
+      </RingRow>
 
       <div className={`${DOT_RULE} border-hairline`}>
         {week && (

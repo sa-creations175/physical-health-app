@@ -33,7 +33,8 @@ export default function DetailsCards({ flash, onTop }: { flash: RingKey | null; 
   return (
     <>
       <p className="eyebrow text-hint mt-8 pt-3.5 border-t border-hairline">Details</p>
-      {(['lower', 'upper', 'full_body', 'cardio'] as TrainingType[]).map((t) => (
+      {/* One card per ring you have: a goal removed takes its card away too. */}
+      {(week?.sessionTypes ?? []).map((t) => (
         <SessionDetails
           key={t}
           type={t}
@@ -43,7 +44,7 @@ export default function DetailsCards({ flash, onTop }: { flash: RingKey | null; 
           onTop={onTop}
         />
       ))}
-      {week && (
+      {week && ring('active_minutes') && (
         <DetailCard id={detailsId('active_minutes')} flash={flash === 'active_minutes'} onTop={onTop}
           icon={<Heart size={16} strokeWidth={2} />}
           title="Active Minutes"

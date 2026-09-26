@@ -217,6 +217,8 @@ export {
   getStretchWeek,
   getStandardsWeek,
   RING_LABEL,
+  RING_ORDER,
+  ringsFor,
   type Workout,
   type WorkoutKind,
   type TrainingType,

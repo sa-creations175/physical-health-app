@@ -233,3 +233,18 @@ export function PairCard({
 export function BottomLine({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`mt-0.5 flex items-center justify-between gap-1 ${className}`}>{children}</div>;
 }
+
+// A row of rings spread evenly across the card, the same on Home and Fitness:
+// each ring sits centred in an equal share of the width, so the space
+// between rings is equal and both ends keep the same margin, however many
+// rings there are.
+export function RingRow({ count, className = '', children }: { count: number; className?: string; children: ReactNode }) {
+  return (
+    <div
+      className={`grid justify-items-center ${className}`}
+      style={{ gridTemplateColumns: `repeat(${Math.max(1, count)}, minmax(0, 1fr))` }}
+    >
+      {children}
+    </div>
+  );
+}
