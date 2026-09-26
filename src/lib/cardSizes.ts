@@ -5,10 +5,16 @@
 // use these sizes for everything inside a card.
 
 export const CARD_PAD = 'px-3 py-[5px]';
+// Fitness's first screen has room for the spec's roomier cards
+// (body-fitness-options.html: about 10px top and bottom at phone size).
+export const CARD_PAD_ROOMY = 'px-3.5 py-2.5';
 
 // Rings: 32px, or 34px where three or five share a row. Numbers 8.5px.
 export const RING = { size: 32, inner: 24, textClass: 'text-[8.5px]' };
 export const WIDE_RING = { size: 34, inner: 25, textClass: 'text-[8.5px]' };
+// A ring with its label beside it (Fitness's collapsed Quick Reps and
+// Recovery): the spec's 44px ring, numbers 10px.
+export const ROW_RING = { size: 44, inner: 34, textClass: 'text-[10px]' };
 
 // Clear space above a row of rings, and above a single ring, under the
 // heading line; and the rule above a row of dots.

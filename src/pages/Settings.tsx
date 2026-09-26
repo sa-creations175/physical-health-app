@@ -216,6 +216,25 @@ export default function Settings() {
         </button>
       </section>
 
+      <section className="mt-6">
+        <SectionLabel>Fitness</SectionLabel>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={prefs.show_move_streak === true}
+          onClick={() => updateUserPreferences({ show_move_streak: prefs.show_move_streak !== true })}
+          className="card w-full px-4 py-3 mt-2 flex items-center justify-between gap-3 text-left"
+        >
+          <span className="min-w-0">
+            <span className="block text-body text-ink">Show move streak</span>
+            <span className="block text-label text-muted mt-0.5">
+              Days in a row at or above your calories goal, shown on Daily Movement.
+            </span>
+          </span>
+          <Switch on={prefs.show_move_streak === true} />
+        </button>
+      </section>
+
       {seasonSetup && (
         <NutritionSetupModal
           onClose={() => setSeasonSetup(false)}

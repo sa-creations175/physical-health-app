@@ -15,9 +15,9 @@ import {
 // between the top of the screen and the tab bar (safe areas included), less a
 // 15px margin above the tab bar, and the cards spread evenly down it, so they
 // breathe on a tall phone and pack closer on a shorter one. The layout keeps
-// 96px under every page for the tab bar; the tab bar is 65px, so Home takes
+// 96px under every page for the tab bar; the tab bar is 57px, so Home takes
 // back the difference with a negative bottom margin.
-const TAB_BAR = 65;
+const TAB_BAR = 57;
 const MARGIN_ABOVE_TAB_BAR = 15;
 const LAYOUT_BOTTOM_PAD = 96;
 

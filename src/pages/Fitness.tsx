@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { History as HistoryIcon, Library, Watch } from 'lucide-react';
 import HeaderStrip from '../components/ui/HeaderStrip';
-import MoveStreakPill from '../components/dashboard/MoveStreakPill';
+import GoalsPill from '../components/ui/GoalsPill';
 import DailyMovementCard from '../components/fitness/DailyMovementCard';
 import FitnessScoreCard from '../components/fitness/FitnessScoreCard';
 import { QuickRepsCard, RecoveryCard } from '../components/fitness/RepsAndRecovery';
@@ -29,7 +29,7 @@ import type { BodyGoal, GoalPeriod } from '../db/types';
 
 // The Fitness tab (body-fitness-proto.html, with the Fitness score card and
 // day sheet from body-fitness-dayview-proto.html): Daily movement, the
-// Fitness score, Start a session and Goals, Quick reps and Recovery,
+// Fitness score with Start a session, Quick reps and Recovery,
 // History / Library / Apple Watch, then one Details card per ring. What the
 // old tab showed that the new one doesn't place yet sits at the bottom under
 // "Still to place", working as before.
@@ -57,9 +57,9 @@ export default function Fitness() {
 
   return (
     <div className="pb-4" ref={topRef}>
-      <FitnessHeader onSeeStandards={() => setStandardsOpen(true)} />
+      <FitnessHeader onSeeStandards={() => setStandardsOpen(true)} onOpenGoals={() => void openGoals()} />
 
-      <div className="px-4 mt-2 space-y-2">
+      <div className="px-4 mt-2.5 space-y-[9px]">
         <DailyMovementCard onEditGoal={() => void openGoals('daily')} />
         <FitnessScoreCard
           selected={ring}
@@ -67,15 +67,9 @@ export default function Fitness() {
           onOpenDay={setDay}
           onOpenGoals={() => void openGoals('sess')}
           onShowDetails={showDetails}
+          onStart={() => navigate('/log/strength')}
         />
-        <div className="flex gap-2">
-          <button type="button" onClick={() => navigate('/log/strength')} className="btn-primary flex-1">
-            Start a session
-          </button>
-          <button type="button" onClick={() => void openGoals()} className="btn tile text-green-700 px-5">
-            Goals
-          </button>
-        </div>
+
         <div className="grid grid-cols-2 gap-2.5">
           <QuickRepsCard />
           <RecoveryCard />
@@ -102,7 +96,7 @@ export default function Fitness() {
   );
 }
 
-function FitnessHeader({ onSeeStandards }: { onSeeStandards: () => void }) {
+function FitnessHeader({ onSeeStandards, onOpenGoals }: { onSeeStandards: () => void; onOpenGoals: () => void }) {
   const now = new Date();
   const standards = useLiveQuery(() => getStandardsWeek(), []);
   const met = standards?.filter((s) => s.met).length ?? 0;
@@ -110,7 +104,7 @@ function FitnessHeader({ onSeeStandards }: { onSeeStandards: () => void }) {
     <HeaderStrip
       compact
       eyebrow={`Fitness · Week ${weekNumber(now)}`}
-      badge={<MoveStreakPill />}
+      badge={<GoalsPill onOpen={onOpenGoals} />}
       title={now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
       subtitle={
         <button type="button" onClick={onSeeStandards} className="text-left">

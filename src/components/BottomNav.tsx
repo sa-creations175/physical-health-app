@@ -4,7 +4,8 @@ import { LayoutGrid, Dumbbell, Apple, ShieldPlus, CirclePlus } from 'lucide-reac
 // Five primary tabs. Settings moved off the nav → gear in the Home header.
 // Log routes to the existing strength type-select (unchanged).
 // Tab bar per PERSONAL_OS_BRAND.md section 6: white, hairline on top, a Lucide
-// icon over a sentence-case Label; active Green 700 at 700 weight.
+// icon over a sentence-case Label; active Green 700 at 700 weight. Nothing
+// under the labels but the iPhone's own home-indicator area (Build 9).
 const tabs = [
   { to: '/', label: 'Home', icon: LayoutGrid, end: true },
   { to: '/fitness', label: 'Fitness', icon: Dumbbell, end: false },
@@ -26,7 +27,7 @@ export default function BottomNav() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 py-2.5 min-h-[60px] text-label transition-colors ${
+                `flex flex-col items-center justify-center gap-1 pt-2.5 pb-0.5 text-label transition-colors ${
                   isActive ? 'text-green-700 font-bold' : 'text-hint font-medium'
                 }`
               }

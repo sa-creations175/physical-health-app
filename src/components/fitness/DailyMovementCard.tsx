@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { Activity, Flame, Footprints } from 'lucide-react';
 import { getFitnessScore } from '../../lib/fitnessScore';
 import { getCaloriesByDay, getHealthSnapshot } from '../../lib/healthkit';
-import { getMoveGoalWeek } from '../../lib/bodySignals';
+import { getMoveGoalWeek, getMoveStreak } from '../../lib/bodySignals';
+import { getUserPreferences } from '../../lib/userPreferences';
 import { getGoals, goalFor } from '../../lib/goals';
 import { currentWeekISODates, todayISODate } from '../../lib/dateHelpers';
 import { COLOR } from '../../lib/brand';
@@ -25,6 +26,8 @@ export default function DailyMovementCard({ onEditGoal }: { onEditGoal: () => vo
   const dailyGoals = useLiveQuery(() => getGoals('day'), [], []);
   const goal = goalFor(dailyGoals, 'calories')?.target ?? null;
   const moveWeek = useLiveQuery(() => getMoveGoalWeek(), [], null);
+  const prefs = useLiveQuery(() => getUserPreferences(), []);
+  const streak = useLiveQuery(() => getMoveStreak(), [], null);
   const [perDay, setPerDay] = useState<number[] | null>(null);
   const [stepsToday, setStepsToday] = useState<number | null>(null);
 
@@ -54,7 +57,21 @@ export default function DailyMovementCard({ onEditGoal }: { onEditGoal: () => vo
 
   return (
     <div className={`card ${CARD_PAD}`}>
-      <CardHead icon={<Activity size={16} strokeWidth={2} />}>Daily Movement</CardHead>
+      <CardHead
+        icon={<Activity size={16} strokeWidth={2} />}
+        right={
+          // Only with "Show move streak" on in Settings, and a streak to show.
+          prefs?.show_move_streak === true &&
+          !!streak && (
+            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-muted whitespace-nowrap">
+              <Flame aria-hidden="true" size={12} strokeWidth={2} className="text-amber" />
+              Move streak: <b className="font-bold text-ink">{streak}</b>
+            </span>
+          )
+        }
+      >
+        Daily Movement
+      </CardHead>
 
       <div className="mt-2 flex gap-2.5">
         <TodayTile

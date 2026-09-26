@@ -425,6 +425,9 @@ export interface UserPreferences {
   // the circle on a ghost set row logs it as "same as last time". Off: the
   // circle refuses until the set has been typed.
   one_tap_repeat: boolean;
+  // Show the move goal streak on Fitness's Daily Movement card — added Build 9.
+  // Off unless switched on in Settings; undefined on older rows reads as off.
+  show_move_streak?: boolean | null;
   // A measured maximum heart rate the person typed in — added Dexie v22, no
   // screen yet. When set it replaces the age-based estimate for the Active
   // minutes line.

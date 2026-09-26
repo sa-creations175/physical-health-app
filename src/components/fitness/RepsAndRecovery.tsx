@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { PersonStanding, Plus, Zap } from 'lucide-react';
+import { ChevronDown, PersonStanding, Plus, Zap } from 'lucide-react';
 import { db } from '../../db/database';
 import BottomSheet from '../ui/BottomSheet';
 import { useToast } from '../ui/Toast';
@@ -11,32 +11,59 @@ import { parseMobilityLinks, upsertBundleLog, type BundleField, type MobilityLin
 import { addDaysISO, shortDayLabel, todayISODate } from '../../lib/dateHelpers';
 import { ringFill } from '../../lib/fitnessFormat';
 import { CardHead, DayDots, DotLabel, Ring } from './parts';
-import { CAPTION, CARD_PAD, DOT_RULE, RING, RING_GAP } from '../../lib/cardSizes';
+import { CAPTION, CARD_PAD_ROOMY, DOT_RULE, RING_ROW_GAP, ROW_RING } from '../../lib/cardSizes';
 
-// Quick reps and Recovery, side by side, each with a + to log today.
+// Quick reps and Recovery, side by side, each with a + to log today
+// (body-fitness-options.html, "Collapsed"): the ring with its label beside
+// it, then under a thin line the count line with a ⌄. Tap the card to show
+// that week's dots; tap again to hide them.
 
 function SmallCard({
   icon,
   title,
   onAdd,
   addLabel,
-  children,
+  ring,
+  caption,
+  dots,
+  count,
+  sheet,
 }: {
   icon: ReactNode;
   title: string;
-  onAdd?: () => void;
+  onAdd: () => void;
   addLabel: string;
-  children: ReactNode;
+  ring: ReactNode;
+  caption: string;
+  dots: ReactNode;
+  count: ReactNode;
+  sheet: ReactNode; // the log sheet, kept outside the tappable card
 }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className={`card min-w-0 ${CARD_PAD}`}>
-      <CardHead
-        icon={icon}
-        right={
-          onAdd && (
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        }}
+        className={`card min-w-0 cursor-pointer select-none ${CARD_PAD_ROOMY}`}
+      >
+        <CardHead
+          icon={icon}
+          right={
             <button
               type="button"
-              onClick={onAdd}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAdd();
+              }}
               aria-label={addLabel}
               className="w-11 h-11 -my-3 -mr-3 flex items-center justify-center shrink-0"
             >
@@ -44,13 +71,27 @@ function SmallCard({
                 <Plus size={14} strokeWidth={2.5} />
               </span>
             </button>
-          )
-        }
-      >
-        {title}
-      </CardHead>
-      {children}
-    </div>
+          }
+        >
+          {title}
+        </CardHead>
+        <div className={`${RING_ROW_GAP} mb-1 flex items-center justify-center gap-2`}>
+          {ring}
+          <span className={`${CAPTION} text-left`}>{caption}</span>
+        </div>
+        {open && <div className={`${DOT_RULE} border-hairline`}>{dots}</div>}
+        <div className={`${DOT_RULE} border-hairline flex items-center justify-between gap-1`}>
+          {count}
+          <ChevronDown
+            aria-hidden="true"
+            size={12}
+            strokeWidth={2}
+            className={`text-hint shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </div>
+      {sheet}
+    </>
   );
 }
 
@@ -59,19 +100,23 @@ function SmallCard({
 // with some reps under it.
 export function QuickRepsCard() {
   const reps = useLiveQuery(() => getRepsWeek(), []);
-  const [open, setOpen] = useState(false);
+  const [logging, setLogging] = useState(false);
   const today = todayISODate();
   const goal = reps?.goal ?? null;
   return (
-    <SmallCard icon={<Zap size={16} strokeWidth={2} />} title="Quick Reps" onAdd={() => setOpen(true)} addLabel="Log reps">
-      <div className={`${RING_GAP} flex flex-col items-center gap-0.5`}>
-        <Ring fill={ringFill(reps?.today ?? 0, goal)} {...RING}>
+    <SmallCard
+      icon={<Zap size={16} strokeWidth={2} />}
+      title="Quick Reps"
+      onAdd={() => setLogging(true)}
+      addLabel="Log reps"
+      ring={
+        <Ring fill={ringFill(reps?.today ?? 0, goal)} {...ROW_RING}>
           {goal === null ? (reps?.today ?? 0) : `${reps?.today ?? 0}/${goal}`}
         </Ring>
-        <span className={CAPTION}>Reps today</span>
-      </div>
-      <div className={`${DOT_RULE} border-hairline`}>
-        {reps && (
+      }
+      caption="Reps today"
+      dots={
+        reps && (
           <DayDots
             days={reps.days.map((d) => ({
               date: d.date,
@@ -80,13 +125,15 @@ export function QuickRepsCard() {
             today={today}
             small
           />
-        )}
-      </div>
-      <p className="mt-0.5">
-        <DotLabel small label="Rep days">{reps?.met ?? 0}/7</DotLabel>
-      </p>
-      {open && <RepsSheet onClose={() => setOpen(false)} />}
-    </SmallCard>
+        )
+      }
+      count={
+        <DotLabel small label="Rep days">
+          {reps?.met ?? 0}/7
+        </DotLabel>
+      }
+      sheet={logging && <RepsSheet onClose={() => setLogging(false)} />}
+    />
   );
 }
 
@@ -94,37 +141,45 @@ export function QuickRepsCard() {
 // Stretches goal, and the last day you stretched.
 export function RecoveryCard() {
   const week = useLiveQuery(() => getStretchWeek(), []);
-  const [open, setOpen] = useState(false);
+  const [logging, setLogging] = useState(false);
   const today = todayISODate();
   const goal = week?.goal ?? null;
   return (
     <SmallCard
       icon={<PersonStanding size={16} strokeWidth={2} />}
       title="Recovery"
-      onAdd={() => setOpen(true)}
+      onAdd={() => setLogging(true)}
       addLabel="Log a stretch"
-    >
-      <div className={`${RING_GAP} flex flex-col items-center gap-0.5`}>
-        <Ring fill={ringFill(week?.count ?? 0, goal)} {...RING}>
+      ring={
+        <Ring fill={ringFill(week?.count ?? 0, goal)} {...ROW_RING}>
           {goal === null ? (week?.count ?? 0) : `${week?.count ?? 0}/${goal}`}
         </Ring>
-        <span className={CAPTION}>Stretches this week</span>
-      </div>
-      <div className={`${DOT_RULE} border-hairline`}>
-        {week && (
+      }
+      caption="Stretches this week"
+      dots={
+        week && (
           <DayDots
             days={week.days.map((d) => ({ date: d.date, state: d.state === 'met' ? 'on' : 'none' }))}
             today={today}
             small
           />
-        )}
-      </div>
-      <p className="mt-0.5 flex justify-between gap-1">
-        <DotLabel small label="Stretch days" />
-        {week?.last && <DotLabel small label="Last">{lastLabel(week.last, today)}</DotLabel>}
-      </p>
-      {open && <StretchSheet onClose={() => setOpen(false)} />}
-    </SmallCard>
+        )
+      }
+      count={
+        <span className="min-w-0 truncate">
+          <DotLabel small label="Stretch days" />
+          {week?.last && (
+            <>
+              <span className="text-[10px] text-hint"> · </span>
+              <DotLabel small label="Last">
+                {lastLabel(week.last, today)}
+              </DotLabel>
+            </>
+          )}
+        </span>
+      }
+      sheet={logging && <StretchSheet onClose={() => setLogging(false)} />}
+    />
   );
 }
 

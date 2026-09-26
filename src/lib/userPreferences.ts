@@ -73,6 +73,7 @@ function buildDefaultPreferences(): UserPreferences {
     fitness_card_config: JSON.stringify(DEFAULT_FITNESS_CARD_CONFIG),
     dexa_nudge_dismissed: false,
     one_tap_repeat: true,
+    show_move_streak: false,
     measured_max_hr: null,
     created_at: now,
     updated_at: now,

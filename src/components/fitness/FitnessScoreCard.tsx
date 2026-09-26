@@ -25,19 +25,21 @@ const DAYS_LABEL: Record<RingKey | 'all', string> = {
 // The Fitness score: your sessions against your own split, and Active
 // minutes. Tap a ring to show only its days (and a link down to its details);
 // tap it again to go back to every training day. Tap a day's dot, Sunday to
-// today, to see that day.
+// today, to see that day. Start a session sits at the bottom of the card.
 export default function FitnessScoreCard({
   selected,
   onSelect,
   onOpenDay,
   onOpenGoals,
   onShowDetails,
+  onStart,
 }: {
   selected: RingKey | null;
   onSelect: (key: RingKey | null) => void;
   onOpenDay: (date: string) => void;
   onOpenGoals: () => void;
   onShowDetails: (key: RingKey) => void;
+  onStart: () => void; // "Start a session": the session picker
 }) {
   const week = useLiveQuery(() => getTrainingWeek(), []);
   const which = selected ?? 'all';
@@ -114,6 +116,9 @@ export default function FitnessScoreCard({
           <span className={`${SMALL_TEXT} text-hint whitespace-nowrap`}>Tap a ring or a day</span>
         )}
       </div>
+      <button type="button" onClick={onStart} className="btn-primary w-full mt-2 mb-0.5 min-h-[40px] py-2">
+        Start a session
+      </button>
     </div>
   );
 }
